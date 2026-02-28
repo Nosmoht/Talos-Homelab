@@ -3,4 +3,5 @@ kind: Kustomization
 
 resources:
   - gateway.yaml
+  - certificate.yaml
   - gateway-endpointslice.yaml
