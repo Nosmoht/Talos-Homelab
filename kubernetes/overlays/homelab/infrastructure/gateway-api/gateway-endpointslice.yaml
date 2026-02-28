@@ -15,6 +15,9 @@ ports:
   - name: port-80
     port: 80
     protocol: TCP
+  - name: port-443
+    port: 443
+    protocol: TCP
 endpoints:
   - addresses:
       - 192.168.2.61
