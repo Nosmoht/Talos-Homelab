@@ -1,0 +1,27 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: piraeus-operator
+  namespace: argocd
+spec:
+  project: infrastructure
+  sources:
+    - repoURL: https://charts.piraeus.io
+      chart: piraeus-operator
+      targetRevision: 2.*
+      helm:
+        valueFiles:
+          - $values/kubernetes/base/infrastructure/piraeus-operator/values.yaml
+          - $values/kubernetes/overlays/homelab/infrastructure/piraeus-operator/values.yaml
+    - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: piraeus-datastore
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: node-feature-discovery
+  namespace: argocd
+spec:
+  project: infrastructure
+  sources:
+    - repoURL: https://kubernetes-sigs.github.io/node-feature-discovery/charts
+      chart: node-feature-discovery
+      targetRevision: 0.17.*
+      helm:
+        valueFiles:
+          - $values/kubernetes/base/infrastructure/node-feature-discovery/values.yaml
+    - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: node-feature-discovery
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

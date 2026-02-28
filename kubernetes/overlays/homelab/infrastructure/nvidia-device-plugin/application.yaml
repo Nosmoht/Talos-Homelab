@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nvidia-device-plugin
+  namespace: argocd
+spec:
+  project: infrastructure
+  sources:
+    - repoURL: https://nvidia.github.io/k8s-device-plugin
+      chart: nvidia-device-plugin
+      targetRevision: 0.17.*
+      helm:
+        valueFiles:
+          - $values/kubernetes/base/infrastructure/nvidia-device-plugin/values.yaml
+    - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

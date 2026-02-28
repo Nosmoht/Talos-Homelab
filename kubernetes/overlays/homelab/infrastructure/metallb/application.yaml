@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: metallb
+  namespace: argocd
+spec:
+  project: infrastructure
+  sources:
+    - repoURL: https://metallb.github.io/metallb
+      chart: metallb
+      targetRevision: 0.14.*
+      helm:
+        valueFiles:
+          - $values/kubernetes/base/infrastructure/metallb/values.yaml
+          - $values/kubernetes/overlays/homelab/infrastructure/metallb/values.yaml
+    - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: metallb-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+      - SkipDryRunOnMissingResource=true

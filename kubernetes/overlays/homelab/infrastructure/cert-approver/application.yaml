@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubelet-serving-cert-approver
+  namespace: argocd
+spec:
+  project: infrastructure
+  sources:
+    - repoURL: https://postfinance.github.io/kubelet-serving-cert-approver
+      chart: kubelet-serving-cert-approver
+      targetRevision: 0.10.*
+      helm:
+        valueFiles:
+          - $values/kubernetes/base/infrastructure/cert-approver/values.yaml
+    - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
