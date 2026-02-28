@@ -1,0 +1,53 @@
+# Manual EndpointSlice for the Cilium gateway service.
+# Cilium Gateway API with external-envoy-proxy creates a LoadBalancer service
+# without a selector (traffic is routed via eBPF to the shared envoy proxy).
+# MetalLB requires endpoints to elect a speaker for L2 announcement, so we
+# provide this EndpointSlice pointing to all cluster nodes.
+apiVersion: discovery.k8s.io/v1
+kind: EndpointSlice
+metadata:
+  name: cilium-gateway-homelab-gateway-manual
+  namespace: default
+  labels:
+    kubernetes.io/service-name: cilium-gateway-homelab-gateway
+addressType: IPv4
+ports:
+  - name: port-80
+    port: 80
+    protocol: TCP
+endpoints:
+  - addresses:
+      - 192.168.2.61
+    conditions:
+      ready: true
+    nodeName: node-01
+  - addresses:
+      - 192.168.2.62
+    conditions:
+      ready: true
+    nodeName: node-02
+  - addresses:
+      - 192.168.2.63
+    conditions:
+      ready: true
+    nodeName: node-03
+  - addresses:
+      - 192.168.2.64
+    conditions:
+      ready: true
+    nodeName: node-04
+  - addresses:
+      - 192.168.2.65
+    conditions:
+      ready: true
+    nodeName: node-05
+  - addresses:
+      - 192.168.2.66
+    conditions:
+      ready: true
+    nodeName: node-06
+  - addresses:
+      - 192.168.2.67
+    conditions:
+      ready: true
+    nodeName: node-gpu-01
