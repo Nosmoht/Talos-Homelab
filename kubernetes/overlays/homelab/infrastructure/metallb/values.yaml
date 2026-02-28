@@ -1,0 +1,11 @@
+ipAddressPools:
+  - name: homelab-pool
+    spec:
+      addresses:
+        - 192.168.2.70/32
+
+l2Advertisements:
+  - name: homelab-l2
+    spec:
+      ipAddressPools:
+        - homelab-pool
