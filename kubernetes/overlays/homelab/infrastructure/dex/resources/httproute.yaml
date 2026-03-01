@@ -9,6 +9,7 @@ spec:
       kind: Gateway
       name: homelab-gateway
       namespace: default
+      sectionName: https
   hostnames:
     - dex.homelab.ntbc.io
   rules:
