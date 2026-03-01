@@ -21,7 +21,7 @@
 | 17 | Medium | piraeus | ServiceMonitor namespace inconsistency | OPEN |
 | 18 | Medium | piraeus | autovg reconciler: elevated RBAC, no securityContext, Docker Hub image | OPEN |
 | 19 | Medium | nvidia | DaemonSet on all nodes — restrict to GPU nodes | OPEN |
-| 20 | Medium | dex | No `allowedDomains` on Google OIDC connector | OPEN |
+| 20 | Medium | dex/argocd | No access restriction — any Google account gets admin; fixed via ArgoCD RBAC email grant | DONE |
 | 21 | Medium | metrics-server | `--kubelet-insecure-tls` still present with cert-approver | OPEN |
 | 22 | Low | root app | Missing `resources-finalizer.argocd.argoproj.io` | OPEN |
 | 23 | Low | argocd base | Empty `kustomization.yaml` — dead file | OPEN |
