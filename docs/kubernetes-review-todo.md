@@ -17,7 +17,7 @@
 | 13 | Medium | gateway-api | Gateway in `default` ns; no HTTP→HTTPS redirect | OPEN |
 | 14 | Medium | gateway-api | Static node IPs in EndpointSlice — fragile | OPEN |
 | 15 | Medium | piraeus | `targetRevision: 2.*` too broad for storage operator | OPEN |
-| 16 | Medium | piraeus | `LinstorSatelliteConfiguration` no `nodeSelector` | OPEN |
+| 16 | Medium | piraeus | `LinstorSatelliteConfiguration` and `LinstorCluster` no `nodeSelector` — exclude `node-gpu-01` | DONE |
 | 17 | Medium | piraeus | ServiceMonitor namespace inconsistency | OPEN |
 | 18 | Medium | piraeus | autovg reconciler: elevated RBAC, no securityContext, Docker Hub image | OPEN |
 | 19 | Medium | nvidia | DaemonSet on all nodes — restrict to GPU nodes | OPEN |
