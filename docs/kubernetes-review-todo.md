@@ -5,7 +5,7 @@
 | 1 | Critical | dex | `storage.type: kubernetes` deprecated — change to `memory` | DONE |
 | 2 | High | dex | HTTPRoute missing `sectionName: https` — OIDC tokens over plain HTTP | DONE |
 | 3 | High | piraeus | `NODE_FILTER_REGEX` excludes `node-gpu-01` — document or fix | DONE |
-| 4 | High | bootstrap | Chart version skew `7.8.*` vs `9.4.*` — align or document | OPEN |
+| 4 | High | bootstrap | Chart version skew `7.8.*` vs `9.4.*` — align or document | DONE |
 | 5 | High | projects | All-wildcard `sourceRepos`/`destinations` — no project isolation | DONE |
 | 6 | Medium | argocd | HTTPRoute missing `sectionName: https` | DONE |
 | 7 | Medium | argocd | `global.domain: ""` — should be `argocd.homelab.ntbc.io` | DONE |
