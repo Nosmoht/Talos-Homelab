@@ -1,0 +1,63 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: dex
+  namespace: dex
+  labels:
+    app.kubernetes.io/name: dex
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: dex
+      app.kubernetes.io/instance: dex
+  ingress:
+    # Gateway proxy traffic (Cilium external Envoy proxy)
+    - fromEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "5556"
+              protocol: TCP
+    # ArgoCD server -> Dex OIDC
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: argocd
+      toPorts:
+        - ports:
+            - port: "5556"
+              protocol: TCP
+  egress:
+    # PostgreSQL storage
+    - toEndpoints:
+        - matchLabels:
+            cnpg.io/cluster: dex-postgresql
+      toPorts:
+        - ports:
+            - port: "5432"
+              protocol: TCP
+    # DNS
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+    # External HTTPS (Google OIDC APIs)
+    - toCIDRSet:
+        - cidr: 0.0.0.0/0
+          except:
+            - 10.0.0.0/8
+            - 172.16.0.0/12
+            - 192.168.0.0/16
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP

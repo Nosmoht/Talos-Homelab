@@ -8,3 +8,6 @@ resources:
   - httproute.yaml
   - postgresql-cluster.yaml
   - serviceaccount.yaml
+  - networkpolicy-default-deny.yaml
+  - cilium-networkpolicy-dex.yaml
+  - cilium-networkpolicy-postgresql.yaml
