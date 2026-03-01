@@ -62,6 +62,22 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: cnpg-system
+  labels:
+    app.kubernetes.io/name: cloudnative-pg
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: node-feature-discovery
   labels:
     app.kubernetes.io/name: node-feature-discovery
