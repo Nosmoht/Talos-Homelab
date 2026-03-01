@@ -5,6 +5,11 @@ metadata:
   namespace: default
 spec:
   gatewayClassName: cilium
+  infrastructure:
+    parametersRef:
+      group: cilium.io
+      kind: CiliumGatewayClassConfig
+      name: homelab-gateway-config
   listeners:
     - name: http
       protocol: HTTP
