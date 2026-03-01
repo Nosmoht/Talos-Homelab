@@ -11,4 +11,5 @@ resources:
   - nvidia-device-plugin
   - node-feature-discovery
   - gateway-api
+  - cloudnative-pg
   - dex

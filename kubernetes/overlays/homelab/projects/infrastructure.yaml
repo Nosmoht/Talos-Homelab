@@ -21,6 +21,7 @@ spec:
     - https://kubernetes-sigs.github.io/node-feature-discovery/charts
     - https://nvidia.github.io/k8s-device-plugin
     - https://charts.piraeus.io
+    - https://cloudnative-pg.github.io/charts
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc
@@ -35,6 +36,8 @@ spec:
     - namespace: kube-system
       server: https://kubernetes.default.svc
     - namespace: node-feature-discovery
+      server: https://kubernetes.default.svc
+    - namespace: cnpg-system
       server: https://kubernetes.default.svc
     - namespace: piraeus-datastore
       server: https://kubernetes.default.svc
