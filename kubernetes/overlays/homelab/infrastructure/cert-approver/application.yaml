@@ -15,6 +15,33 @@ spec:
     repoURL: https://github.com/alex1989hu/kubelet-serving-cert-approver.git
     targetRevision: v0.10.3
     path: deploy/standalone
+    kustomize:
+      patches:
+        - target:
+            kind: Namespace
+            name: kubelet-serving-cert-approver
+          patch: |
+            - op: add
+              path: /metadata/labels/app.kubernetes.io~1instance
+              value: homelab
+            - op: add
+              path: /metadata/labels/app.kubernetes.io~1part-of
+              value: homelab
+            - op: replace
+              path: /metadata/labels/app.kubernetes.io~1name
+              value: kubelet-serving-cert-approver
+            - op: add
+              path: /metadata/labels/app.kubernetes.io~1managed-by
+              value: argocd
+            - op: add
+              path: /metadata/labels/pod-security.kubernetes.io~1enforce-version
+              value: latest
+            - op: add
+              path: /metadata/labels/pod-security.kubernetes.io~1audit-version
+              value: latest
+            - op: add
+              path: /metadata/labels/pod-security.kubernetes.io~1warn-version
+              value: latest
   destination:
     server: https://kubernetes.default.svc
     namespace: kubelet-serving-cert-approver
