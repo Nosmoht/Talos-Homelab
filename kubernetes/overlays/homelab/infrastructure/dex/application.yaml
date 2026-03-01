@@ -8,16 +8,16 @@ spec:
   sources:
     - repoURL: https://charts.dexidp.io
       chart: dex
-      targetRevision: 0.24.*
+      targetRevision: 0.24.0
       helm:
         valueFiles:
           - $values/kubernetes/base/infrastructure/dex/values.yaml
           - $values/kubernetes/overlays/homelab/infrastructure/dex/values.yaml
     - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
-      targetRevision: HEAD
+      targetRevision: main
       ref: values
     - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
-      targetRevision: HEAD
+      targetRevision: main
       path: kubernetes/overlays/homelab/infrastructure/dex/resources
   destination:
     server: https://kubernetes.default.svc
