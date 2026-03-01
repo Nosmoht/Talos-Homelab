@@ -9,7 +9,7 @@ spec:
     - https://github.com/Nosmoht/Talos-Homelab.git
     - https://argoproj.github.io/argo-helm
     - https://charts.jetstack.io
-    - https://postfinance.github.io/kubelet-serving-cert-approver
+    - https://github.com/alex1989hu/kubelet-serving-cert-approver.git
     - https://charts.dexidp.io
     - https://kubernetes-sigs.github.io/metrics-server
     - https://kubernetes-sigs.github.io/node-feature-discovery/charts
