@@ -6,10 +6,19 @@ metadata:
 spec:
   description: Cluster infrastructure components
   sourceRepos:
-    - "*"
+    - https://github.com/Nosmoht/Talos-Homelab.git
+    - https://argoproj.github.io/argo-helm
+    - https://charts.jetstack.io
+    - https://postfinance.github.io/kubelet-serving-cert-approver
+    - https://charts.dexidp.io
+    - https://metallb.github.io/metallb
+    - https://kubernetes-sigs.github.io/metrics-server
+    - https://kubernetes-sigs.github.io/node-feature-discovery/charts
+    - https://nvidia.github.io/k8s-device-plugin
+    - https://charts.piraeus.io
   destinations:
     - namespace: "*"
-      server: "*"
+      server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"

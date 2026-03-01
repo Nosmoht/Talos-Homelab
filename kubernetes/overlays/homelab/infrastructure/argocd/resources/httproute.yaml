@@ -9,6 +9,7 @@ spec:
       kind: Gateway
       name: homelab-gateway
       namespace: default
+      sectionName: https
   hostnames:
     - argocd.homelab.ntbc.io
   rules:

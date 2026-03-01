@@ -6,10 +6,10 @@ metadata:
 spec:
   description: User-facing applications
   sourceRepos:
-    - "*"
+    - https://github.com/Nosmoht/Talos-Homelab.git
   destinations:
     - namespace: "*"
-      server: "*"
+      server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: "*"
       kind: "*"
