@@ -6,6 +6,9 @@ metadata:
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
+  nodeSelector:
+    matchLabels:
+      extensions.talos.dev/nvme-cli: v2.14
   internalTLS:
     certManager:
       name: linstor-internal-ca
