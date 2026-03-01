@@ -11,7 +11,6 @@ spec:
     - https://charts.jetstack.io
     - https://postfinance.github.io/kubelet-serving-cert-approver
     - https://charts.dexidp.io
-    - https://metallb.github.io/metallb
     - https://kubernetes-sigs.github.io/metrics-server
     - https://kubernetes-sigs.github.io/node-feature-discovery/charts
     - https://nvidia.github.io/k8s-device-plugin
