@@ -15,8 +15,9 @@ spec:
       app.kubernetes.io/name: dex
       app.kubernetes.io/instance: dex
   ingress:
-    # Gateway proxy traffic (Cilium external Envoy proxy)
+    # Gateway proxy traffic (Cilium external Envoy proxy uses reserved:ingress identity)
     - fromEntities:
+        - ingress
         - world
       toPorts:
         - ports:
