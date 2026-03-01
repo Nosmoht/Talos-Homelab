@@ -39,10 +39,13 @@ spec:
                 - name: usr-src
                   $patch: delete
                 - name: etc-lvm-backup
+                  # Talos keeps mutable /etc state under /var/etc on the host.
+                  # Mount the real host path so LVM backup files persist correctly.
                   hostPath:
                     path: /var/etc/lvm/backup
                     type: DirectoryOrCreate
                 - name: etc-lvm-archive
+                  # Same Talos path redirection as above for LVM metadata archives.
                   hostPath:
                     path: /var/etc/lvm/archive
                     type: DirectoryOrCreate
