@@ -1,3 +1,11 @@
+rbac:
+  create: false
+  createClusterScoped: false
+
+serviceAccount:
+  create: false
+  name: dex
+
 topologySpreadConstraints:
   - maxSkew: 1
     topologyKey: kubernetes.io/hostname
