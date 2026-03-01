@@ -2,237 +2,123 @@
 
 Date: 2026-03-01  
 Reviewer: Staff Engineer / Principal Architect (Kubernetes, CI/CD, Security)  
-Scope: `kubernetes/`, `talos/`, root `Makefile`, repository automation posture
+Scope: `kubernetes/`, `talos/`, root `Makefile`, GitOps control path
 
 ## Executive Summary
 
-This repository has strong GitOps fundamentals (ArgoCD app-of-apps, SOPS/KSOPS integration, Talos immutable host OS, and generally clean manifest layout). The primary risks are concentrated in GitOps blast radius and supply-chain mutability:
+Security posture improved materially since the initial baseline. Major GitOps governance gaps (wildcard AppProject scope, mutable revisions, root app in `default` project, dead cert-approver source URL) were remediated.
 
-1. Argo projects are effectively unrestricted (`*` resource and namespace permissions).
-2. Argo tracks mutable revisions (`HEAD` and wildcard chart versions), which weakens change control and rollback determinism.
-3. Argo repo-server is configured to execute arbitrary kustomize plugins (`--enable-exec`), increasing RCE blast radius if repo trust is violated.
-4. Talos control-plane etcd metrics are exposed on `0.0.0.0` over HTTP.
-5. Local decrypted Talos secrets are written as plaintext intermediates; ignored by git but still high-impact on workstation compromise.
-6. There is no CI security gate (policy-as-code, manifest validation, secret scanning, image/signature verification).
+Current top risks are now concentrated in:
 
-Overall risk rating: **High** (mainly due to control-plane and GitOps control-path exposure, not workload hardening quality).
+1. Argo repo-server executable kustomize plugin mode.
+2. etcd metrics exposure (`0.0.0.0:2381` over HTTP).
+3. Argo internal HTTP mode (`server.insecure: true`).
+4. Broad Gateway route attachment (`from: All`).
+5. Local plaintext Talos secret intermediate workflow.
+6. Missing CI security gates.
 
-## Methodology
+Overall risk rating: **Medium-High** (improved from prior High baseline).
 
-- Static review of Kubernetes/Talos manifests and make targets.
-- Focus areas:
-  - GitOps supply chain and change immutability
-  - RBAC and namespace/resource blast radius
-  - Secret lifecycle and plaintext exposure
-  - Control-plane and ingress security defaults
-  - CI/CD security controls and policy enforcement
-- No runtime cluster access was used; this is source-based analysis.
+## Confirmed Remediations
 
-## Positive Controls Observed
+- AppProject scope hardened (destinations and cluster resource allowlists constrained).
+- Root app moved from `default` to dedicated constrained `root-bootstrap` project.
+- Argo Git and chart revisions pinned (no `HEAD` or wildcard chart ranges in active app specs).
+- Cert-manager secret structure normalized (metadata plaintext, secret payload encrypted).
+- Kubelet serving cert approver source fixed (dead chart repo replaced with upstream Git source).
+- Talos `extraManifests` no longer manages cert-approver/metrics-server (single Argo ownership path).
 
-- `SOPS` is configured centrally for Talos and Kubernetes secret files: [.sops.yaml](/Users/thomaskrahn/workspace/homelab-migration/.sops.yaml:1).
-- ArgoCD repo-server mounts SOPS AGE key read-only: [kubernetes/base/infrastructure/argocd/values.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/base/infrastructure/argocd/values.yaml:26).
-- Dex pod/container hardening is strong (`runAsNonRoot`, read-only root fs, dropped caps): [kubernetes/base/infrastructure/dex/values.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/base/infrastructure/dex/values.yaml:15).
-- HTTP to HTTPS redirect is present on gateway: [kubernetes/overlays/homelab/infrastructure/gateway-api/httproute-redirect.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/gateway-api/httproute-redirect.yaml:1).
-- Dex and Argo are pinned to HTTPS listeners via Gateway `sectionName`: [kubernetes/overlays/homelab/infrastructure/dex/resources/httproute.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/dex/resources/httproute.yaml:12), [kubernetes/overlays/homelab/infrastructure/argocd/resources/httproute.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/argocd/resources/httproute.yaml:12).
-
-## Findings
-
-## Critical
-
-### 1) Argo AppProject blast radius is effectively cluster-admin
-
-Evidence:
-- Infrastructure project allows all destinations/namespaces and all resource kinds: [kubernetes/overlays/homelab/projects/infrastructure.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/projects/infrastructure.yaml:19), [kubernetes/overlays/homelab/projects/infrastructure.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/projects/infrastructure.yaml:21).
-- Apps project has same wildcard model: [kubernetes/overlays/homelab/projects/apps.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/projects/apps.yaml:11), [kubernetes/overlays/homelab/projects/apps.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/projects/apps.yaml:13).
-
-Impact:
-- Any app mapped to these projects can create or mutate any namespace-scoped and cluster-scoped resource.
-- A compromised repo PR, chart, or Argo account can fully compromise the cluster.
-
-Recommendation:
-- Restrict `destinations` to explicit namespaces per project.
-- Use explicit allowlists for `clusterResourceWhitelist` and `namespaceResourceWhitelist`.
-- Separate infra vs app projects with non-overlapping RBAC policies.
+## Active Findings
 
 ## High
 
-### 2) GitOps source revisions are mutable (`HEAD` + wildcard chart ranges)
+### 1) Argo repo-server allows executable plugin rendering
 
 Evidence:
-- Root app tracks `HEAD`: [kubernetes/bootstrap/argocd/root-application.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/bootstrap/argocd/root-application.yaml:10).
-- Multiple infra applications track repo `HEAD`: [kubernetes/overlays/homelab/infrastructure/argocd/application.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/argocd/application.yaml:16), [kubernetes/overlays/homelab/infrastructure/dex/application.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/dex/application.yaml:17), [kubernetes/overlays/homelab/infrastructure/cert-manager/application.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/cert-manager/application.yaml:16), [kubernetes/overlays/homelab/infrastructure/metrics-server/application.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/metrics-server/application.yaml:16).
-- Helm charts use floating minor wildcards (for example `9.4.*`, `v1.19.*`, `0.24.*`): [kubernetes/overlays/homelab/infrastructure/argocd/application.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/argocd/application.yaml:11).
+- [kubernetes/base/infrastructure/argocd/values.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/base/infrastructure/argocd/values.yaml:59)
 
-Impact:
-- Non-deterministic deploys and drift over time without explicit change approval.
-- Harder incident response and reproducible rollback.
+Risk:
+- Manifest render path can execute binaries if trusted source boundaries are violated.
 
 Recommendation:
-- Pin Git sources to immutable commit SHAs or signed tags.
-- Pin chart versions to exact versions.
-- Enforce branch protections and signed commits/tags for release refs.
+- Remove `--enable-exec`, or isolate repo-server with strict node/SA/egress controls if unavoidable.
 
-### 3) ArgoCD repo-server enables executable kustomize plugins
+### 2) etcd metrics exposed on plaintext all-interfaces bind
 
 Evidence:
-- `kustomize.buildOptions: "--enable-alpha-plugins --enable-exec"`: [kubernetes/base/infrastructure/argocd/values.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/base/infrastructure/argocd/values.yaml:59).
+- [talos/patches/controlplane.yaml](/Users/thomaskrahn/workspace/homelab-migration/talos/patches/controlplane.yaml:8)
 
-Impact:
-- Repo content can execute binaries in repo-server context.
-- Expands attack surface from manifest rendering to command execution.
-
-Recommendation:
-- Remove `--enable-exec` unless strictly required.
-- If required, isolate repo-server (dedicated node pool, restrictive PSP/PSA equivalent controls, egress restrictions, read-only FS, minimal service account perms).
-- Prefer purpose-built Argo plugins with explicit allowlisting over general exec.
-
-### 4) etcd metrics exposed over HTTP on all interfaces
-
-Evidence:
-- `listen-metrics-urls: http://0.0.0.0:2381`: [talos/patches/controlplane.yaml](/Users/thomaskrahn/workspace/homelab-migration/talos/patches/controlplane.yaml:10).
-
-Impact:
-- Control-plane telemetry endpoint is network-reachable plaintext by default.
-- Increases reconnaissance and internal lateral movement risk.
+Risk:
+- Increases control-plane telemetry exposure for internal reconnaissance.
 
 Recommendation:
-- Bind metrics to loopback or a dedicated management interface.
-- If remote scraping is required, enforce network policy / node firewall segmentation and TLS-protected scraping path.
+- Bind to loopback/management interface and enforce network segmentation.
 
 ## Medium
 
-### 5) Plaintext decrypted Talos secrets are generated to disk
+### 3) Argo server runs in insecure mode behind edge TLS
 
 Evidence:
-- Make target decrypts into plaintext `.secrets.dec.yaml`: [talos/Makefile](/Users/thomaskrahn/workspace/homelab-migration/talos/Makefile:50).
-- File is gitignored but still present locally: [.gitignore](/Users/thomaskrahn/workspace/homelab-migration/.gitignore:3), [talos/.secrets.dec.yaml](/Users/thomaskrahn/workspace/homelab-migration/talos/.secrets.dec.yaml:1).
+- [kubernetes/base/infrastructure/argocd/values.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/base/infrastructure/argocd/values.yaml:46)
 
-Impact:
-- Local workstation compromise or accidental backup/sync leakage exposes cluster bootstrap secrets.
+Risk:
+- In-cluster traffic to Argo server remains HTTP.
 
 Recommendation:
-- Use ephemeral temp files with restrictive permissions (`umask 077`, `mktemp`) and trap-based deletion.
-- Prefer process substitution or stdin piping where supported by tools.
-- Add a pre-commit/CI check to fail on `*.dec.yaml` presence.
+- Prefer end-to-end TLS, or enforce strict in-cluster network access controls.
 
-### 6) Argo API/UI served in insecure mode behind gateway TLS termination
+### 4) Shared Gateway allows routes from any namespace
 
 Evidence:
-- `server.insecure: true`: [kubernetes/base/infrastructure/argocd/values.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/base/infrastructure/argocd/values.yaml:46).
+- [kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml:12)
+- [kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml:23)
 
-Impact:
-- In-cluster traffic to Argo server is HTTP; acceptable only with strong east-west trust boundaries.
+Risk:
+- Weak tenant boundary at ingress layer.
 
 Recommendation:
-- If feasible, enable TLS end-to-end (gateway passthrough/re-encrypt).
-- If staying with terminated TLS, enforce namespace network policies and limit in-cluster access to Argo server service.
+- Restrict via namespace selector/policy and explicit route admission boundaries.
 
-### 7) Gateway accepts routes from all namespaces
+### 5) Talos secret generation writes decrypted intermediate file
 
 Evidence:
-- `allowedRoutes.namespaces.from: All` on HTTP and HTTPS listeners: [kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml:12), [kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml:23).
+- [talos/Makefile](/Users/thomaskrahn/workspace/homelab-migration/talos/Makefile:50)
 
-Impact:
-- Any namespace can attach routes to the shared gateway unless additional Route/Gateway policies constrain it.
-
-Recommendation:
-- Restrict to selected namespaces or labels (`from: Selector`).
-- Define route admission guardrails per tenant/app namespace.
-
-### 8) OIDC connector does not restrict identity domain
-
-Evidence:
-- Google connector configured without `allowedDomains`: [kubernetes/overlays/homelab/infrastructure/dex/values.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/dex/values.yaml:4).
-
-Impact:
-- Access control relies entirely on downstream RBAC mapping, increasing misconfiguration risk.
+Risk:
+- Workstation compromise or backup leakage can expose bootstrap secrets.
 
 Recommendation:
-- Add `allowedDomains` (or equivalent claim-based constraints) in Dex connector config.
-- Keep least-privilege Argo RBAC defaults (current explicit admin mapping is good but should not be sole boundary).
-
-### 9) Certificate scope limited to wildcard subdomain only
-
-Evidence:
-- Cert contains only `*.homelab.ntbc.io`: [kubernetes/overlays/homelab/infrastructure/gateway-api/certificate.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/gateway-api/certificate.yaml:11).
-
-Impact:
-- Apex `homelab.ntbc.io` is not covered if needed later, causing future TLS surprises.
-
-Recommendation:
-- Add explicit apex SAN if intended (`homelab.ntbc.io`).
-- Optionally define key algorithm and renewal windows explicitly.
+- Switch to ephemeral secure temp handling (`umask 077`, trap cleanup, pipe/process-substitution where possible).
 
 ## Low
 
-### 10) Secret manifests encrypt metadata/kind fields in addition to data
+### 6) Root app finalizer missing
 
 Evidence:
-- Entire object metadata and kind are encrypted: [kubernetes/overlays/homelab/infrastructure/dex/resources/secret.sops.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/dex/resources/secret.sops.yaml:1).
+- [kubernetes/bootstrap/argocd/root-application.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/bootstrap/argocd/root-application.yaml:3)
 
-Impact:
-- Operational debugging and linting become harder; low direct security benefit.
+Risk:
+- Deleting root app can orphan child resources.
 
 Recommendation:
-- Encrypt only sensitive keys (`stringData` / `data`) unless there is a specific metadata confidentiality requirement.
+- Add `resources-finalizer.argocd.argoproj.io`.
 
-### 11) No explicit CI security pipeline found in repository
+### 7) CI security controls not codified in repository
 
 Evidence:
-- No `.github/workflows` or equivalent CI pipeline definitions detected in source.
+- No in-repo CI workflow files for policy/schema/security checks.
 
-Impact:
-- Policy regressions, secret leaks, and misconfigurations are only detected post-merge/apply.
+Risk:
+- Regressions can merge without automated guardrails.
 
 Recommendation:
-- Add CI checks for:
-  - `kustomize build` and schema validation (`kubeconform`)
-  - policy-as-code (`conftest`/OPA or Kyverno CLI)
-  - secrets scanning (`gitleaks`)
-  - IaC security (`checkov`/`kubescape`)
-  - container/image provenance and signing checks where applicable
+- Add mandatory PR gates for render/schema validation, policy-as-code, secret scanning, and IaC checks.
 
-## Risk Register (Prioritized)
+## Priority Remediation Order
 
-1. Restrict Argo AppProject permissions and namespace scope.  
-2. Replace `HEAD` and wildcard revisions with immutable references.  
-3. Remove or tightly contain Argo `--enable-exec`.  
-4. Close or segment etcd metrics endpoint exposure.  
-5. Eliminate persistent plaintext decrypted secret intermediates.  
-6. Add CI security guardrails (validation, policy, secret scanning).
-
-## 30/60/90 Day Remediation Plan
-
-### 0-30 days
-
-- Lock down AppProjects to explicit destinations and resource allowlists.
-- Pin root app and infra app Git refs to SHAs/tags.
-- Pin Helm charts to exact versions.
-- Remove `--enable-exec` or document and isolate its necessity.
-
-### 31-60 days
-
-- Refactor Talos secret generation to ephemeral secure temp handling.
-- Restrict Gateway route attachment from `All` to selected namespaces.
-- Rework etcd metrics binding and scraping model.
-
-### 61-90 days
-
-- Stand up CI security pipeline with policy gates.
-- Add admission policy framework (Kyverno/Gatekeeper) for baseline controls.
-- Add periodic dependency and chart update process with signed release promotion.
-
-## Suggested CI/CD Security Baseline
-
-Minimum checks on every pull request:
-
-1. Render and validate all overlays (`kustomize build` + schema validation).  
-2. Run policy checks (forbidden wildcards, required securityContext, no mutable tags/refs).  
-3. Secret scanning and SOPS policy checks.  
-4. Block merges unless all checks pass and at least one code owner approves infra/security-sensitive paths.
-
-## Residual Risk / Assumptions
-
-- This assessment is repository-only and assumes no out-of-band runtime controls (firewalls, cluster policies, service mesh authz) beyond manifests.
-- If runtime controls exist, some findings may be partially mitigated but should still be codified in GitOps source-of-truth where possible.
+1. Disable/contain Argo `--enable-exec`.  
+2. Restrict etcd metrics exposure.  
+3. Tighten Argo internal transport model.  
+4. Restrict Gateway route attachment scope.  
+5. Remove decrypted Talos secret intermediate persistence.  
+6. Add CI security gates.

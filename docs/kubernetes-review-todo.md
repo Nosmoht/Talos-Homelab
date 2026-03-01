@@ -5,7 +5,7 @@
 | 1 | Critical | dex | `storage.type: kubernetes` deprecated — change to `memory` | DONE |
 | 2 | High | dex | HTTPRoute missing `sectionName: https` — OIDC tokens over plain HTTP | DONE |
 | 3 | High | piraeus | `NODE_FILTER_REGEX` excludes `node-gpu-01` — document or fix | DONE |
-| 4 | High | bootstrap | Chart version skew `7.8.*` vs `9.4.*` — align or document | DONE |
+| 4 | High | bootstrap | Argo CD bootstrap and self-managed chart versions now aligned and pinned (`9.4.5`) | DONE |
 | 5 | High | projects | All-wildcard `sourceRepos`/`destinations` — no project isolation | DONE |
 | 6 | Medium | argocd | HTTPRoute missing `sectionName: https` | DONE |
 | 7 | Medium | argocd | `global.domain: ""` — should be `argocd.homelab.ntbc.io` | DONE |
@@ -16,7 +16,7 @@
 | 12 | Medium | gateway-api | Implicit ordering deps — fixed with sync-wave 5 | DONE |
 | 13 | Medium | gateway-api | No HTTP→HTTPS redirect — added redirect HTTPRoute | DONE |
 | 14 | Medium | gateway-api | Static node IPs in EndpointSlice — fragile | DONE |
-| 15 | Medium | piraeus | `targetRevision: 2.*` too broad — pinned to `2.10.*` | DONE |
+| 15 | Medium | piraeus | `targetRevision` too broad — pinned to exact `2.10.4` | DONE |
 | 16 | Medium | piraeus | `LinstorSatelliteConfiguration` and `LinstorCluster` no `nodeSelector` — exclude `node-gpu-01` | DONE |
 | 17 | Medium | piraeus | ServiceMonitor namespace inconsistency — standardized to `monitoring` | DONE |
 | 18 | Medium | piraeus | autovg reconciler — added securityContext, switched to bitnami/kubectl | DONE |
