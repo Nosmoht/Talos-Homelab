@@ -11,7 +11,7 @@ spec:
     path: deploy/standalone
   destination:
     server: https://kubernetes.default.svc
-    namespace: kube-system
+    namespace: kubelet-serving-cert-approver
   syncPolicy:
     automated:
       prune: true
