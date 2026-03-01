@@ -12,7 +12,7 @@
 | 8 | Medium | argocd | sops-age volumeMount missing `readOnly: true` | DONE |
 | 9 | Medium | all apps | No `retry` block on any Application CR | DONE |
 | 10 | Medium | cert-manager | Missing `SkipDryRunOnMissingResource=true` | DONE |
-| 11 | Medium | cert-manager | SOPS secret fully encrypted including `kind`/`metadata` | OPEN |
+| 11 | Medium | cert-manager | SOPS secret fully encrypted including `kind`/`metadata` | DONE |
 | 12 | Medium | gateway-api | Implicit ordering deps — fixed with sync-wave 5 | DONE |
 | 13 | Medium | gateway-api | No HTTP→HTTPS redirect — added redirect HTTPRoute | DONE |
 | 14 | Medium | gateway-api | Static node IPs in EndpointSlice — fragile | DONE |
@@ -32,3 +32,10 @@
 | 28 | Low | namespaces | No PSA labels on any namespace | OPEN |
 | 29 | Low | piraeus | LVM path redirections lack comments | OPEN |
 | 30 | Low | piraeus | CA certs use RSA 2048 — ECDSA preferred | OPEN |
+| 31 | High | gitops | Mutable revisions in Argo (`targetRevision: HEAD` and wildcard chart versions) reduce deploy determinism and rollback safety; pin to immutable SHAs/tags and exact chart versions | OPEN |
+| 32 | High | argocd | `kustomize.buildOptions` enables `--enable-exec`; remove or isolate repo-server with strict controls due to exec/plugin RCE blast radius | OPEN |
+| 33 | High | talos/controlplane | etcd metrics exposed on `http://0.0.0.0:2381`; bind to loopback/management network and enforce access restrictions | OPEN |
+| 34 | Medium | talos/secrets | Talos workflow writes decrypted `.secrets.dec.yaml` to disk; switch to ephemeral temp-file/pipe workflow and enforce cleanup checks | OPEN |
+| 35 | Medium | argocd | `server.insecure: true` serves Argo HTTP behind TLS termination; harden with in-cluster network restrictions or end-to-end TLS | OPEN |
+| 36 | Medium | gateway-api | Gateway listeners allow routes from all namespaces (`allowedRoutes.namespaces.from: All`); restrict by namespace selector/policy | OPEN |
+| 37 | Low | ci-cd | No CI security pipeline found (`kubeconform`, policy-as-code, secret scanning, IaC security checks); add mandatory PR gates | OPEN |
