@@ -29,7 +29,7 @@
 | 25 | Low | cert-manager | No resource requests/limits or securityContext | DONE |
 | 26 | Low | cert-manager | No `ignoreDifferences` for CRD caBundle | DONE |
 | 27 | Low | certificate | No privateKey algorithm, duration, or apex domain | DONE |
-| 28 | Low | namespaces | No PSA labels on any namespace | OPEN |
+| 28 | Low | namespaces | No PSA labels on any namespace | DONE |
 | 29 | Low | piraeus | LVM path redirections lack comments | OPEN |
 | 30 | Low | piraeus | CA certs use RSA 2048 — ECDSA preferred | OPEN |
 | 31 | High | gitops | Mutable revisions in Argo (`targetRevision: HEAD` and wildcard chart versions) reduce deploy determinism and rollback safety; pin to immutable SHAs/tags and exact chart versions | DONE |
