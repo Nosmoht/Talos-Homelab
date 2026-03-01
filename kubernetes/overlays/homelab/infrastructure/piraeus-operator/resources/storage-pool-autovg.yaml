@@ -3,12 +3,24 @@ kind: ServiceAccount
 metadata:
   name: linstor-storage-pool-autovg
   namespace: piraeus-datastore
+  labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: linstor-storage-pool-autovg
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: linstor-storage-pool-autovg
   namespace: piraeus-datastore
+  labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: linstor-storage-pool-autovg
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 rules:
   - apiGroups: [""]
     resources: ["pods"]
@@ -22,6 +34,12 @@ kind: RoleBinding
 metadata:
   name: linstor-storage-pool-autovg
   namespace: piraeus-datastore
+  labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: linstor-storage-pool-autovg
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
@@ -35,6 +53,12 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
   name: linstor-storage-pool-autovg
+  labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: linstor-storage-pool-autovg
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 rules:
   - apiGroups: [""]
     resources: ["nodes"]
@@ -44,6 +68,12 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: linstor-storage-pool-autovg
+  labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: linstor-storage-pool-autovg
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
@@ -58,6 +88,12 @@ kind: Deployment
 metadata:
   name: linstor-storage-pool-autovg
   namespace: piraeus-datastore
+  labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: linstor-storage-pool-autovg
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "3"
 spec:
@@ -71,7 +107,10 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: piraeus-datastore
+        app.kubernetes.io/instance: homelab
         app.kubernetes.io/component: linstor-storage-pool-autovg
+        app.kubernetes.io/part-of: homelab
+        app.kubernetes.io/managed-by: argocd
     spec:
       serviceAccountName: linstor-storage-pool-autovg
       securityContext:

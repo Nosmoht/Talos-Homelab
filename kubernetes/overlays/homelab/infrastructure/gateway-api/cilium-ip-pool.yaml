@@ -2,6 +2,12 @@ apiVersion: cilium.io/v2
 kind: CiliumLoadBalancerIPPool
 metadata:
   name: homelab-pool
+  labels:
+    app.kubernetes.io/name: cilium
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: ip-pool
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 spec:
   blocks:
     - cidr: 192.168.2.70/32

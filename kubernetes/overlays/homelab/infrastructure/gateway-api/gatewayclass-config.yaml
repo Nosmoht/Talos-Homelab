@@ -3,6 +3,12 @@ kind: CiliumGatewayClassConfig
 metadata:
   name: homelab-gateway-config
   namespace: default
+  labels:
+    app.kubernetes.io/name: cilium
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: gateway-class-config
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 spec:
   description: Preserve client source IP on Gateway Service.
   service:

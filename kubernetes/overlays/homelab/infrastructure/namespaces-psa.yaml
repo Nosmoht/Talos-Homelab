@@ -3,6 +3,8 @@ kind: Namespace
 metadata:
   name: default
   labels:
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/managed-by: argocd
     pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/audit: restricted
@@ -15,6 +17,10 @@ kind: Namespace
 metadata:
   name: argocd
   labels:
+    app.kubernetes.io/name: argocd
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
     edge-public: "true"
     pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/enforce-version: latest
@@ -28,6 +34,8 @@ kind: Namespace
 metadata:
   name: kube-system
   labels:
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/managed-by: argocd
     pod-security.kubernetes.io/enforce: privileged
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/audit: restricted
@@ -40,6 +48,10 @@ kind: Namespace
 metadata:
   name: kubelet-serving-cert-approver
   labels:
+    app.kubernetes.io/name: kubelet-serving-cert-approver
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
     pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/audit: restricted
@@ -52,6 +64,10 @@ kind: Namespace
 metadata:
   name: node-feature-discovery
   labels:
+    app.kubernetes.io/name: node-feature-discovery
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
     pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/audit: restricted
