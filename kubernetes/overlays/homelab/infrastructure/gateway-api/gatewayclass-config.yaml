@@ -7,3 +7,4 @@ spec:
   description: Preserve client source IP on Gateway Service.
   service:
     externalTrafficPolicy: Local
+    allocateLoadBalancerNodePorts: false
