@@ -3,6 +3,12 @@ kind: Application
 metadata:
   name: piraeus-operator
   namespace: argocd
+  labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: application
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 spec:
   project: infrastructure
   sources:

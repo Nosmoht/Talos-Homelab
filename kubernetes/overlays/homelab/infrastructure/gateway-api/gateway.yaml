@@ -3,6 +3,12 @@ kind: Gateway
 metadata:
   name: homelab-gateway
   namespace: default
+  labels:
+    app.kubernetes.io/name: gateway
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: gateway
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 spec:
   gatewayClassName: cilium
   infrastructure:

@@ -3,6 +3,12 @@ kind: Application
 metadata:
   name: nvidia-device-plugin
   namespace: argocd
+  labels:
+    app.kubernetes.io/name: nvidia-device-plugin
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: application
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 spec:
   project: infrastructure
   sources:

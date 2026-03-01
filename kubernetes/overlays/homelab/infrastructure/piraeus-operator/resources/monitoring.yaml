@@ -4,6 +4,11 @@ metadata:
   name: drbd-reactor
   namespace: piraeus-datastore
   labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
     app: drbd-reactor
 spec:
   ports:
@@ -20,6 +25,11 @@ metadata:
   name: drbd-reactor
   namespace: monitoring
   labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
     monitoring: default
 spec:
   namespaceSelector:
@@ -39,6 +49,11 @@ metadata:
   name: linstor-csi-nfs
   namespace: monitoring
   labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
     monitoring: default
 spec:
   namespaceSelector:

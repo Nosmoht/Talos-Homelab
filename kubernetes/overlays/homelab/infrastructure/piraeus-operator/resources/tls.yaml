@@ -3,6 +3,12 @@ kind: Issuer
 metadata:
   name: ca-bootstrapper
   namespace: piraeus-datastore
+  labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: tls
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 spec:
   selfSigned: {}
 ---
@@ -11,6 +17,12 @@ kind: Certificate
 metadata:
   name: linstor-api-ca
   namespace: piraeus-datastore
+  labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: tls
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 spec:
   commonName: linstor-api-ca
   secretName: linstor-api-ca
@@ -32,6 +44,12 @@ kind: Certificate
 metadata:
   name: linstor-internal-ca
   namespace: piraeus-datastore
+  labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: tls
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 spec:
   commonName: linstor-internal-ca
   secretName: linstor-internal-ca
@@ -53,6 +71,12 @@ kind: Issuer
 metadata:
   name: linstor-api-ca
   namespace: piraeus-datastore
+  labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: tls
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 spec:
   ca:
     secretName: linstor-api-ca
@@ -62,6 +86,12 @@ kind: Issuer
 metadata:
   name: linstor-internal-ca
   namespace: piraeus-datastore
+  labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: tls
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
 spec:
   ca:
     secretName: linstor-internal-ca

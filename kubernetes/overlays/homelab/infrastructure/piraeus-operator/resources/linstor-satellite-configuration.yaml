@@ -3,6 +3,12 @@ kind: LinstorSatelliteConfiguration
 metadata:
   name: homelab
   namespace: piraeus-datastore
+  labels:
+    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: linstor-satellite-configuration
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
   annotations:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
