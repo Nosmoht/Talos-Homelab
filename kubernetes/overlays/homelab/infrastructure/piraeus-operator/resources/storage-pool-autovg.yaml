@@ -74,10 +74,27 @@ spec:
         app.kubernetes.io/component: linstor-storage-pool-autovg
     spec:
       serviceAccountName: linstor-storage-pool-autovg
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      volumes:
+        - name: tmp
+          emptyDir: {}
       containers:
         - name: reconciler
-          image: alpine/kubectl:1.35.0
+          image: bitnami/kubectl:1.35.0
           imagePullPolicy: IfNotPresent
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
           command:
             - /bin/sh
             - -ceu
@@ -87,6 +104,8 @@ spec:
               POOL_NAME="${POOL_NAME:-lvm-thick}"
               VG_NAME="${VG_NAME:-linstor}"
               DEVICE="${DEVICE:-/dev/nvme0n1}"
+              # Only target NVMe-equipped nodes (node-01..06); excludes node-gpu-01
+              # which uses SATA storage and has no /dev/nvme0n1 device.
               NODE_FILTER_REGEX="${NODE_FILTER_REGEX:-^node-[0-9]+$}"
               WATCH_RECONNECT_DELAY="${WATCH_RECONNECT_DELAY:-5}"
 
