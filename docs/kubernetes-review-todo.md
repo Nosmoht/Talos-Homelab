@@ -15,7 +15,7 @@
 | 11 | Medium | cert-manager | SOPS secret fully encrypted including `kind`/`metadata` | OPEN |
 | 12 | Medium | gateway-api | Implicit ordering deps — fixed with sync-wave 5 | DONE |
 | 13 | Medium | gateway-api | No HTTP→HTTPS redirect — added redirect HTTPRoute | DONE |
-| 14 | Medium | gateway-api | Static node IPs in EndpointSlice — fragile | OPEN |
+| 14 | Medium | gateway-api | Static node IPs in EndpointSlice — fragile | DONE |
 | 15 | Medium | piraeus | `targetRevision: 2.*` too broad — pinned to `2.10.*` | DONE |
 | 16 | Medium | piraeus | `LinstorSatelliteConfiguration` and `LinstorCluster` no `nodeSelector` — exclude `node-gpu-01` | DONE |
 | 17 | Medium | piraeus | ServiceMonitor namespace inconsistency — standardized to `monitoring` | DONE |

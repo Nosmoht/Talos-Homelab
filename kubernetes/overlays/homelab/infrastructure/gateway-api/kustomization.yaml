@@ -7,5 +7,6 @@ commonAnnotations:
 resources:
   - gateway.yaml
   - certificate.yaml
-  - gateway-endpointslice.yaml
+  - cilium-ip-pool.yaml
+  - cilium-l2-announcement.yaml
   - httproute-redirect.yaml

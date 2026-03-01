@@ -9,6 +9,5 @@ resources:
   - cert-manager
   - nvidia-device-plugin
   - node-feature-discovery
-  - metallb
   - gateway-api
   - dex
