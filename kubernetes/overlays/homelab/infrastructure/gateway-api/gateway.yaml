@@ -16,7 +16,10 @@ spec:
       port: 80
       allowedRoutes:
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              edge-public: "true"
     - name: https
       protocol: HTTPS
       port: 443
@@ -27,4 +30,7 @@ spec:
             name: homelab-wildcard-tls
       allowedRoutes:
         namespaces:
-          from: All
+          from: Selector
+          selector:
+            matchLabels:
+              edge-public: "true"
