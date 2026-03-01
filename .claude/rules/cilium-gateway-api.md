@@ -24,3 +24,7 @@ paths:
 ## Routing Pattern
 - GatewayClass → Gateway → HTTPRoute
 - **HARD CONSTRAINT: Gateway API only, NO Ingress** — no Ingress resources or Ingress controllers
+
+## ArgoCD Sync — Gateway API Gotchas
+- Gateway API webhook auto-defaults fields (e.g., `group: ""` on certificateRefs, `matches: [{path: {type: PathPrefix, value: /}}]` on HTTPRoutes) — always include these explicitly in manifests to prevent perpetual OutOfSync drift
+- HTTP listener uses `from: Same` (redirect HTTPRoute is same namespace as Gateway); HTTPS listener uses `from: Selector` with `edge-public: "true"` label
