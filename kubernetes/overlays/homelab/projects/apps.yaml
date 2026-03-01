@@ -8,11 +8,9 @@ spec:
   sourceRepos:
     - https://github.com/Nosmoht/Talos-Homelab.git
   destinations:
-    - namespace: "*"
+    - namespace: apps-*
       server: https://kubernetes.default.svc
-  clusterResourceWhitelist:
-    - group: "*"
-      kind: "*"
+  clusterResourceWhitelist: []
   namespaceResourceWhitelist:
     - group: "*"
       kind: "*"
