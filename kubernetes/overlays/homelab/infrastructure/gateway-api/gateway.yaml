@@ -16,17 +16,15 @@ spec:
       port: 80
       allowedRoutes:
         namespaces:
-          from: Selector
-          selector:
-            matchLabels:
-              edge-public: "true"
+          from: Same
     - name: https
       protocol: HTTPS
       port: 443
       tls:
         mode: Terminate
         certificateRefs:
-          - kind: Secret
+          - group: ""
+            kind: Secret
             name: homelab-wildcard-tls
       allowedRoutes:
         namespaces:
