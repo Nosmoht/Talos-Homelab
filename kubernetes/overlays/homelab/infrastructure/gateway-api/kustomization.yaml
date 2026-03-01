@@ -6,6 +6,7 @@ commonAnnotations:
 
 resources:
   - gateway.yaml
+  - gatewayclass-config.yaml
   - certificate.yaml
   - cilium-ip-pool.yaml
   - cilium-l2-announcement.yaml
