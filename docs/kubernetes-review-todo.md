@@ -25,8 +25,8 @@
 | 21 | Medium | metrics-server | `--kubelet-insecure-tls` removed — cert-approver handles certs | DONE |
 | 22 | Low | root app | Missing `resources-finalizer.argocd.argoproj.io` | OPEN |
 | 23 | Low | argocd base | Empty `kustomization.yaml` — dead file | OPEN |
-| 24 | Low | dex | Missing `ServerSideApply=true` — inconsistent | OPEN |
-| 25 | Low | cert-manager | No resource requests/limits or securityContext | OPEN |
+| 24 | Low | dex | Missing `ServerSideApply=true` — inconsistent | DONE |
+| 25 | Low | cert-manager | No resource requests/limits or securityContext | DONE |
 | 26 | Low | cert-manager | No `ignoreDifferences` for CRD caBundle | OPEN |
 | 27 | Low | certificate | No privateKey algorithm, duration, or apex domain | OPEN |
 | 28 | Low | namespaces | No PSA labels on any namespace | OPEN |
