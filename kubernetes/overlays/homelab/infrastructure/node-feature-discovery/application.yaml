@@ -8,12 +8,12 @@ spec:
   sources:
     - repoURL: https://kubernetes-sigs.github.io/node-feature-discovery/charts
       chart: node-feature-discovery
-      targetRevision: 0.17.*
+      targetRevision: 0.17.4
       helm:
         valueFiles:
           - $values/kubernetes/base/infrastructure/node-feature-discovery/values.yaml
     - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
-      targetRevision: HEAD
+      targetRevision: main
       ref: values
   destination:
     server: https://kubernetes.default.svc

@@ -32,7 +32,7 @@
 | 28 | Low | namespaces | No PSA labels on any namespace | OPEN |
 | 29 | Low | piraeus | LVM path redirections lack comments | OPEN |
 | 30 | Low | piraeus | CA certs use RSA 2048 — ECDSA preferred | OPEN |
-| 31 | High | gitops | Mutable revisions in Argo (`targetRevision: HEAD` and wildcard chart versions) reduce deploy determinism and rollback safety; pin to immutable SHAs/tags and exact chart versions | OPEN |
+| 31 | High | gitops | Mutable revisions in Argo (`targetRevision: HEAD` and wildcard chart versions) reduce deploy determinism and rollback safety; pin to immutable SHAs/tags and exact chart versions | DONE |
 | 32 | High | argocd | `kustomize.buildOptions` enables `--enable-exec`; remove or isolate repo-server with strict controls due to exec/plugin RCE blast radius | OPEN |
 | 33 | High | talos/controlplane | etcd metrics exposed on `http://0.0.0.0:2381`; bind to loopback/management network and enforce access restrictions | OPEN |
 | 34 | Medium | talos/secrets | Talos workflow writes decrypted `.secrets.dec.yaml` to disk; switch to ephemeral temp-file/pipe workflow and enforce cleanup checks | OPEN |
