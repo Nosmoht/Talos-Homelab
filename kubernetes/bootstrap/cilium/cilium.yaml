@@ -1756,6 +1756,11 @@ metadata:
   name: cilium
 spec:
   controllerName: io.cilium/gateway-controller
+  parametersRef:
+    group: cilium.io
+    kind: CiliumGatewayClassConfig
+    name: homelab-gateway-config
+    namespace: default
 ---
 # Gateway API: additional RBAC for cilium-operator (requires gatewayAPI.enabled=true)
 # These rules are missing from the rendered manifest when gateway-api CRDs are not
