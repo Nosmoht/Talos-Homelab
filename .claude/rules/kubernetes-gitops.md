@@ -83,14 +83,13 @@ spec:
       - SkipDryRunOnMissingResource=true  # used by: metallb, piraeus-operator (CRD ordering)
 ```
 
-## Infrastructure Components (10)
+## Infrastructure Components (9)
 | Component | Chart Repo | Namespace | Has resources/ | Has overlay values |
 |-----------|-----------|-----------|----------------|-------------------|
 | argocd | argoproj.github.io/argo-helm | argocd | yes (httproute) | no |
 | cert-manager | charts.jetstack.io | cert-manager | yes (issuers, secrets) | no |
 | cert-approver | postfinance.github.io/kubelet-serving-cert-approver | kube-system | no | no |
 | dex | charts.dexidp.io | dex | yes (httproute, secrets) | yes |
-| metallb | metallb.universe.tf | metallb-system | yes (ippool, l2adv) | no |
 | metrics-server | kubernetes-sigs.github.io/metrics-server | kube-system | no | no |
 | node-feature-discovery | kubernetes-sigs.github.io/.../charts | node-feature-discovery | no | no |
 | nvidia-device-plugin | nvidia.github.io/k8s-device-plugin | kube-system | no | no |
