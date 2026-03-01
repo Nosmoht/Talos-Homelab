@@ -1,0 +1,30 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+spec:
+  project: infrastructure
+  sources:
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      targetRevision: '9.4.*'
+      helm:
+        valueFiles:
+          - $values/kubernetes/base/infrastructure/argocd/values.yaml
+    - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
+      targetRevision: HEAD
+      ref: values
+    - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
+      targetRevision: HEAD
+      path: kubernetes/overlays/homelab/infrastructure/argocd/resources
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
