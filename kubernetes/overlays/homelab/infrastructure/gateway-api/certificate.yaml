@@ -5,8 +5,14 @@ metadata:
   namespace: default
 spec:
   secretName: homelab-wildcard-tls
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  duration: 2160h
+  renewBefore: 720h
   issuerRef:
     name: homelab
     kind: ClusterIssuer
   dnsNames:
+    - homelab.ntbc.io
     - "*.homelab.ntbc.io"
