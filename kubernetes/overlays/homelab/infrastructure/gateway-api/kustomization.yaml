@@ -8,3 +8,4 @@ resources:
   - gateway.yaml
   - certificate.yaml
   - gateway-endpointslice.yaml
+  - httproute-redirect.yaml
