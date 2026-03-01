@@ -8,7 +8,7 @@ spec:
   sources:
     - repoURL: https://charts.piraeus.io
       chart: piraeus-operator
-      targetRevision: 2.*
+      targetRevision: 2.10.*
       helm:
         valueFiles:
           - $values/kubernetes/base/infrastructure/piraeus-operator/values.yaml
