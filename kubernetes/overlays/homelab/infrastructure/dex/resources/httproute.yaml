@@ -23,6 +23,22 @@ spec:
         - path:
             type: PathPrefix
             value: /
+      filters:
+        - type: ResponseHeaderModifier
+          responseHeaderModifier:
+            set:
+              - name: Strict-Transport-Security
+                value: "max-age=31536000; includeSubDomains"
+              - name: X-Frame-Options
+                value: DENY
+              - name: X-Content-Type-Options
+                value: nosniff
+              - name: Referrer-Policy
+                value: strict-origin-when-cross-origin
+              - name: Permissions-Policy
+                value: "camera=(), microphone=(), geolocation=()"
+              - name: X-XSS-Protection
+                value: "1; mode=block"
       backendRefs:
         - group: ""
           kind: Service
