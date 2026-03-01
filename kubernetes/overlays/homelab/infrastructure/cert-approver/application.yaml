@@ -5,16 +5,10 @@ metadata:
   namespace: argocd
 spec:
   project: infrastructure
-  sources:
-    - repoURL: https://postfinance.github.io/kubelet-serving-cert-approver
-      chart: kubelet-serving-cert-approver
-      targetRevision: 0.10.3
-      helm:
-        valueFiles:
-          - $values/kubernetes/base/infrastructure/cert-approver/values.yaml
-    - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
-      targetRevision: main
-      ref: values
+  source:
+    repoURL: https://github.com/alex1989hu/kubelet-serving-cert-approver.git
+    targetRevision: v0.10.3
+    path: deploy/standalone
   destination:
     server: https://kubernetes.default.svc
     namespace: kube-system
