@@ -18,16 +18,16 @@ apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
   name: drbd-reactor
-  namespace: piraeus-datastore
+  namespace: monitoring
   labels:
     monitoring: default
 spec:
-  selector:
-    matchLabels:
-      app: drbd-reactor
   namespaceSelector:
     matchNames:
       - piraeus-datastore
+  selector:
+    matchLabels:
+      app: drbd-reactor
   endpoints:
     - port: metrics
       path: /metrics
