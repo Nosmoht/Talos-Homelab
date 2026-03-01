@@ -12,10 +12,12 @@ spec:
       helm:
         valueFiles:
           - $values/kubernetes/base/infrastructure/piraeus-operator/values.yaml
-          - $values/kubernetes/overlays/homelab/infrastructure/piraeus-operator/values.yaml
     - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
       targetRevision: HEAD
       ref: values
+    - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
+      targetRevision: HEAD
+      path: kubernetes/overlays/homelab/infrastructure/piraeus-operator/resources
   destination:
     server: https://kubernetes.default.svc
     namespace: piraeus-datastore
@@ -25,3 +27,5 @@ spec:
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
+      - SkipDryRunOnMissingResource=true

@@ -12,6 +12,7 @@ spec:
       helm:
         valueFiles:
           - $values/kubernetes/base/infrastructure/dex/values.yaml
+          - $values/kubernetes/overlays/homelab/infrastructure/dex/values.yaml
     - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
       targetRevision: HEAD
       ref: values
