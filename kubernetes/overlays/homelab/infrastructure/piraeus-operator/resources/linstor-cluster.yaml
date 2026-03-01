@@ -1,0 +1,14 @@
+apiVersion: piraeus.io/v1
+kind: LinstorCluster
+metadata:
+  name: homelab
+  namespace: piraeus-datastore
+spec:
+  apiTLS:
+    certManager:
+      kind: Issuer
+      name: linstor-api-ca
+  internalTLS:
+    certManager:
+      kind: Issuer
+      name: linstor-internal-ca
