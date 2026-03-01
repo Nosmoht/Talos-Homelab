@@ -1,4 +1,34 @@
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: kubernetes.io/hostname
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: dex
+        app.kubernetes.io/instance: dex
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: dex
+              app.kubernetes.io/instance: dex
+          topologyKey: kubernetes.io/hostname
+
 config:
+  storage:
+    type: postgres
+    config:
+      host: $DEX_DB_HOST
+      port: 5432
+      database: $DEX_DB_NAME
+      user: $DEX_DB_USER
+      password: $DEX_DB_PASSWORD
+      ssl:
+        mode: require
   issuer: https://dex.homelab.ntbc.io
   connectors:
     - type: google
@@ -71,3 +101,23 @@ envVars:
       secretKeyRef:
         name: dex-oidc-secrets
         key: alertmanager-oidc-client-secret
+  - name: DEX_DB_HOST
+    valueFrom:
+      secretKeyRef:
+        name: dex-postgresql-app
+        key: host
+  - name: DEX_DB_USER
+    valueFrom:
+      secretKeyRef:
+        name: dex-postgresql-app
+        key: username
+  - name: DEX_DB_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: dex-postgresql-app
+        key: password
+  - name: DEX_DB_NAME
+    valueFrom:
+      secretKeyRef:
+        name: dex-postgresql-app
+        key: dbname
