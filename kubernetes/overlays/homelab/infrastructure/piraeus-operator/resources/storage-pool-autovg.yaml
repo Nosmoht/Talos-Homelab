@@ -143,9 +143,8 @@ spec:
               POOL_NAME="${POOL_NAME:-lvm-thick}"
               VG_NAME="${VG_NAME:-linstor}"
               DEVICE="${DEVICE:-/dev/nvme0n1}"
-              # Only target NVMe-equipped nodes (node-01..06); excludes node-gpu-01
-              # which uses SATA storage and has no /dev/nvme0n1 device.
-              NODE_FILTER_REGEX="${NODE_FILTER_REGEX:-^node-[0-9]+$}"
+              # Only target nodes with NVMe hardware detected by NFD
+              NODE_LABEL_SELECTOR="${NODE_LABEL_SELECTOR:-feature.node.kubernetes.io/storage-nvme.present=true}"
               WATCH_RECONNECT_DELAY="${WATCH_RECONNECT_DELAY:-5}"
 
               log() {
@@ -254,11 +253,8 @@ spec:
               }
 
               reconcile_all_nodes() {
-                kubectl get nodes -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | while IFS= read -r node; do
+                kubectl get nodes -l "${NODE_LABEL_SELECTOR}" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}' | while IFS= read -r node; do
                   [ -z "${node}" ] && continue
-                  if [ -n "${NODE_FILTER_REGEX}" ] && ! printf '%s\n' "${node}" | grep -Eq "${NODE_FILTER_REGEX}"; then
-                    continue
-                  fi
                   ensure_pool_capacity "${node}" || true
                 done
               }
@@ -283,13 +279,10 @@ spec:
 
               while true; do
                 log "Watching node events"
-                if ! kubectl get nodes -w --no-headers -o custom-columns=NAME:.metadata.name 2>/tmp/node-watch.err \
+                if ! kubectl get nodes -l "${NODE_LABEL_SELECTOR}" -w --no-headers -o custom-columns=NAME:.metadata.name 2>/tmp/node-watch.err \
                   | while IFS= read -r node; do
                       node="$(printf '%s\n' "${node}" | trim)"
                       [ -z "${node}" ] && continue
-                      if [ -n "${NODE_FILTER_REGEX}" ] && ! printf '%s\n' "${node}" | grep -Eq "${NODE_FILTER_REGEX}"; then
-                        continue
-                      fi
                       ensure_pool_capacity "${node}" || true
                     done
                 then
