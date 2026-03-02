@@ -6,13 +6,37 @@ generators:
   - ksops-generator-oauth2.yaml
 
 configMapGenerator:
-  - name: dashboard-prometheus
+  - name: dashboard-etcd
     namespace: monitoring
     files:
-      - dashboards/prometheus.json
+      - dashboards/etcd.json
     options:
       labels:
-        homelab_dashboard: "1"
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
+  - name: dashboard-cert-manager
+    namespace: monitoring
+    files:
+      - dashboards/cert-manager.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
+  - name: dashboard-nvidia-dcgm
+    namespace: monitoring
+    files:
+      - dashboards/nvidia-dcgm.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
+  - name: dashboard-cilium-hubble
+    namespace: monitoring
+    files:
+      - dashboards/cilium-hubble.json
+    options:
+      labels:
+        grafana_dashboard: "1"
       disableNameSuffixHash: true
 
 resources:
