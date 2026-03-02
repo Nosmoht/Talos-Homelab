@@ -20,7 +20,7 @@ spec:
     - https://kubernetes-sigs.github.io/metrics-server
     - https://kubernetes-sigs.github.io/node-feature-discovery/charts
     - https://nvidia.github.io/k8s-device-plugin
-    - https://charts.piraeus.io
+    - ghcr.io/piraeusdatastore/piraeus-operator*
     - https://cloudnative-pg.github.io/charts
   destinations:
     - namespace: argocd
