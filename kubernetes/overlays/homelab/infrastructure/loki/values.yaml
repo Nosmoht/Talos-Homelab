@@ -1,0 +1,3 @@
+# Overlay values are empty — all Loki config is in base values.
+# This file exists so the Application CR's $values reference resolves.
+{}

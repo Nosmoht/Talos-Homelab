@@ -13,3 +13,6 @@ resources:
   - gateway-api
   - cloudnative-pg
   - dex
+  - kube-prometheus-stack
+  - loki
+  - alloy
