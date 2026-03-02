@@ -23,9 +23,18 @@ spec:
             - port: "10901"
               protocol: TCP
   egress:
-    # Scrape targets in all namespaces
+    # Scrape targets in monitoring namespace
     - toEndpoints:
         - {}
+    # NVIDIA DCGM exporter metrics (cross-namespace)
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: nvidia-dcgm-exporter
+            app.kubernetes.io/name: dcgm-exporter
+      toPorts:
+        - ports:
+            - port: "9400"
+              protocol: TCP
     # cert-manager metrics (cross-namespace)
     - toEndpoints:
         - matchLabels:
