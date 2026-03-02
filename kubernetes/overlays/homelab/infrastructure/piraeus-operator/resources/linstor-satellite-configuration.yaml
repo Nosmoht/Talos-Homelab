@@ -13,8 +13,7 @@ metadata:
     argocd.argoproj.io/sync-options: Replace=true
 spec:
   nodeSelector:
-    matchLabels:
-      feature.node.kubernetes.io/storage-nvme.present: "true"
+    feature.node.kubernetes.io/storage-nvme.present: "true"
   internalTLS:
     certManager:
       name: linstor-internal-ca
