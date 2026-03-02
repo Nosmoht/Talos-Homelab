@@ -73,6 +73,21 @@ spec:
         - ports:
             - port: "443"
               protocol: TCP
+    # Kubernetes API via node/control-plane addresses
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - toCIDRSet:
+        - cidr: 192.168.2.0/24
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "6443"
+              protocol: TCP
     # External HTTPS (Dex OIDC discovery via public URL)
     - toCIDRSet:
         - cidr: 0.0.0.0/0
