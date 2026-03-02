@@ -11,6 +11,18 @@ metadata:
     app.kubernetes.io/managed-by: argocd
 spec:
   project: infrastructure
+  ignoreDifferences:
+    - group: ""
+      kind: Secret
+      name: piraeus-operator-tls
+      namespace: piraeus-datastore
+      jsonPointers:
+        - /data
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      name: piraeus-operator-validating-webhook-configuration
+      jqPathExpressions:
+        - .webhooks[].clientConfig.caBundle
   sources:
     - repoURL: ghcr.io/piraeusdatastore/piraeus-operator
       chart: piraeus
