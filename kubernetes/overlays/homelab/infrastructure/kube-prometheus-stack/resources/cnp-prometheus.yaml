@@ -44,6 +44,25 @@ spec:
         - ports:
             - port: "9402"
               protocol: TCP
+    # cilium and hubble metrics (cross-namespace)
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s-app: cilium
+      toPorts:
+        - ports:
+            - port: "9962"
+              protocol: TCP
+            - port: "9965"
+              protocol: TCP
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            io.cilium/app: operator
+      toPorts:
+        - ports:
+            - port: "9963"
+              protocol: TCP
     # Scrape targets on node IPs (node-exporter, kubelet)
     - toCIDRSet:
         - cidr: 192.168.2.0/24
