@@ -50,6 +50,7 @@ resources:
   - prometheus-httproute.yaml
   - alertmanager-httproute.yaml
   - oauth2-proxy-prometheus.yaml
+  - oauth2-proxy-allowed-emails.yaml
   - oauth2-proxy-alertmanager.yaml
   - cnp-prometheus.yaml
   - cnp-alertmanager.yaml
