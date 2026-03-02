@@ -123,7 +123,7 @@ spec:
           emptyDir: {}
       containers:
         - name: reconciler
-          image: bitnami/kubectl:1.35.0
+          image: alpine/kubectl:1.35.0
           imagePullPolicy: IfNotPresent
           securityContext:
             allowPrivilegeEscalation: false
