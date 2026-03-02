@@ -63,6 +63,17 @@ spec:
         - ports:
             - port: "9963"
               protocol: TCP
+    - toEntities:
+        - host
+        - remote-node
+      toPorts:
+        - ports:
+            - port: "9962"
+              protocol: TCP
+            - port: "9963"
+              protocol: TCP
+            - port: "9965"
+              protocol: TCP
     # Scrape targets on node IPs (node-exporter, kubelet)
     - toCIDRSet:
         - cidr: 192.168.2.0/24
