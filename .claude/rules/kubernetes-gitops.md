@@ -93,7 +93,7 @@ spec:
 | metrics-server | kubernetes-sigs.github.io/metrics-server | kube-system | no | no |
 | node-feature-discovery | kubernetes-sigs.github.io/.../charts | node-feature-discovery | no | no |
 | nvidia-device-plugin | nvidia.github.io/k8s-device-plugin | kube-system | no | no |
-| piraeus-operator | charts.piraeus.io | piraeus-datastore | yes (linstor config) | no |
+| piraeus-operator | ghcr.io/piraeusdatastore/piraeus-operator (OCI) | piraeus-datastore | yes (linstor config) | no |
 | gateway-api | N/A (raw resources, no Application) | default | N/A | N/A |
 
 Components with base namespace.yaml (referenced by overlay kustomization): cert-manager, dex, piraeus-operator
