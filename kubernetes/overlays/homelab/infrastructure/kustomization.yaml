@@ -9,6 +9,7 @@ resources:
   - cert-approver
   - cert-manager
   - nvidia-device-plugin
+  - nvidia-dcgm-exporter
   - node-feature-discovery
   - gateway-api
   - cloudnative-pg

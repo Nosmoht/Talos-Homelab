@@ -20,6 +20,7 @@ spec:
     - https://kubernetes-sigs.github.io/metrics-server
     - https://kubernetes-sigs.github.io/node-feature-discovery/charts
     - https://nvidia.github.io/k8s-device-plugin
+    - https://nvidia.github.io/dcgm-exporter/helm-charts
     - ghcr.io/piraeusdatastore/piraeus-operator*
     - https://cloudnative-pg.github.io/charts
     - https://prometheus-community.github.io/helm-charts
@@ -38,6 +39,8 @@ spec:
     - namespace: kube-system
       server: https://kubernetes.default.svc
     - namespace: node-feature-discovery
+      server: https://kubernetes.default.svc
+    - namespace: nvidia-dcgm-exporter
       server: https://kubernetes.default.svc
     - namespace: cnpg-system
       server: https://kubernetes.default.svc
