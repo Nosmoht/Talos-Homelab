@@ -61,6 +61,12 @@ kube-state-metrics:
   replicas: 2
   podDisruptionBudget:
     minAvailable: 1
+  livenessProbe:
+    initialDelaySeconds: 30
+    timeoutSeconds: 10
+  readinessProbe:
+    initialDelaySeconds: 30
+    timeoutSeconds: 10
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
