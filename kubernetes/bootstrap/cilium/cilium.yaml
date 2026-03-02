@@ -212,6 +212,10 @@ data:
 
   enable-hubble: "true"
   hubble-listen-address: ":4244"
+  hubble-disable-tls: "false"
+  hubble-tls-cert-file: /var/lib/cilium/tls/hubble/server.crt
+  hubble-tls-key-file: /var/lib/cilium/tls/hubble/server.key
+  hubble-tls-client-ca-files: /var/lib/cilium/tls/hubble/client-ca.crt
   hubble-metrics-server: ":9965"
   hubble-metrics: "dns:query;ignoreAAAA drop tcp flow port-distribution icmp httpV2"
   ipam: "kubernetes"
@@ -1150,6 +1154,9 @@ spec:
           readOnly: true
         - name: xtables-lock
           mountPath: /run/xtables.lock
+        - name: hubble-tls
+          mountPath: /var/lib/cilium/tls/hubble
+          readOnly: true
         - name: tmp
           mountPath: /tmp
 
@@ -1428,6 +1435,21 @@ spec:
         hostPath:
           path: /proc/sys/kernel
           type: Directory
+      - name: hubble-tls
+        projected:
+          # note: the leading zero means this number is in octal representation: do not remove it
+          defaultMode: 0400
+          sources:
+          - secret:
+              name: hubble-server-certs
+              optional: true
+              items:
+              - key: tls.crt
+                path: server.crt
+              - key: tls.key
+                path: server.key
+              - key: ca.crt
+                path: client-ca.crt
 ---
 # Source: cilium/templates/cilium-envoy/daemonset.yaml
 apiVersion: apps/v1
