@@ -22,12 +22,12 @@ spec:
             - port: "10250"
               protocol: TCP
   egress:
-    # kube-apiserver
+    # kube-apiserver (port 6443 is the actual listen port after DNAT)
     - toEntities:
         - kube-apiserver
       toPorts:
         - ports:
-            - port: "443"
+            - port: "6443"
               protocol: TCP
     # DNS
     - toEndpoints:
