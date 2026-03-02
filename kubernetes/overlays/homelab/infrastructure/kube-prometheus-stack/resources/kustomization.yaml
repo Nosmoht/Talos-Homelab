@@ -51,7 +51,6 @@ resources:
   - alertmanager-httproute.yaml
   - oauth2-proxy-prometheus.yaml
   - oauth2-proxy-alertmanager.yaml
-  - networkpolicy-default-deny.yaml
   - cnp-prometheus.yaml
   - cnp-alertmanager.yaml
   - cnp-grafana.yaml
