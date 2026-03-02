@@ -211,6 +211,7 @@ data:
   operator-api-serve-addr: "127.0.0.1:9234"
 
   enable-hubble: "true"
+  hubble-listen-address: ":4244"
   hubble-metrics-server: ":9965"
   hubble-metrics: "dns:query;ignoreAAAA drop tcp flow port-distribution icmp httpV2"
   ipam: "kubernetes"
