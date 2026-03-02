@@ -12,7 +12,7 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
-      app: kube-prometheus-stack-operator
+      app.kubernetes.io/name: kube-prometheus-stack-prometheus-operator
   ingress:
     # kube-apiserver webhook calls
     - fromEntities:
