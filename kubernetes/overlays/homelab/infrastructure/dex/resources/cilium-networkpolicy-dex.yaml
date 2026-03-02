@@ -31,11 +31,10 @@ spec:
         - ports:
             - port: "5556"
               protocol: TCP
-    # Grafana + OAuth2 proxies -> Dex OIDC (token exchange, userinfo)
+    # Monitoring namespace -> Dex OIDC (Grafana token exchange, OAuth2 proxies)
     - fromEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: monitoring
-            app.kubernetes.io/name: grafana
       toPorts:
         - ports:
             - port: "5556"
