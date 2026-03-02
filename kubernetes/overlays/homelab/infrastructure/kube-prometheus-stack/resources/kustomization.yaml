@@ -1,0 +1,61 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+generators:
+  - ksops-generator-grafana.yaml
+  - ksops-generator-oauth2.yaml
+
+configMapGenerator:
+  - name: dashboard-etcd
+    namespace: monitoring
+    files:
+      - dashboards/etcd.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
+  - name: dashboard-cert-manager
+    namespace: monitoring
+    files:
+      - dashboards/cert-manager.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
+  - name: dashboard-nvidia-dcgm
+    namespace: monitoring
+    files:
+      - dashboards/nvidia-dcgm.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
+  - name: dashboard-cilium-hubble
+    namespace: monitoring
+    files:
+      - dashboards/cilium-hubble.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
+
+resources:
+  - thanos-query.yaml
+  - etcd-service.yaml
+  - etcd-endpointslice.yaml
+  - etcd-servicemonitor.yaml
+  - cilium-servicemonitors.yaml
+  - prometheus-rules.yaml
+  - grafana-httproute.yaml
+  - prometheus-httproute.yaml
+  - alertmanager-httproute.yaml
+  - oauth2-proxy-prometheus.yaml
+  - oauth2-proxy-alertmanager.yaml
+  - networkpolicy-default-deny.yaml
+  - cnp-prometheus.yaml
+  - cnp-alertmanager.yaml
+  - cnp-grafana.yaml
+  - cnp-thanos-query.yaml
+  - cnp-oauth2-proxy.yaml
+  - cnp-kube-state-metrics.yaml
+  - cnp-prometheus-operator.yaml

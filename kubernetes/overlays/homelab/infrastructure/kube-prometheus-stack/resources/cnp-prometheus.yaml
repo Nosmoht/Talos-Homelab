@@ -1,0 +1,50 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: prometheus
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: kube-prometheus-stack
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: prometheus
+  ingress:
+    # Thanos Query -> Thanos sidecar gRPC
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: thanos-query
+      toPorts:
+        - ports:
+            - port: "10901"
+              protocol: TCP
+  egress:
+    # Scrape targets in all namespaces
+    - toEndpoints:
+        - {}
+    # Scrape targets on node IPs (node-exporter, kubelet)
+    - toCIDRSet:
+        - cidr: 192.168.2.0/24
+    # Alertmanager
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: alertmanager
+      toPorts:
+        - ports:
+            - port: "9093"
+              protocol: TCP
+    # DNS
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
