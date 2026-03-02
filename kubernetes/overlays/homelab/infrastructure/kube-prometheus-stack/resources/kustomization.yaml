@@ -58,3 +58,4 @@ resources:
   - cnp-oauth2-proxy.yaml
   - cnp-kube-state-metrics.yaml
   - cnp-prometheus-operator.yaml
+  - cnp-node-exporter.yaml

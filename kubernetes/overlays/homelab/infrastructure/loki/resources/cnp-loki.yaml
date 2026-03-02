@@ -30,6 +30,22 @@ spec:
         - ports:
             - port: "3100"
               protocol: TCP
+    # Loki canary -> Loki gateway
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: loki
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+    # Loki single-binary -> memcached caches
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: loki
+      toPorts:
+        - ports:
+            - port: "11211"
+              protocol: TCP
   egress:
     # Alertmanager (ruler alerts)
     - toEndpoints:
@@ -38,6 +54,37 @@ spec:
       toPorts:
         - ports:
             - port: "9093"
+              protocol: TCP
+    # Loki canary -> Loki gateway
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: loki
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+    # Loki single-binary -> memcached caches
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: loki
+      toPorts:
+        - ports:
+            - port: "11211"
+              protocol: TCP
+    # Kubernetes API for loki-sc-rules sidecar
+    - toCIDRSet:
+        - cidr: 10.96.0.1/32
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+            - port: "6443"
               protocol: TCP
     # DNS
     - toEndpoints:
