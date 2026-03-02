@@ -12,7 +12,7 @@ metadata:
 spec:
   nodeSelector:
     matchLabels:
-      extensions.talos.dev/nvme-cli: v2.14
+      feature.node.kubernetes.io/storage-nvme.present: "true"
   apiTLS:
     certManager:
       kind: Issuer
