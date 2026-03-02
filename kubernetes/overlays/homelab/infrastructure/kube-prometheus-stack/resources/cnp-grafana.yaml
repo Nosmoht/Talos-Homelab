@@ -66,6 +66,13 @@ spec:
               protocol: UDP
             - port: "53"
               protocol: TCP
+    # Kubernetes API (required by dashboard sidecar to list/watch ConfigMaps)
+    - toCIDRSet:
+        - cidr: 10.96.0.1/32
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
     # External HTTPS (Dex OIDC discovery via public URL)
     - toCIDRSet:
         - cidr: 0.0.0.0/0
