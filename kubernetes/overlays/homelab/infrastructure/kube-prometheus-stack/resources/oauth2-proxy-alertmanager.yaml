@@ -64,6 +64,7 @@ spec:
             - --redirect-url=https://alertmanager.homelab.ntbc.io/oauth2/callback
             - --upstream=http://monitoring-kube-prometheus-alertmanager.monitoring.svc:9093
             - --email-domain=*
+            - --authenticated-emails-file=/etc/oauth2-proxy/allowed-emails
             - --scope=openid email profile groups
             - --cookie-secure=true
             - --cookie-samesite=lax
@@ -90,6 +91,11 @@ spec:
                 secretKeyRef:
                   name: oauth2-proxy-secrets
                   key: alertmanager-cookie-secret
+          volumeMounts:
+            - name: allowed-emails
+              mountPath: /etc/oauth2-proxy/allowed-emails
+              subPath: allowed-emails
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /ping
@@ -105,3 +111,7 @@ spec:
             limits:
               cpu: 250m
               memory: 256Mi
+      volumes:
+        - name: allowed-emails
+          configMap:
+            name: oauth2-proxy-allowed-emails
