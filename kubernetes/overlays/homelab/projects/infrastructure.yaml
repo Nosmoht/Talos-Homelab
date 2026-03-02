@@ -39,6 +39,8 @@ spec:
       server: https://kubernetes.default.svc
     - namespace: cnpg-system
       server: https://kubernetes.default.svc
+    - namespace: monitoring
+      server: https://kubernetes.default.svc
     - namespace: piraeus-datastore
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
@@ -66,6 +68,10 @@ spec:
       kind: GatewayClass
     - group: nfd.k8s-sigs.io
       kind: NodeFeatureRule
+    - group: piraeus.io
+      kind: LinstorCluster
+    - group: piraeus.io
+      kind: LinstorSatelliteConfiguration
   namespaceResourceWhitelist:
     - group: "*"
       kind: "*"
