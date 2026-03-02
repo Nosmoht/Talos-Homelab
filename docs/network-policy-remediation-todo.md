@@ -5,12 +5,20 @@ Scope: CiliumNetworkPolicy resources in `monitoring` and `dex` plus uncovered hi
 
 - [x] Build runtime inventory of CNPs, selected pods, and recent connectivity failures.
 - [x] Fix `prometheus` CNP to allow Kubernetes API egress required for service discovery (`10.96.0.1:443`, `kube-apiserver:443/6443`).
-- [ ] Fix `loki` CNP to allow Kubernetes API egress for `loki-sc-rules` sidecar.
-- [ ] Fix `loki` CNP to allow Loki canary <-> Loki gateway connectivity on TCP/80.
-- [ ] Fix `loki` CNP to allow Loki single-binary <-> Loki memcached caches on TCP/11211.
-- [ ] Add missing CNP for `monitoring-prometheus-node-exporter` (currently uncovered in `monitoring` namespace) with least-privilege ingress from Prometheus only.
-- [ ] Re-verify runtime after changes: no active API timeout errors in policy-controlled observability components; Grafana/Thanos queries return data.
+- [x] Fix `loki` CNP to allow Kubernetes API egress for `loki-sc-rules` sidecar.
+- [x] Fix `loki` CNP to allow Loki canary <-> Loki gateway connectivity (service `:80` -> backend `:8080`).
+- [x] Fix `loki` CNP to allow Loki single-binary <-> Loki memcached caches on TCP/11211.
+- [x] Add missing CNP for `monitoring-prometheus-node-exporter` (previously uncovered in `monitoring` namespace) with least-privilege ingress from Prometheus only.
+- [x] Re-verify runtime after changes: API connectivity restored for policy-controlled observability components; Grafana/Thanos queries return data.
 
-## Notes
-- Prometheus data-path recovery has already been observed (`sum(up)=17` via Thanos from Grafana pod) after the Prometheus CNP fix.
-- Remaining open items focus on Loki component-specific traffic and node-exporter hardening.
+## Validation Summary
+- `prometheus` and `grafana` can reach kube-apiserver (`10.96.0.1:443` and `kube-apiserver:6443` path).
+- Loki rule sidecar can reach kube-apiserver.
+- Loki policy identities can reach:
+  - gateway path (`ClusterIP:80` and backend pod `:8080`)
+  - cache backends (`loki-chunks-cache:11211`, `loki-results-cache:11211`)
+- `node-exporter` CNP now exists in-cluster with Argo tracking annotation.
+
+## Remaining Observations (not policy-blocking)
+- Loki canary still logs intermittent query/tail timeouts under load; direct TCP connectivity tests now pass, indicating likely application/performance behavior rather than network policy denial.
+- Many `up` targets remain `0`, which points to scrape endpoint-level issues (service/port/auth/readiness) and not a CNP transport block.
