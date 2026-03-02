@@ -11,8 +11,7 @@ metadata:
     app.kubernetes.io/managed-by: argocd
 spec:
   nodeSelector:
-    matchLabels:
-      feature.node.kubernetes.io/storage-nvme.present: "true"
+    feature.node.kubernetes.io/storage-nvme.present: "true"
   apiTLS:
     certManager:
       kind: Issuer
