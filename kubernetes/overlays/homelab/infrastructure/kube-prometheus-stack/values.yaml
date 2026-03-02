@@ -83,7 +83,7 @@ kube-state-metrics:
           app.kubernetes.io/name: kube-state-metrics
 
 grafana:
-  replicas: 2
+  replicas: 1
   service:
     type: ClusterIP
     sessionAffinity: ClientIP
