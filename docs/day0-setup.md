@@ -57,7 +57,7 @@ VT-d is required for the boot parameters `intel_iommu=on` and `iommu=force` to t
 ## Project Structure
 
 ```
-homelab-migration/
+repo-root/
 ├── Makefile                           # Build automation
 ├── secrets.yaml                       # Cluster secrets (SOPS-encrypted, gitignored)
 ├── patches/

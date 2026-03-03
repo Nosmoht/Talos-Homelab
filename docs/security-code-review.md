@@ -35,7 +35,7 @@ Overall risk rating: **Medium-High** (improved from prior High baseline).
 ### 1) Argo repo-server allows executable plugin rendering
 
 Evidence:
-- [kubernetes/base/infrastructure/argocd/values.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/base/infrastructure/argocd/values.yaml:59)
+- [kubernetes/base/infrastructure/argocd/values.yaml](../kubernetes/base/infrastructure/argocd/values.yaml#L59)
 
 Risk:
 - Manifest render path can execute binaries if trusted source boundaries are violated.
@@ -46,7 +46,7 @@ Recommendation:
 ### 2) etcd metrics exposed on plaintext all-interfaces bind
 
 Evidence:
-- [talos/patches/controlplane.yaml](/Users/thomaskrahn/workspace/homelab-migration/talos/patches/controlplane.yaml:8)
+- [talos/patches/controlplane.yaml](../talos/patches/controlplane.yaml#L8)
 
 Risk:
 - Increases control-plane telemetry exposure for internal reconnaissance.
@@ -59,7 +59,7 @@ Recommendation:
 ### 3) Argo server runs in insecure mode behind edge TLS
 
 Evidence:
-- [kubernetes/base/infrastructure/argocd/values.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/base/infrastructure/argocd/values.yaml:46)
+- [kubernetes/base/infrastructure/argocd/values.yaml](../kubernetes/base/infrastructure/argocd/values.yaml#L46)
 
 Risk:
 - In-cluster traffic to Argo server remains HTTP.
@@ -70,8 +70,8 @@ Recommendation:
 ### 4) Shared Gateway allows routes from any namespace
 
 Evidence:
-- [kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml:12)
-- [kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml:23)
+- [kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml](../kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml#L12)
+- [kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml](../kubernetes/overlays/homelab/infrastructure/gateway-api/gateway.yaml#L23)
 
 Risk:
 - Weak tenant boundary at ingress layer.
@@ -82,7 +82,7 @@ Recommendation:
 ### 5) Talos secret generation writes decrypted intermediate file
 
 Evidence:
-- [talos/Makefile](/Users/thomaskrahn/workspace/homelab-migration/talos/Makefile:50)
+- [talos/Makefile](../talos/Makefile#L50)
 
 Risk:
 - Workstation compromise or backup leakage can expose bootstrap secrets.
@@ -95,7 +95,7 @@ Recommendation:
 ### 6) Root app finalizer missing
 
 Evidence:
-- [kubernetes/bootstrap/argocd/root-application.yaml](/Users/thomaskrahn/workspace/homelab-migration/kubernetes/bootstrap/argocd/root-application.yaml:3)
+- [kubernetes/bootstrap/argocd/root-application.yaml](../kubernetes/bootstrap/argocd/root-application.yaml#L3)
 
 Risk:
 - Deleting root app can orphan child resources.
