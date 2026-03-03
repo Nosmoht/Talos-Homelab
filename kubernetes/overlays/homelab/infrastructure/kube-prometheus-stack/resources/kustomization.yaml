@@ -52,6 +52,7 @@ resources:
   - oauth2-proxy-prometheus.yaml
   - oauth2-proxy-allowed-emails.yaml
   - oauth2-proxy-alertmanager.yaml
+  - ccnp-monitoring-dns-visibility.yaml
   - cnp-prometheus.yaml
   - cnp-alertmanager.yaml
   - cnp-grafana.yaml
