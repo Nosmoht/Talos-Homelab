@@ -42,3 +42,13 @@ spec:
               protocol: UDP
             - port: "53"
               protocol: TCP
+          rules:
+            dns:
+              - matchPattern: "*"
+    # GeoIP database download for init container
+    - toFQDNs:
+        - matchName: download.db-ip.com
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
