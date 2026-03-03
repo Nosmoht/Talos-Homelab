@@ -18,7 +18,6 @@ spec:
     # Gateway proxy traffic (Cilium external Envoy proxy uses reserved:ingress identity)
     - fromEntities:
         - ingress
-        - world
       toPorts:
         - ports:
             - port: "5556"
