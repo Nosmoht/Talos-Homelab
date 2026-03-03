@@ -129,7 +129,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "sum by (geoip_country_code) (count_over_time({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", source_namespace=\"\", destination_namespace=~\"$destination_namespace\", geoip_country_code!=\"\"} | json | source_ip !~ \"^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.|127\\.|169\\.254\\.|::1|fc00:|fe80:)\" [$__range]))",
+          "expr": "sum by (geoip_country_code) (count_over_time({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", destination_namespace=~\"$destination_namespace\", geoip_country_code!=\"\"}[$__range]))",
           "instant": true,
           "queryType": "instant",
           "refId": "A"
@@ -226,7 +226,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "topk(15, sum by (geoip_country_name) (count_over_time({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", source_namespace=\"\", destination_namespace=~\"$destination_namespace\", geoip_country_name!=\"\"} | json | source_ip !~ \"^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.|127\\.|169\\.254\\.|::1|fc00:|fe80:)\" [$__range])))",
+          "expr": "topk(15, sum by (geoip_country_name) (count_over_time({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", destination_namespace=~\"$destination_namespace\", geoip_country_name!=\"\"}[$__range])))",
           "instant": true,
           "queryType": "instant",
           "refId": "A"
@@ -301,7 +301,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "sum by (destination_namespace) (rate({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", source_namespace=\"\", destination_namespace=~\"$destination_namespace\"} | json | source_ip !~ \"^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.|127\\.|169\\.254\\.|::1|fc00:|fe80:)\" [$__rate_interval]))",
+          "expr": "sum by (destination_namespace) (rate({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", destination_namespace=~\"$destination_namespace\"}[$__rate_interval]))",
           "queryType": "range",
           "refId": "A"
         }
@@ -365,7 +365,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "topk(25, sum by (geoip_country_name, source_ip) (count_over_time({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", source_namespace=\"\", destination_namespace=~\"$destination_namespace\"} | json | source_ip !~ \"^(10\\.|192\\.168\\.|172\\.(1[6-9]|2[0-9]|3[0-1])\\.|127\\.|169\\.254\\.|::1|fc00:|fe80:)\" [$__range])))",
+          "expr": "topk(25, sum by (geoip_country_name, source_ip) (count_over_time({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", destination_namespace=~\"$destination_namespace\"}[$__range])))",
           "instant": true,
           "queryType": "instant",
           "refId": "A"
