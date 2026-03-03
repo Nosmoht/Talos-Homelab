@@ -28,6 +28,7 @@ spec:
     - https://kyverno.github.io/kyverno
     - https://ot-container-kit.github.io/helm-charts
     - https://strimzi.io/charts/
+    - ghcr.io/bank-vaults/helm-charts*
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc
@@ -56,6 +57,8 @@ spec:
     - namespace: redis-system
       server: https://kubernetes.default.svc
     - namespace: kafka
+      server: https://kubernetes.default.svc
+    - namespace: vault
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: ""

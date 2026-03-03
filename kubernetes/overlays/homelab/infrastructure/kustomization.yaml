@@ -13,6 +13,7 @@ resources:
   - node-feature-discovery
   - gateway-api
   - cloudnative-pg
+  - vault-operator
   - redis-operator
   - strimzi-kafka-operator
   - dex
