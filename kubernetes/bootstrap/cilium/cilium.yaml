@@ -217,7 +217,7 @@ data:
   hubble-tls-key-file: /var/lib/cilium/tls/hubble/server.key
   hubble-tls-client-ca-files: /var/lib/cilium/tls/hubble/client-ca.crt
   hubble-metrics-server: ":9965"
-  hubble-metrics: "dns:query;ignoreAAAA drop tcp flow port-distribution icmp httpV2"
+  hubble-metrics: "dns drop tcp flow port-distribution icmp httpV2"
   ipam: "kubernetes"
   ipam-cilium-node-update-rate: "15s"
 
