@@ -30,6 +30,15 @@ spec:
         - ports:
             - port: "3100"
               protocol: TCP
+    # Loki gateway -> Loki backend
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: loki
+            app.kubernetes.io/component: gateway
+      toPorts:
+        - ports:
+            - port: "3100"
+              protocol: TCP
     # Loki canary -> Loki gateway
     - fromEndpoints:
         - matchLabels:
@@ -59,6 +68,7 @@ spec:
     - toEndpoints:
         - matchLabels:
             app.kubernetes.io/name: loki
+            app.kubernetes.io/component: single-binary
       toPorts:
         - ports:
             - port: "3100"

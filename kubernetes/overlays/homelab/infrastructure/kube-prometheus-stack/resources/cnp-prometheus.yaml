@@ -131,6 +131,12 @@ spec:
               protocol: TCP
             - port: "2381"
               protocol: TCP
+            - port: "10250"
+              protocol: TCP
+            - port: "10257"
+              protocol: TCP
+            - port: "10259"
+              protocol: TCP
     # Alertmanager
     - toEndpoints:
         - matchLabels:
