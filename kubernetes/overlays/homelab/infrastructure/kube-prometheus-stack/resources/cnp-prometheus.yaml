@@ -85,6 +85,8 @@ spec:
               protocol: TCP
             - port: "9965"
               protocol: TCP
+            - port: "2381"
+              protocol: TCP
     # Scrape targets on node IPs (node-exporter, kubelet)
     - toCIDRSet:
         - cidr: 192.168.2.0/24
@@ -102,6 +104,8 @@ spec:
             - port: "443"
               protocol: TCP
             - port: "6443"
+              protocol: TCP
+            - port: "2381"
               protocol: TCP
     # Alertmanager
     - toEndpoints:
