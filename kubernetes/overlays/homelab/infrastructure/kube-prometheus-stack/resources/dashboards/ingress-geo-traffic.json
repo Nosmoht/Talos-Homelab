@@ -301,7 +301,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "sum by (destination_namespace) (rate({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", destination_namespace=~\"$destination_namespace\"}[$__rate_interval]))",
+          "expr": "sum by (destination_namespace) (rate({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", destination_namespace=~\"$destination_namespace\"}[5m]))",
           "queryType": "range",
           "refId": "A"
         }
