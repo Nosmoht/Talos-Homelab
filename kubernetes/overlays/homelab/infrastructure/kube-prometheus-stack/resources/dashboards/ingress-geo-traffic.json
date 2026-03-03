@@ -226,13 +226,13 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "topk(15, sum by (geoip_country_name) (count_over_time({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", destination_namespace=~\"$destination_namespace\", geoip_country_name!=\"\"}[$__range])))",
+          "expr": "topk(15, sum by (source_ip) (count_over_time({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", destination_namespace=~\"$destination_namespace\"} | json source_ip=\"flow.IP.source\" [$__range])))",
           "instant": true,
           "queryType": "instant",
           "refId": "A"
         }
       ],
-      "title": "Top Source Countries",
+      "title": "Top Source Origins (IP Fallback)",
       "transformations": [
         {
           "id": "labelsToFields",
@@ -365,7 +365,7 @@
             "uid": "loki"
           },
           "editorMode": "code",
-          "expr": "topk(25, sum by (geoip_country_name, source_ip) (count_over_time({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", destination_namespace=~\"$destination_namespace\"}[$__range])))",
+          "expr": "topk(25, sum by (source_ip, destination_namespace) (count_over_time({job=\"cilium-hubble\", traffic_direction=\"INGRESS\", destination_namespace=~\"$destination_namespace\"} | json source_ip=\"flow.IP.source\" [$__range])))",
           "instant": true,
           "queryType": "instant",
           "refId": "A"
