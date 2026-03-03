@@ -38,6 +38,14 @@ configMapGenerator:
       labels:
         grafana_dashboard: "1"
       disableNameSuffixHash: true
+  - name: dashboard-kubernetes-scheduler
+    namespace: monitoring
+    files:
+      - dashboards/kubernetes-scheduler.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
 
 resources:
   - thanos-query.yaml
