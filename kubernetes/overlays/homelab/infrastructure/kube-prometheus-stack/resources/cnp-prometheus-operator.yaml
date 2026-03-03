@@ -14,6 +14,14 @@ spec:
     matchLabels:
       app.kubernetes.io/name: kube-prometheus-stack-prometheus-operator
   ingress:
+    # Prometheus -> operator metrics (ServiceMonitor monitoring-kube-prometheus-operator)
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: prometheus
+      toPorts:
+        - ports:
+            - port: "10250"
+              protocol: TCP
     # kube-apiserver webhook calls
     - fromEntities:
         - kube-apiserver
