@@ -17,6 +17,8 @@ spec:
     # Webhook calls from kube-apiserver
     - fromEntities:
         - kube-apiserver
+        - host
+        - remote-node
       toPorts:
         - ports:
             - port: "9443"

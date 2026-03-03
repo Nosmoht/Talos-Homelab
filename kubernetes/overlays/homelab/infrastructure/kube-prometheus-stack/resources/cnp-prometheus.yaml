@@ -22,6 +22,18 @@ spec:
         - ports:
             - port: "10901"
               protocol: TCP
+    # Prometheus peer scraping and self-monitoring
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: prometheus
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+            - port: "9090"
+              protocol: TCP
+            - port: "10902"
+              protocol: TCP
   egress:
     # Scrape targets in monitoring namespace
     - toEndpoints:
@@ -96,9 +108,12 @@ spec:
               protocol: TCP
             - port: "2381"
               protocol: TCP
-    # Scrape targets on node IPs (node-exporter, kubelet)
-    - toCIDRSet:
-        - cidr: 192.168.2.0/24
+            - port: "10250"
+              protocol: TCP
+            - port: "10257"
+              protocol: TCP
+            - port: "10259"
+              protocol: TCP
     # Kubernetes API for service discovery
     - toCIDRSet:
         - cidr: 10.96.0.1/32
