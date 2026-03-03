@@ -13,6 +13,7 @@ resources:
   - node-feature-discovery
   - gateway-api
   - cloudnative-pg
+  - redis-operator
   - dex
   - kyverno
   - kube-prometheus-stack

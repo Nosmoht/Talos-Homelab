@@ -26,6 +26,7 @@ spec:
     - https://prometheus-community.github.io/helm-charts
     - https://grafana.github.io/helm-charts
     - https://kyverno.github.io/kyverno
+    - https://ot-container-kit.github.io/helm-charts
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc
@@ -50,6 +51,8 @@ spec:
     - namespace: piraeus-datastore
       server: https://kubernetes.default.svc
     - namespace: kyverno
+      server: https://kubernetes.default.svc
+    - namespace: redis-system
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: ""
