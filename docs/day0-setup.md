@@ -64,11 +64,14 @@ repo-root/
 │   ├── common.yaml                    # All nodes: sysctls, DRBD, kubelet, NTP
 │   ├── controlplane.yaml              # Control plane: Cilium manifests (~1700 lines)
 │   └── worker-gpu.yaml               # GPU worker: NVIDIA modules, bpf_jit
+│   └── worker-pi.yaml                # Pi worker: edge labels
 ├── nodes/
 │   ├── node-{01..06}.yaml             # Per node: hostname, static IP, VIP (CP only)
 │   └── node-gpu-01.yaml
+│   └── node-pi-01.yaml
 ├── talos-factory-schematic.yaml       # Standard schematic (boot params + extensions)
 ├── talos-factory-schematic-gpu.yaml   # GPU schematic (+ NVIDIA drivers)
+├── talos-factory-schematic-pi.yaml    # Pi schematic (ARM-safe kernel args)
 ├── generated/                         # Generated configs (gitignored)
 │   ├── controlplane/
 │   └── worker/
@@ -115,10 +118,12 @@ make schematics
 ```
 
 This target:
-1. Posts `talos-factory-schematic.yaml` and `talos-factory-schematic-gpu.yaml`
+1. Posts `talos-factory-schematic.yaml`, `talos-factory-schematic-gpu.yaml`,
+   and `talos-factory-schematic-pi.yaml`
    to the Image Factory API (`factory.talos.dev`)
 2. Extracts schematic IDs from the JSON response
-3. Writes IDs to `.schematic-ids.mk` (committed, used by `make gen-configs`)
+3. Writes IDs (`SCHEMATIC_ID`, `GPU_SCHEMATIC_ID`, `PI_SCHEMATIC_ID`) to `.schematic-ids.mk`
+   (committed, used by `make gen-configs`)
 
 Install image URLs are constructed at Make time from the schematic IDs + `TALOS_VERSION`:
 ```
@@ -143,6 +148,7 @@ generated/worker/node-04.yaml         # Worker nodes
 generated/worker/node-05.yaml
 generated/worker/node-06.yaml
 generated/worker/node-gpu-01.yaml     # GPU worker
+generated/worker/node-pi-01.yaml      # Pi worker
 ```
 
 Post-processing automatically removes the `auto: stable` field from HostnameConfig
@@ -213,6 +219,7 @@ kubectl get nodes -o wide
 | `nodes/node-{01..03}.yaml` | Install disk (by-path), static IP, default route, **VIP 192.168.2.60**, DNS, hostname |
 | `nodes/node-{04..06}.yaml` | Install disk (by-path), static IP, default route, DNS, hostname (no VIP) |
 | `nodes/node-gpu-01.yaml` | Install disk (by-path), static IP, default route, DNS, hostname (no VIP), UserVolumeConfig (NVMe) |
+| `nodes/node-pi-01.yaml` | Install disk (by-id USB), static IP `192.168.2.68`, default route, DNS, hostname (edge worker) |
 
 VIP is only configured on control plane nodes (kube-apiserver HA).
 
@@ -222,6 +229,7 @@ VIP is only configured on control plane nodes (kube-apiserver HA).
 |------|-----------|-------|
 | `talos-factory-schematic.yaml` | drbd, gvisor, i915, intel-ucode, nvme-cli | Boot params: performance + security + NVMe/PCIe + IOMMU |
 | `talos-factory-schematic-gpu.yaml` | drbd, gvisor, i915, intel-ucode, nvidia-open-gpu-kernel-modules-lts, nvidia-container-toolkit-lts, realtek-firmware | Same boot params + `usbcore.autosuspend=-1`, `iommu.strict=0` (lazy for GPU DMA) |
+| `talos-factory-schematic-pi.yaml` | none | Separate ARM profile for Pi edge worker |
 
 Boot kernel parameters (shared by both schematics unless noted):
 - **Performance:** `cpufreq.default_governor=performance`, `intel_idle.max_cstate=0`, `processor.max_cstate=0`, `transparent_hugepage=madvise`, `elevator=none`

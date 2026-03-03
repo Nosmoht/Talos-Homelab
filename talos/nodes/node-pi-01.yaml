@@ -1,0 +1,20 @@
+machine:
+  install:
+    # Populate with the persistent USB disk ID seen from Talos installer shell.
+    disk: /dev/disk/by-id/REPLACE_WITH_PI_USB_DISK_ID
+  network:
+    interfaces:
+      - deviceSelector:
+          hardwareAddr: REPLACE_WITH_PI_ETH0_MAC
+        addresses:
+          - 192.168.2.68/24
+        routes:
+          - network: 0.0.0.0/0
+            gateway: 192.168.2.1
+    nameservers:
+      - 192.168.2.1
+---
+apiVersion: v1alpha1
+kind: HostnameConfig
+auto: null
+hostname: node-pi-01
