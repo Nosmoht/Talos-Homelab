@@ -14,8 +14,8 @@ Comprehensive hardware analysis of a Talos Kubernetes node. Gathers data via `ta
 
 The user provides either a node name (e.g., `node-gpu-01`) or an IP address (e.g., `192.168.2.67`).
 
-1. If given a **node name**: look up `nodes/<name>.yaml` to find the IP address (under `machine.network.interfaces[].addresses`).
-2. If given an **IP address**: scan `nodes/*.yaml` files to find the matching node name by IP, and read the HostnameConfig `hostname` field.
+1. If given a **node name**: look up `talos/nodes/<name>.yaml` to find the IP address (under `machine.network.interfaces[].addresses`).
+2. If given an **IP address**: scan `talos/nodes/*.yaml` files to find the matching node name by IP, and read the HostnameConfig `hostname` field.
 3. If neither matches, ask the user for clarification.
 
 Store both `NODE_NAME` and `NODE_IP` for use throughout.
@@ -103,15 +103,15 @@ kubectl get nodefeature -n node-feature-discovery $NODE_NAME -o yaml 2>/dev/null
 
 Read the following files to understand what's currently configured:
 
-1. `patches/common.yaml` — shared sysctls and settings for all nodes
+1. `talos/patches/common.yaml` — shared sysctls and settings for all nodes
 2. Determine the node's role from its Kubernetes labels (`node-role.kubernetes.io/control-plane` or worker):
-   - Control plane: `patches/controlplane.yaml`
-   - GPU worker: `patches/worker-gpu.yaml`
+   - Control plane: `talos/patches/controlplane.yaml`
+   - GPU worker: `talos/patches/worker-gpu.yaml`
    - Standard workers have no role patch (install image injected dynamically via Makefile)
-3. `nodes/$NODE_NAME.yaml` — node-specific config
+3. `talos/nodes/$NODE_NAME.yaml` — node-specific config
 4. Determine the correct factory schematic:
-   - Standard nodes: `talos-factory-schematic.yaml`
-   - GPU worker: `talos-factory-schematic-gpu.yaml`
+   - Standard nodes: `talos/talos-factory-schematic.yaml`
+   - GPU worker: `talos/talos-factory-schematic-gpu.yaml`
    - Check the `machine.install.image` URL in the role patch — the schematic ID in the URL identifies which schematic file
 
 ### Step 4: Live Sysctl Verification

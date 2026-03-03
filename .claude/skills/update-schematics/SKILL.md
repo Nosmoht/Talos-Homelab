@@ -22,8 +22,8 @@ The user provides a node name (e.g., `node-01`, `node-gpu-01`) or `all`.
   > Hardware analysis for `<node>` not found. Please run `/analyze-node-hardware <node>` first.
 
 **Classify nodes into schematic groups** using the Makefile variables:
-- Read `CP_NODES` and `WORKER_NODES` from `Makefile` — these use `talos-factory-schematic.yaml` (standard schematic)
-- Read `GPU_NODES` from `Makefile` — these use `talos-factory-schematic-gpu.yaml` (GPU schematic)
+- Read `CP_NODES` and `WORKER_NODES` from `talos/Makefile` — these use `talos/talos-factory-schematic.yaml` (standard schematic)
+- Read `GPU_NODES` from `talos/Makefile` — these use `talos/talos-factory-schematic-gpu.yaml` (GPU schematic)
 
 Store the mapping of which target nodes belong to which schematic group.
 
@@ -33,13 +33,13 @@ Read ALL of the following files:
 
 1. **Hardware analysis docs** for each target node: `docs/hardware-analysis-<node>.md`
 2. **Both schematic YAML files:**
-   - `talos-factory-schematic.yaml` — standard nodes
-   - `talos-factory-schematic-gpu.yaml` — GPU nodes
+   - `talos/talos-factory-schematic.yaml` — standard nodes
+   - `talos/talos-factory-schematic-gpu.yaml` — GPU nodes
 3. **Role patches** (for kernel module declarations):
-   - `patches/controlplane.yaml` — control plane config (no install image)
-   - `patches/worker-gpu.yaml` — look for `machine.kernel.modules`
+   - `talos/patches/controlplane.yaml` — control plane config (no install image)
+   - `talos/patches/worker-gpu.yaml` — look for `machine.kernel.modules`
    - Install images are NOT in patch files — they're built dynamically from `.schematic-ids.mk` + `TALOS_VERSION`
-4. **TALOS_VERSION** from `Makefile` (line starting with `TALOS_VERSION :=`)
+4. **TALOS_VERSION** from `talos/Makefile` (line starting with `TALOS_VERSION :=`)
 
 ## Step 3: Query Extension Catalog
 
@@ -102,7 +102,7 @@ Present a structured summary. **Stop and wait for user approval before making ch
 ```markdown
 ## Schematic Extension Recommendations
 
-### Standard Schematic (`talos-factory-schematic.yaml`)
+### Standard Schematic (`talos/talos-factory-schematic.yaml`)
 
 **Current Extensions:**
 | Extension | Status | Rationale |
@@ -122,7 +122,7 @@ Present a structured summary. **Stop and wait for user approval before making ch
 | node-01 | Intel | Intel iGPU | Yes | I219-LM | drbd, intel-ucode, i915, nvme-cli |
 | ... | ... | ... | ... | ... | ... |
 
-### GPU Schematic (`talos-factory-schematic-gpu.yaml`)
+### GPU Schematic (`talos/talos-factory-schematic-gpu.yaml`)
 
 (Same format as above)
 
@@ -142,12 +142,12 @@ After user approval:
    - Preserve the rest of the file (bootloader, extraKernelArgs) unchanged
 2. **Validate YAML** after editing:
    ```bash
-   python3 -c "import yaml; yaml.safe_load(open('talos-factory-schematic.yaml'))" && echo "OK"
-   python3 -c "import yaml; yaml.safe_load(open('talos-factory-schematic-gpu.yaml'))" && echo "OK"
+   python3 -c "import yaml; yaml.safe_load(open('talos/talos-factory-schematic.yaml'))" && echo "OK"
+   python3 -c "import yaml; yaml.safe_load(open('talos/talos-factory-schematic-gpu.yaml'))" && echo "OK"
    ```
-3. **Cross-check kernel modules** — verify that kernel module declarations in role patches (`machine.kernel.modules` in `patches/worker-gpu.yaml`, `patches/controlplane.yaml`) are consistent with the schematic extensions:
+3. **Cross-check kernel modules** — verify that kernel module declarations in role patches (`machine.kernel.modules` in `talos/patches/worker-gpu.yaml`, `talos/patches/controlplane.yaml`) are consistent with the schematic extensions:
    - NVIDIA extensions require `nvidia`, `nvidia_uvm`, `nvidia_drm` modules in the role patch
-   - DRBD extension requires `drbd` module (should be in `patches/common.yaml`)
+   - DRBD extension requires `drbd` module (should be in `talos/patches/common.yaml`)
    - If mismatch found, **warn** the user but do NOT edit role patches (out of scope for this skill)
 
 ## Step 9: Run Make Targets

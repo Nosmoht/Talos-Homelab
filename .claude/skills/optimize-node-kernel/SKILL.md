@@ -25,15 +25,15 @@ Read ALL of the following files before making any recommendations:
    - `docs/kernel-tuning.md` — standard node tuning (understand what's already decided)
    - `docs/kernel-tuning-gpu.md` — GPU node tuning (if exists)
 3. **Current config files (determine which ones apply to this node):**
-   - `patches/common.yaml` — shared sysctls for ALL nodes
+   - `talos/patches/common.yaml` — shared sysctls for ALL nodes
    - Role patch (determine from node labels or hardware analysis):
-     - `patches/controlplane.yaml` for control plane nodes
-     - `patches/worker-gpu.yaml` for GPU workers
+     - `talos/patches/controlplane.yaml` for control plane nodes
+     - `talos/patches/worker-gpu.yaml` for GPU workers
      - Standard workers have no role patch (install image injected dynamically via Makefile)
-   - `nodes/<node-name>.yaml` — node-specific config
+   - `talos/nodes/<node-name>.yaml` — node-specific config
    - Factory schematic:
-     - `talos-factory-schematic.yaml` for standard nodes
-     - `talos-factory-schematic-gpu.yaml` for GPU workers
+     - `talos/talos-factory-schematic.yaml` for standard nodes
+     - `talos/talos-factory-schematic-gpu.yaml` for GPU workers
 4. **Talos KSPP defaults** (documented in kernel-tuning.md Section 3) — to avoid duplicating parameters Talos already enforces
 
 ## Step 2: Identify Tuning Opportunities
@@ -91,12 +91,12 @@ Use WebSearch and WebFetch to research hardware-specific recommendations:
 
 | Parameter Type | Condition | Placement |
 |---------------|-----------|-----------|
-| **Sysctls** | Applies to ALL nodes (network, memory, security) | `patches/common.yaml` |
-| **Sysctls** | Specific to GPU workloads | `patches/worker-gpu.yaml` |
-| **Sysctls** | Specific to control plane (etcd tuning) | `patches/controlplane.yaml` |
-| **Sysctls** | Unique to one node's hardware | `nodes/<node>.yaml` |
-| **Boot parameters** | Applies to standard nodes | `talos-factory-schematic.yaml` |
-| **Boot parameters** | Applies to GPU worker | `talos-factory-schematic-gpu.yaml` |
+| **Sysctls** | Applies to ALL nodes (network, memory, security) | `talos/patches/common.yaml` |
+| **Sysctls** | Specific to GPU workloads | `talos/patches/worker-gpu.yaml` |
+| **Sysctls** | Specific to control plane (etcd tuning) | `talos/patches/controlplane.yaml` |
+| **Sysctls** | Unique to one node's hardware | `talos/nodes/<node>.yaml` |
+| **Boot parameters** | Applies to standard nodes | `talos/talos-factory-schematic.yaml` |
+| **Boot parameters** | Applies to GPU worker | `talos/talos-factory-schematic-gpu.yaml` |
 | **Kernel module params** | Role-specific module | Role patch (e.g., `worker-gpu.yaml`) |
 | **BIOS settings** | Cannot be set via config | Document in recommendations only |
 
@@ -114,22 +114,22 @@ Before making any changes, present a structured summary to the user:
 ```markdown
 ## Kernel Optimization Recommendations for <node-name>
 
-### Changes to `patches/common.yaml` (affects ALL nodes)
+### Changes to `talos/patches/common.yaml` (affects ALL nodes)
 | Sysctl | Current | Proposed | Rationale |
 |--------|---------|----------|-----------|
 | ... | ... | ... | ... |
 
-### Changes to `patches/<role>.yaml`
+### Changes to `talos/patches/<role>.yaml`
 | Parameter | Current | Proposed | Rationale |
 |-----------|---------|----------|-----------|
 | ... | ... | ... | ... |
 
-### Changes to `nodes/<node>.yaml`
+### Changes to `talos/nodes/<node>.yaml`
 | Parameter | Current | Proposed | Rationale |
 |-----------|---------|----------|-----------|
 | ... | ... | ... | ... |
 
-### Changes to `talos-factory-schematic*.yaml`
+### Changes to `talos/talos-factory-schematic*.yaml`
 | Boot Parameter | Current | Proposed | Rationale |
 |----------------|---------|----------|-----------|
 | ... | ... | ... | ... |
@@ -155,7 +155,7 @@ For each approved change:
 2. **Verify YAML validity** after each edit:
    ```bash
    # For Talos config patches, validate if possible:
-   python3 -c "import yaml; yaml.safe_load(open('patches/common.yaml'))" 2>&1 || echo "YAML INVALID"
+   python3 -c "import yaml; yaml.safe_load(open('talos/patches/common.yaml'))" 2>&1 || echo "YAML INVALID"
    ```
 3. **Regenerate configs** (suggest but don't run without approval):
    ```bash
