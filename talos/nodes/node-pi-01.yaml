@@ -1,11 +1,10 @@
 machine:
   install:
-    # Populate with the persistent USB disk ID seen from Talos installer shell.
-    disk: /dev/disk/by-id/REPLACE_WITH_PI_USB_DISK_ID
+    disk: /dev/disk/by-id/usb-EDILOCA_EN605_256GB_012938000C52-0:0
   network:
     interfaces:
       - deviceSelector:
-          hardwareAddr: REPLACE_WITH_PI_ETH0_MAC
+          hardwareAddr: dc:a6:32:c4:57:e8
         addresses:
           - 192.168.2.68/24
         routes:
