@@ -12,7 +12,7 @@ The platform now follows a cleaner GitOps ownership model than the initial revie
 - Infrastructure/app projects are no longer wildcard-open for destinations and cluster-scoped kinds.
 - Mutable Argo source revisions were pinned (`main` for Git refs, exact chart versions).
 - Cert-manager SOPS secret format was normalized to encrypt sensitive data fields only.
-- Kubelet serving cert approver source was fixed (migrated from dead Helm repo URL to upstream Git source).
+- Kubelet serving cert approver source was fixed (switched from dead Helm repo URL to upstream Git source).
 - Talos no longer bootstraps cert-approver/metrics-server via `extraManifests`; these are now Argo-owned.
 
 ## Closed Findings
@@ -77,4 +77,4 @@ The following previously reported issues are resolved:
 
 ## Notes
 
-- For actionable status tracking, use [`docs/kubernetes-review-todo.md`](/Users/thomaskrahn/workspace/homelab-migration/docs/kubernetes-review-todo.md), which is the live source of truth for open/closed findings.
+- For actionable status tracking, use [`docs/kubernetes-review-todo.md`](kubernetes-review-todo.md), which is the live source of truth for open/closed findings.
