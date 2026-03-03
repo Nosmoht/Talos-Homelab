@@ -38,7 +38,15 @@ spec:
         - ports:
             - port: "9093"
               protocol: TCP
-    # Alertmanager mesh (self)
+    # Prometheus -> Alertmanager config-reloader metrics
+    - fromEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: prometheus
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+    # Alertmanager mesh (self) — memberlist gossip uses TCP + UDP
     - fromEndpoints:
         - matchLabels:
             app.kubernetes.io/name: alertmanager
@@ -46,6 +54,8 @@ spec:
         - ports:
             - port: "9094"
               protocol: TCP
+            - port: "9094"
+              protocol: UDP
     # Loki ruler -> Alertmanager
     - fromEndpoints:
         - matchLabels:
@@ -55,7 +65,7 @@ spec:
             - port: "9093"
               protocol: TCP
   egress:
-    # Alertmanager mesh
+    # Alertmanager mesh — memberlist gossip uses TCP + UDP
     - toEndpoints:
         - matchLabels:
             app.kubernetes.io/name: alertmanager
@@ -63,6 +73,8 @@ spec:
         - ports:
             - port: "9094"
               protocol: TCP
+            - port: "9094"
+              protocol: UDP
     # DNS
     - toEndpoints:
         - matchLabels:
