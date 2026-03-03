@@ -58,13 +58,12 @@ spec:
               protocol: UDP
             - port: "53"
               protocol: TCP
-    # External HTTPS (Google OIDC APIs)
-    - toCIDRSet:
-        - cidr: 0.0.0.0/0
-          except:
-            - 10.0.0.0/8
-            - 172.16.0.0/12
-            - 192.168.0.0/16
+    # External HTTPS (Google OIDC APIs only)
+    - toFQDNs:
+        - matchName: accounts.google.com
+        - matchName: oauth2.googleapis.com
+        - matchName: openidconnect.googleapis.com
+        - matchName: www.googleapis.com
       toPorts:
         - ports:
             - port: "443"
