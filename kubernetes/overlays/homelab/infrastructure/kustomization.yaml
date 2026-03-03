@@ -14,6 +14,7 @@ resources:
   - gateway-api
   - cloudnative-pg
   - redis-operator
+  - strimzi-kafka-operator
   - dex
   - kyverno
   - kube-prometheus-stack
