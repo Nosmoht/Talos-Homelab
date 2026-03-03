@@ -14,6 +14,7 @@ resources:
   - gateway-api
   - cloudnative-pg
   - dex
+  - kyverno
   - kube-prometheus-stack
   - loki
   - alloy
