@@ -58,6 +58,9 @@ spec:
               protocol: UDP
             - port: "53"
               protocol: TCP
+          rules:
+            dns:
+              - matchPattern: "*"
     # External HTTPS (Google OIDC APIs only)
     - toFQDNs:
         - matchName: accounts.google.com
