@@ -33,8 +33,10 @@ spec:
             - port: "3370"
               protocol: TCP
     # Kubelet health probes + linstor-csi-node (hostNetwork)
+    # hostNetwork traffic can arrive as host (local node) or remote-node (other nodes).
     - fromEntities:
         - host
+        - remote-node
       toPorts:
         - ports:
             - port: "3370"

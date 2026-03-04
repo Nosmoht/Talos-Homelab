@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/part-of: homelab
     app.kubernetes.io/managed-by: argocd
 spec:
-  description: Gateway profile for edge ingress with Cilium L2.
+  description: Gateway service profile with Cilium L2 announcements.
   service:
     # L2 announcements with externalTrafficPolicy=Local can blackhole traffic on
     # announcer nodes without a local gateway endpoint.

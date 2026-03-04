@@ -8,7 +8,7 @@
 | 4 | High | bootstrap | Argo CD bootstrap and self-managed chart versions now aligned and pinned (`9.4.5`) | DONE |
 | 5 | High | projects | All-wildcard `sourceRepos`/`destinations` — no project isolation | DONE |
 | 6 | Medium | argocd | HTTPRoute missing `sectionName: https` | DONE |
-| 7 | Medium | argocd | `global.domain: ""` — should be `argocd.homelab.ntbc.io` | DONE |
+| 7 | Medium | argocd | `global.domain: ""` — should be `argocd.homelab.local` | DONE |
 | 8 | Medium | argocd | sops-age volumeMount missing `readOnly: true` | DONE |
 | 9 | Medium | all apps | No `retry` block on any Application CR | DONE |
 | 10 | Medium | cert-manager | Missing `SkipDryRunOnMissingResource=true` | DONE |
