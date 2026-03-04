@@ -38,14 +38,6 @@ configMapGenerator:
       labels:
         grafana_dashboard: "1"
       disableNameSuffixHash: true
-  - name: dashboard-kubernetes-scheduler
-    namespace: monitoring
-    files:
-      - dashboards/kubernetes-scheduler.json
-    options:
-      labels:
-        grafana_dashboard: "1"
-      disableNameSuffixHash: true
   - name: dashboard-ingress-geo-traffic
     namespace: monitoring
     files:
