@@ -67,6 +67,7 @@ make apply-node-01
 1. Control plane nodes one at a time: `node-01` → `node-02` → `node-03`
 2. Worker nodes: `node-04` → `node-05` → `node-06`
 3. GPU worker: `node-gpu-01`
+4. Pi worker: `node-pi-01`
 
 Verify each node is `Ready` before proceeding to the next:
 
@@ -116,6 +117,7 @@ make upgrade-node-04
 make upgrade-node-05
 make upgrade-node-06
 make upgrade-node-gpu-01
+make upgrade-node-pi-01
 ```
 
 `make upgrade-<node>` performs two steps:
@@ -126,6 +128,7 @@ make upgrade-node-gpu-01
 The correct image (standard vs. GPU) is assigned automatically:
 - **Standard nodes** (node-01..06): image from `INSTALL_IMAGE` (built from `.schematic-ids.mk` + `TALOS_VERSION`)
 - **GPU node** (node-gpu-01): image from `GPU_INSTALL_IMAGE` (built from `.schematic-ids.mk` + `TALOS_VERSION`)
+- **Pi node** (node-pi-01): image from `PI_INSTALL_IMAGE` (built from `.schematic-ids.mk` + `TALOS_VERSION`)
 
 ### Post-Upgrade Verification
 

@@ -9,5 +9,9 @@ metadata:
     app.kubernetes.io/part-of: homelab
     app.kubernetes.io/managed-by: argocd
 spec:
+  # Reserve this pool for the Gateway API Service only.
+  serviceSelector:
+    matchLabels:
+      gateway.networking.k8s.io/gateway-name: homelab-gateway
   blocks:
     - cidr: 192.168.2.70/32
