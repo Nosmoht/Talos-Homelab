@@ -64,15 +64,15 @@ configMapGenerator:
       disableNameSuffixHash: true
 
 resources:
+  - grafana-httproute.yaml
+  - prometheus-httproute.yaml
+  - alertmanager-httproute.yaml
   - thanos-query.yaml
   - etcd-service.yaml
   - etcd-endpointslice.yaml
   - etcd-servicemonitor.yaml
   - cilium-servicemonitors.yaml
   - prometheus-rules.yaml
-  - grafana-httproute.yaml
-  - prometheus-httproute.yaml
-  - alertmanager-httproute.yaml
   - oauth2-proxy-prometheus.yaml
   - oauth2-proxy-allowed-emails.yaml
   - oauth2-proxy-alertmanager.yaml

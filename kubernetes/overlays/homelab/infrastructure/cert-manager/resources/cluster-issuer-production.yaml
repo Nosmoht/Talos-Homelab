@@ -23,4 +23,4 @@ spec:
               name: google-cloud-dns
         selector:
           dnsZones:
-            - homelab.ntbc.io
+            - homelab.local

@@ -10,8 +10,10 @@ metadata:
     app.kubernetes.io/component: oauth2-proxy
     app.kubernetes.io/part-of: homelab
     app.kubernetes.io/managed-by: argocd
+    homelab.local/expose: "true"
 spec:
-  type: ClusterIP
+  type: LoadBalancer
+  loadBalancerIP: 192.168.2.133
   ports:
     - name: http
       port: 4180
@@ -60,8 +62,12 @@ spec:
           args:
             - --http-address=0.0.0.0:4180
             - --provider=oidc
-            - --oidc-issuer-url=https://dex-int.homelab.ntbc.io
-            - --redirect-url=https://prometheus-int.homelab.ntbc.io/oauth2/callback
+            - --oidc-issuer-url=https://dex.homelab.local
+            - --skip-oidc-discovery=true
+            - --login-url=https://dex.homelab.local/auth
+            - --redeem-url=http://dex.dex.svc.cluster.local:5556/token
+            - --oidc-jwks-url=http://dex.dex.svc.cluster.local:5556/keys
+            - --redirect-url=https://prometheus.homelab.local/oauth2/callback
             - --upstream=http://monitoring-kube-prometheus-prometheus.monitoring.svc:9090
             - --email-domain=*
             - --authenticated-emails-file=/etc/oauth2-proxy/allowed-emails

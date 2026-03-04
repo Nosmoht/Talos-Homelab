@@ -15,6 +15,13 @@ spec:
       app.kubernetes.io/name: dex
       app.kubernetes.io/instance: dex
   ingress:
+    # Direct local LAN access to Dex UI/API via dedicated LoadBalancer IP
+    - fromCIDRSet:
+        - cidr: 192.168.2.0/24
+      toPorts:
+        - ports:
+            - port: "5556"
+              protocol: TCP
     # Gateway proxy traffic (Cilium external Envoy proxy uses reserved:ingress identity)
     - fromEntities:
         - ingress

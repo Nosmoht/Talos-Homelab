@@ -17,7 +17,7 @@ spec:
       namespace: default
       sectionName: https
   hostnames:
-    - alertmanager-int.homelab.ntbc.io
+    - alertmanager.homelab.local
   rules:
     - matches:
         - path:

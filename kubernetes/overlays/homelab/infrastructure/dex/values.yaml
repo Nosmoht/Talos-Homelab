@@ -6,6 +6,13 @@ serviceAccount:
   create: false
   name: dex
 
+commonLabels:
+  "homelab.local/expose": "true"
+
+service:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.2.131
+
 topologySpreadConstraints:
   - maxSkew: 1
     topologyKey: kubernetes.io/hostname
@@ -27,6 +34,7 @@ affinity:
           topologyKey: kubernetes.io/hostname
 
 config:
+  enablePasswordDB: true
   storage:
     type: postgres
     config:
@@ -37,41 +45,39 @@ config:
       password: $DEX_DB_PASSWORD
       ssl:
         mode: require
-  issuer: https://dex-int.homelab.ntbc.io
-  enablePasswordDB: true
-  staticPasswords:
-    - email: nosmoht@ntbc.io
-      username: nosmoht
-      userID: "4f8c860e-06f9-44d6-bf8a-4208d7c9ff90"
-      hash: "$2y$12$oB5CvF4Wl.8NXA3QvhK6nuFVQiHwiLJGF30DgTL4F1RBJTQGREHbq"
+  issuer: https://dex.homelab.local
   staticClients:
     - id: argocd
       name: Argo CD
       redirectURIs:
-        - https://argocd-int.homelab.ntbc.io/auth/callback
+        - https://argocd.homelab.local/auth/callback
       secretEnv: ARGOCD_OIDC_CLIENT_SECRET
     - id: argo-workflows
       name: Argo Workflows
       redirectURIs:
-        - https://argoworkflows.homelab.ntbc.io/oauth2/callback
+        - https://argoworkflows.homelab.local/oauth2/callback
       secretEnv: ARGO_WORKFLOWS_OIDC_CLIENT_SECRET
     - id: grafana
       name: Grafana
       redirectURIs:
-        - https://grafana-int.homelab.ntbc.io/login/generic_oauth
-        - http://127.0.0.1:3000/login/generic_oauth
-        - http://localhost:3000/login/generic_oauth
+        - https://grafana.homelab.local/login/generic_oauth
       secretEnv: GRAFANA_OIDC_CLIENT_SECRET
     - id: prometheus
       name: Prometheus
       redirectURIs:
-        - https://prometheus-int.homelab.ntbc.io/oauth2/callback
+        - https://prometheus.homelab.local/oauth2/callback
       secretEnv: PROMETHEUS_OIDC_CLIENT_SECRET
     - id: alertmanager
       name: Alertmanager
       redirectURIs:
-        - https://alertmanager-int.homelab.ntbc.io/oauth2/callback
+        - https://alertmanager.homelab.local/oauth2/callback
       secretEnv: ALERTMANAGER_OIDC_CLIENT_SECRET
+  staticPasswords:
+    - email: nosmoht
+      # bcrypt hash generated for the local Dex password auth user.
+      hash: $2y$12$oB5CvF4Wl.8NXA3QvhK6nuFVQiHwiLJGF30DgTL4F1RBJTQGREHbq
+      userID: 4f8c860e-06f9-44d6-bf8a-4208d7c9ff90
+      username: nosmoht
 
 envVars:
   - name: ARGOCD_OIDC_CLIENT_SECRET

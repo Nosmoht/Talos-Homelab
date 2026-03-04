@@ -14,6 +14,13 @@ spec:
     matchLabels:
       app.kubernetes.io/name: grafana
   ingress:
+    # Direct local LAN access to Grafana via dedicated LoadBalancer IP
+    - fromCIDRSet:
+        - cidr: 192.168.2.0/24
+      toPorts:
+        - ports:
+            - port: "3000"
+              protocol: TCP
     # Prometheus -> Grafana metrics (ServiceMonitor monitoring-grafana)
     - fromEndpoints:
         - matchLabels:
@@ -97,11 +104,4 @@ spec:
             - port: "443"
               protocol: TCP
             - port: "6443"
-              protocol: TCP
-    # HTTPS (Dex OIDC discovery via internal hostname)
-    - toFQDNs:
-        - matchName: dex-int.homelab.ntbc.io
-      toPorts:
-        - ports:
-            - port: "443"
               protocol: TCP

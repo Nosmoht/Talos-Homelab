@@ -17,7 +17,7 @@ spec:
       namespace: default
       sectionName: https
   hostnames:
-    - prometheus-int.homelab.ntbc.io
+    - prometheus.homelab.local
   rules:
     - matches:
         - path:

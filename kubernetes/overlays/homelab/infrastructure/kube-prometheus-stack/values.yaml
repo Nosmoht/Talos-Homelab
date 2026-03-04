@@ -85,8 +85,11 @@ kube-state-metrics:
 grafana:
   replicas: 1
   service:
-    type: ClusterIP
+    type: LoadBalancer
+    loadBalancerIP: 192.168.2.132
     sessionAffinity: ClientIP
+    labels:
+      "homelab.local/expose": "true"
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -112,8 +115,8 @@ grafana:
     GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: "true"
   grafana.ini:
     server:
-      domain: 127.0.0.1
-      root_url: http://127.0.0.1:3000
+      domain: localhost
+      root_url: http://localhost:3000
     analytics:
       reporting_enabled: false
       check_for_updates: false
@@ -121,17 +124,20 @@ grafana:
       feedback_links_enabled: false
     security:
       disable_initial_admin_creation: true
-      cookie_secure: true
+      cookie_secure: false
       cookie_samesite: lax
     auth:
-      disable_login_form: true
-    auth.generic_oauth:
+      disable_login_form: false
+    auth.anonymous:
       enabled: true
+      org_role: Admin
+    auth.generic_oauth:
+      enabled: false
       name: Dex
       client_id: grafana
       client_secret: ${GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
       scopes: openid email profile groups
-      auth_url: http://127.0.0.1:5556/auth
+      auth_url: https://dex.homelab.local/auth
       token_url: http://dex.dex.svc.cluster.local:5556/token
       api_url: http://dex.dex.svc.cluster.local:5556/userinfo
       allow_sign_up: true
