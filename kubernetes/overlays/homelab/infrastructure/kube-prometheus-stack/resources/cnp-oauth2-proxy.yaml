@@ -26,6 +26,13 @@ spec:
         - ports:
             - port: "4180"
               protocol: TCP
+    # Cilium may classify cross-node LB forwarding as world on backend nodes
+    - fromEntities:
+        - world
+      toPorts:
+        - ports:
+            - port: "4180"
+              protocol: TCP
     # Gateway proxy traffic (Cilium external Envoy proxy uses reserved:ingress identity)
     - fromEntities:
         - ingress
