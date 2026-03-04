@@ -112,26 +112,33 @@ grafana:
     GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: "true"
   grafana.ini:
     server:
-      domain: grafana.homelab.ntbc.io
-      root_url: https://grafana.homelab.ntbc.io
+      domain: localhost
+      root_url: http://localhost:3000
+    analytics:
+      reporting_enabled: false
+      check_for_updates: false
+      check_for_plugin_updates: false
+      feedback_links_enabled: false
     security:
       disable_initial_admin_creation: true
-      cookie_secure: true
+      cookie_secure: false
       cookie_samesite: lax
     auth:
-      disable_login_form: true
-    auth.generic_oauth:
+      disable_login_form: false
+    auth.anonymous:
       enabled: true
+      org_role: Admin
+    auth.generic_oauth:
+      enabled: false
       name: Dex
       client_id: grafana
       client_secret: ${GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET}
       scopes: openid email profile groups
-      auth_url: https://dex.homelab.ntbc.io/auth
+      auth_url: https://dex-int.homelab.ntbc.io/auth
       token_url: http://dex.dex.svc.cluster.local:5556/token
       api_url: http://dex.dex.svc.cluster.local:5556/userinfo
-      allowed_domains: ntbc.io
       allow_sign_up: true
-      role_attribute_path: email=='ntbc@ntbc.io' && 'Admin' || ''
+      role_attribute_path: preferred_username=='nosmoht' && 'Admin' || ''
       role_attribute_strict: true
       skip_org_role_sync: false
   datasources:
