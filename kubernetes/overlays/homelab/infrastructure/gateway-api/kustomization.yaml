@@ -8,6 +8,7 @@ resources:
   - gateway.yaml
   - gatewayclass-config.yaml
   - certificate.yaml
+  - certificate-argocd.yaml
   - cilium-ip-pool.yaml
   - cilium-ui-ip-pool.yaml
   - cilium-l2-announcement.yaml

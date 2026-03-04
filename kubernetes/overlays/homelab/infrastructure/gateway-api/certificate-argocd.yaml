@@ -1,0 +1,23 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: argocd-homelab-local-tls
+  namespace: default
+  labels:
+    app.kubernetes.io/name: gateway
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: certificate
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  secretName: argocd-homelab-local-tls
+  privateKey:
+    algorithm: ECDSA
+    size: 256
+  duration: 2160h
+  renewBefore: 720h
+  issuerRef:
+    name: vault-internal
+    kind: ClusterIssuer
+  dnsNames:
+    - argocd.homelab.local
