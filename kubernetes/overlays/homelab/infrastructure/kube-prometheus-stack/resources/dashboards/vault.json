@@ -417,8 +417,8 @@
     "list": [
       {
         "current": {
-          "text": "default",
-          "value": "default"
+          "text": "Prometheus",
+          "value": "Prometheus"
         },
         "hide": 0,
         "includeAll": false,
@@ -479,8 +479,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "Vault (Bank-Vaults Metrics)",
-  "uid": "vault",
+  "title": "Hashicorp Vault",
+  "uid": "vaults",
   "version": 1,
   "weekStart": ""
 }
