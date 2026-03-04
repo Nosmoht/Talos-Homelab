@@ -7,3 +7,6 @@ generators:
 resources:
   - cluster-issuer-production.yaml
   - cluster-issuer-staging.yaml
+  - cluster-issuer-vault-internal.yaml
+  - role-cert-manager-vault-tokenrequest.yaml
+  - certificate-vault-pki-canary.yaml
