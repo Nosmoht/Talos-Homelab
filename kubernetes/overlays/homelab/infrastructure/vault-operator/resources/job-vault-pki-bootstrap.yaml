@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: vault-pki-bootstrap
+  name: vault-pki-bootstrap-v2
   namespace: vault
   annotations:
     argocd.argoproj.io/hook: PostSync
