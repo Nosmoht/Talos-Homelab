@@ -15,4 +15,4 @@ spec:
     # L2 announcements with externalTrafficPolicy=Local can blackhole traffic on
     # announcer nodes without a local gateway endpoint.
     externalTrafficPolicy: Cluster
-    allocateLoadBalancerNodePorts: true
+    allocateLoadBalancerNodePorts: false

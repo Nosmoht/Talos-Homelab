@@ -17,7 +17,7 @@ spec:
       namespace: default
       sectionName: https
   hostnames:
-    - grafana.homelab.ntbc.io
+    - grafana-int.homelab.ntbc.io
   rules:
     - matches:
         - path:
