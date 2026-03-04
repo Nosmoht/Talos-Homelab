@@ -12,7 +12,4 @@ spec:
   serviceSelector:
     matchLabels:
       homelab.local/expose: "true"
-  nodeSelector:
-    matchLabels:
-      kubernetes.io/hostname: node-pi-01
   loadBalancerIPs: true

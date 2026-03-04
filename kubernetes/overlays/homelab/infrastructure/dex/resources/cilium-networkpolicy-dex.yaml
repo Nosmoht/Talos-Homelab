@@ -15,9 +15,10 @@ spec:
       app.kubernetes.io/name: dex
       app.kubernetes.io/instance: dex
   ingress:
-    # Direct local LAN access to Dex UI/API via dedicated LoadBalancer IP
+    # Direct local LAN access plus SNATed LB forwarding from cluster PodCIDR
     - fromCIDRSet:
         - cidr: 192.168.2.0/24
+        - cidr: 10.244.0.0/16
       toPorts:
         - ports:
             - port: "5556"
