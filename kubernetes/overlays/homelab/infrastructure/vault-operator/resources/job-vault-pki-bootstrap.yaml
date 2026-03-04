@@ -103,6 +103,8 @@ spec:
                 allow_subdomains=true \
                 allow_glob_domains=true \
                 allow_any_name=false \
+                key_type="ec" \
+                key_bits=256 \
                 max_ttl="2160h"
 
               cat <<'EOF' >/tmp/cert-manager-pki.hcl
