@@ -62,6 +62,14 @@ configMapGenerator:
       labels:
         grafana_dashboard: "1"
       disableNameSuffixHash: true
+  - name: dashboard-piraeus-datastore
+    namespace: monitoring
+    files:
+      - dashboards/piraeus-datastore.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
 
 resources:
   - grafana-httproute.yaml
