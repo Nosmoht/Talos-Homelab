@@ -61,13 +61,3 @@ spec:
           rules:
             dns:
               - matchPattern: "*"
-    # External HTTPS (Google OIDC APIs only)
-    - toFQDNs:
-        - matchName: accounts.google.com
-        - matchName: oauth2.googleapis.com
-        - matchName: openidconnect.googleapis.com
-        - matchName: www.googleapis.com
-      toPorts:
-        - ports:
-            - port: "443"
-              protocol: TCP

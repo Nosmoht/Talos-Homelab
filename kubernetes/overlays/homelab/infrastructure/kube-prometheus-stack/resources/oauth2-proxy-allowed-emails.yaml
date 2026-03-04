@@ -11,4 +11,4 @@ metadata:
     app.kubernetes.io/managed-by: argocd
 data:
   allowed-emails: |
-    ntbc@ntbc.io
+    nosmoht@ntbc.io

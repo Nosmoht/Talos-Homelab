@@ -62,9 +62,9 @@ spec:
               protocol: UDP
             - port: "53"
               protocol: TCP
-    # External HTTPS (Dex OIDC discovery via public URL)
+    # HTTPS (Dex OIDC discovery via internal hostname)
     - toFQDNs:
-        - matchName: dex.homelab.ntbc.io
+        - matchName: dex-int.homelab.ntbc.io
       toPorts:
         - ports:
             - port: "443"

@@ -60,8 +60,8 @@ spec:
           args:
             - --http-address=0.0.0.0:4180
             - --provider=oidc
-            - --oidc-issuer-url=https://dex.homelab.ntbc.io
-            - --redirect-url=https://prometheus.homelab.ntbc.io/oauth2/callback
+            - --oidc-issuer-url=https://dex-int.homelab.ntbc.io
+            - --redirect-url=https://prometheus-int.homelab.ntbc.io/oauth2/callback
             - --upstream=http://monitoring-kube-prometheus-prometheus.monitoring.svc:9090
             - --email-domain=*
             - --authenticated-emails-file=/etc/oauth2-proxy/allowed-emails
