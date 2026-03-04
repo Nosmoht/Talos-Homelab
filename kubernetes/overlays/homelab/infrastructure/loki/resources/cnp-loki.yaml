@@ -30,29 +30,28 @@ spec:
         - ports:
             - port: "3100"
               protocol: TCP
-    # Loki gateway -> Loki backend
+    # Prometheus metrics scraping
     - fromEndpoints:
         - matchLabels:
-            app.kubernetes.io/name: loki
-            app.kubernetes.io/component: gateway
+            app.kubernetes.io/name: prometheus
       toPorts:
         - ports:
             - port: "3100"
               protocol: TCP
-    # Loki canary -> Loki gateway
+    # Loki internal component traffic (gateway/read/write/backend/canary)
     - fromEndpoints:
         - matchLabels:
             app.kubernetes.io/name: loki
       toPorts:
         - ports:
+            - port: "3100"
+              protocol: TCP
+            - port: "9095"
+              protocol: TCP
+            - port: "7946"
+              protocol: TCP
             - port: "8080"
               protocol: TCP
-    # Loki single-binary -> memcached caches
-    - fromEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: loki
-      toPorts:
-        - ports:
             - port: "11211"
               protocol: TCP
   egress:
@@ -64,30 +63,30 @@ spec:
         - ports:
             - port: "9093"
               protocol: TCP
-    # Loki gateway -> Loki backend
+    # Loki internal component traffic (gateway/read/write/backend/canary)
     - toEndpoints:
         - matchLabels:
             app.kubernetes.io/name: loki
-            app.kubernetes.io/component: single-binary
       toPorts:
         - ports:
             - port: "3100"
               protocol: TCP
-    # Loki canary -> Loki gateway
-    - toEndpoints:
-        - matchLabels:
-            app.kubernetes.io/name: loki
-      toPorts:
-        - ports:
+            - port: "9095"
+              protocol: TCP
+            - port: "7946"
+              protocol: TCP
             - port: "8080"
               protocol: TCP
-    # Loki single-binary -> memcached caches
+            - port: "11211"
+              protocol: TCP
+    # Loki -> MinIO object storage
     - toEndpoints:
         - matchLabels:
-            app.kubernetes.io/name: loki
+            k8s:io.kubernetes.pod.namespace: minio
+            v1.min.io/tenant: minio
       toPorts:
         - ports:
-            - port: "11211"
+            - port: "9000"
               protocol: TCP
     # Kubernetes API for loki-sc-rules sidecar
     - toCIDRSet:
