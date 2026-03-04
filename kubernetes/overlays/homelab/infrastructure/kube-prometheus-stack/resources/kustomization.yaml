@@ -67,7 +67,6 @@ resources:
   - grafana-httproute.yaml
   - prometheus-httproute.yaml
   - alertmanager-httproute.yaml
-  - grafana-ui-lb.yaml
   - thanos-query.yaml
   - etcd-service.yaml
   - etcd-endpointslice.yaml

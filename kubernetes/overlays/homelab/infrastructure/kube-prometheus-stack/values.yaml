@@ -85,8 +85,11 @@ kube-state-metrics:
 grafana:
   replicas: 1
   service:
-    type: ClusterIP
+    type: LoadBalancer
+    loadBalancerIP: 192.168.2.132
     sessionAffinity: ClientIP
+    labels:
+      "homelab.local/expose": "true"
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
