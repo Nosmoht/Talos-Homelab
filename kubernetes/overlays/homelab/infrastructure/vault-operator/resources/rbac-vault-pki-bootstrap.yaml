@@ -54,9 +54,6 @@ subjects:
   - kind: ServiceAccount
     name: vault
     namespace: vault
-  - kind: ServiceAccount
-    name: vault
-    namespace: vault
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -75,4 +72,7 @@ roleRef:
 subjects:
   - kind: ServiceAccount
     name: vault-pki-bootstrap
+    namespace: vault
+  - kind: ServiceAccount
+    name: vault
     namespace: vault
