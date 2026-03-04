@@ -30,7 +30,7 @@ spec:
           type: RuntimeDefault
       initContainers:
         - name: copy-vault-ca
-          image: bitnami/kubectl:1.33
+          image: alpine/kubectl:1.35.0
           command:
             - /bin/sh
             - -ec
