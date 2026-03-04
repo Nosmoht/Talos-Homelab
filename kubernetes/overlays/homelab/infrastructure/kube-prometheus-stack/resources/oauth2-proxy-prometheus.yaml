@@ -70,6 +70,7 @@ spec:
             - --redirect-url=https://prometheus.homelab.local/oauth2/callback
             - --upstream=http://monitoring-kube-prometheus-prometheus.monitoring.svc:9090
             - --email-domain=*
+            - --oidc-email-claim=preferred_username
             - --authenticated-emails-file=/etc/oauth2-proxy/allowed-emails
             - --scope=openid email profile groups
             - --cookie-secure=true

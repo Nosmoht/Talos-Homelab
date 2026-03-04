@@ -70,6 +70,7 @@ spec:
             - --redirect-url=https://alertmanager.homelab.local/oauth2/callback
             - --upstream=http://monitoring-kube-prometheus-alertmanager.monitoring.svc:9093
             - --email-domain=*
+            - --oidc-email-claim=preferred_username
             - --authenticated-emails-file=/etc/oauth2-proxy/allowed-emails
             - --scope=openid email profile groups
             - --cookie-secure=true
