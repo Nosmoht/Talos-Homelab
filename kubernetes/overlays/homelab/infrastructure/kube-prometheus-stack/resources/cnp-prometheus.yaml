@@ -83,6 +83,16 @@ spec:
         - ports:
             - port: "9000"
               protocol: TCP
+    # Vault metrics (cross-namespace)
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: vault
+            app.kubernetes.io/name: vault
+            vault_cr: vault
+      toPorts:
+        - ports:
+            - port: "9091"
+              protocol: TCP
     # cilium and hubble metrics (cross-namespace)
     - toEndpoints:
         - matchLabels:
