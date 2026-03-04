@@ -858,7 +858,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "rate(drbd_device_written_bytes_total{node=~\"$node\"}[$__rate_interval]) and topk(5, avg_over_time(drbd_device_written_bytes_total{node=~\"$node\"}[$__rate_interval]) > 0)",
+          "expr": "topk(5, rate(drbd_device_written_bytes_total{node=~\"$node\"}[$__rate_interval])) OR on() vector(0)",
           "instant": false,
           "legendFormat": "{{name}} on {{node}}",
           "refId": "A"
@@ -956,7 +956,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "rate(drbd_device_read_bytes_total{node=~\"$node\"}[$__rate_interval]) and topk(5, avg_over_time(drbd_device_read_bytes_total{node=~\"$node\"}[$__rate_interval]) > 0)",
+          "expr": "topk(5, rate(drbd_device_read_bytes_total{node=~\"$node\"}[$__rate_interval])) OR on() vector(0)",
           "instant": false,
           "legendFormat": "{{name}} on {{node}}",
           "refId": "A"
@@ -1054,7 +1054,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by (node) (rate(drbd_device_written_bytes_total{node=~\"$node\"}[$__rate_interval]))",
+          "expr": "sum by (node) (rate(drbd_device_written_bytes_total{node=~\"$node\"}[$__rate_interval])) OR on() vector(0)",
           "instant": false,
           "legendFormat": "{{ node }}",
           "refId": "A"
@@ -1152,7 +1152,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by (node) (rate(drbd_device_read_bytes_total{node=~\"$node\"}[$__rate_interval]))",
+          "expr": "sum by (node) (rate(drbd_device_read_bytes_total{node=~\"$node\"}[$__rate_interval])) OR on() vector(0)",
           "instant": false,
           "legendFormat": "{{ node }}",
           "refId": "A"
@@ -1327,7 +1327,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "avg_over_time(scrape_duration_seconds{job=~\".*/linstor-satellite\", node=~\"$node\"}[$__rate_interval])",
+          "expr": "avg_over_time(scrape_duration_seconds{job=\"drbd-reactor\", node=~\"$node\"}[$__rate_interval]) OR on() vector(0)",
           "legendFormat": "{{node}}",
           "refId": "A"
         }
