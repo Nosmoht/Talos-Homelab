@@ -57,8 +57,12 @@ spec:
               export VAULT_ADDR="https://vault.vault.svc.cluster.local:8200"
               export VAULT_CACERT="/vault/tls/ca.crt"
               export VAULT_TOKEN="$(cat /vault/bootstrap/vault-root)"
-              export KUBE_TOKEN_PATH="/var/run/secrets/kubernetes.io/serviceaccount/token"
-              export KUBE_CA_PATH="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+              export KUBE_TOKEN_PATH="/vault/reviewer/token"
+              export KUBE_CA_PATH="/vault/reviewer/ca.crt"
+
+              until [ -s "${KUBE_TOKEN_PATH}" ] && [ -s "${KUBE_CA_PATH}" ]; do
+                sleep 2
+              done
 
               until vault status >/dev/null 2>&1; do
                 sleep 5
@@ -145,6 +149,9 @@ spec:
             - name: vault-tls
               mountPath: /vault/tls
               readOnly: true
+            - name: vault-k8s-auth-reviewer
+              mountPath: /vault/reviewer
+              readOnly: true
       volumes:
         - name: vault-bootstrap
           secret:
@@ -155,3 +162,6 @@ spec:
         - name: vault-tls
           secret:
             secretName: vault-tls
+        - name: vault-k8s-auth-reviewer
+          secret:
+            secretName: vault-k8s-auth-reviewer

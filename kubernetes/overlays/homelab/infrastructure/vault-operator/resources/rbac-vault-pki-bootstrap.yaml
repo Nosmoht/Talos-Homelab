@@ -10,6 +10,21 @@ metadata:
     app.kubernetes.io/part-of: homelab
     app.kubernetes.io/managed-by: argocd
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: vault-k8s-auth-reviewer
+  namespace: vault
+  annotations:
+    kubernetes.io/service-account.name: vault-pki-bootstrap
+  labels:
+    app.kubernetes.io/name: vault-pki-bootstrap
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: bootstrap
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+type: kubernetes.io/service-account-token
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
