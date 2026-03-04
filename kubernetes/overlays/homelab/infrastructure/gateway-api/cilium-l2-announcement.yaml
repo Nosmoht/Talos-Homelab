@@ -9,5 +9,12 @@ metadata:
     app.kubernetes.io/part-of: homelab
     app.kubernetes.io/managed-by: argocd
 spec:
-  serviceSelector: {}
+  # Announce only the Gateway API LoadBalancer Service, not every LB Service.
+  serviceSelector:
+    matchLabels:
+      gateway.networking.k8s.io/gateway-name: homelab-gateway
+  # Keep VIP ownership on nodes explicitly designated for edge ingress.
+  nodeSelector:
+    matchLabels:
+      homelab.ntbc.io/edge-gateway: "true"
   loadBalancerIPs: true
