@@ -29,6 +29,7 @@ spec:
     - https://ot-container-kit.github.io/helm-charts
     - https://strimzi.io/charts/
     - ghcr.io/bank-vaults/helm-charts*
+    - https://operator.min.io/
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc
@@ -59,6 +60,10 @@ spec:
     - namespace: kafka
       server: https://kubernetes.default.svc
     - namespace: vault
+      server: https://kubernetes.default.svc
+    - namespace: minio-operator
+      server: https://kubernetes.default.svc
+    - namespace: minio
       server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: ""
@@ -91,6 +96,8 @@ spec:
       kind: LinstorCluster
     - group: piraeus.io
       kind: LinstorSatelliteConfiguration
+    - group: minio.min.io
+      kind: Tenant
   namespaceResourceWhitelist:
     - group: "*"
       kind: "*"
