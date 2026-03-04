@@ -74,6 +74,15 @@ spec:
         - ports:
             - port: "9942"
               protocol: TCP
+    # MinIO metrics (cross-namespace)
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: minio
+            v1.min.io/tenant: minio
+      toPorts:
+        - ports:
+            - port: "9000"
+              protocol: TCP
     # cilium and hubble metrics (cross-namespace)
     - toEndpoints:
         - matchLabels:

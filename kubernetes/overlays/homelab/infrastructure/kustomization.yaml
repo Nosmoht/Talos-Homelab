@@ -21,3 +21,5 @@ resources:
   - kube-prometheus-stack
   - loki
   - alloy
+  - minio-operator
+  - minio
