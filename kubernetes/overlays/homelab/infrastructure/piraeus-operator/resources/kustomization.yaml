@@ -6,6 +6,7 @@ resources:
   - linstor-cluster.yaml
   - linstor-satellite-configuration.yaml
   - storage-class.yaml
+  - storage-class-noreplica.yaml
   - storage-pool-autovg.yaml
   - monitoring.yaml
   - cnp-piraeus-operator.yaml
