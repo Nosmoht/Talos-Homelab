@@ -43,6 +43,15 @@ spec:
               protocol: TCP
             - port: "3371"
               protocol: TCP
+    # Prometheus metrics scraping (cross-namespace)
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: monitoring
+            app.kubernetes.io/name: prometheus
+      toPorts:
+        - ports:
+            - port: "3370"
+              protocol: TCP
   egress:
     # Satellite communication
     - toEndpoints:

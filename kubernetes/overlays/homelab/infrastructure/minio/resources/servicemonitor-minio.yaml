@@ -14,11 +14,9 @@ spec:
   namespaceSelector:
     matchNames:
       - minio
-  selector:
-    matchLabels:
-      v1.min.io/tenant: minio
+  selector: {}
   endpoints:
-    - port: http-minio
+    - port: https-minio
       path: /minio/v2/metrics/cluster
       scheme: https
       tlsConfig:

@@ -2166,7 +2166,7 @@
         "multi": true,
         "name": "node",
         "options": [],
-        "query": "label_values(drbdreactor_up, node)",
+        "query": "label_values(linstor_node_state, node)",
         "refresh": 2,
         "regex": "",
         "skipUrlSync": false,

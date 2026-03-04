@@ -74,6 +74,15 @@ spec:
         - ports:
             - port: "9942"
               protocol: TCP
+    # piraeus-datastore linstor-controller metrics (cross-namespace)
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: piraeus-datastore
+            app.kubernetes.io/component: linstor-controller
+      toPorts:
+        - ports:
+            - port: "3370"
+              protocol: TCP
     # MinIO metrics (cross-namespace)
     - toEndpoints:
         - matchLabels:
