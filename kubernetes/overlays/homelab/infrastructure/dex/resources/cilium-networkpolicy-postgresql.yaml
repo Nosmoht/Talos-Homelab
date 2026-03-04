@@ -31,3 +31,5 @@ spec:
         - ports:
             - port: "5432"
               protocol: TCP
+            - port: "8000"
+              protocol: TCP
