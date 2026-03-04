@@ -27,6 +27,7 @@ affinity:
           topologyKey: kubernetes.io/hostname
 
 config:
+  enablePasswordDB: true
   storage:
     type: postgres
     config:
@@ -37,54 +38,41 @@ config:
       password: $DEX_DB_PASSWORD
       ssl:
         mode: require
-  issuer: https://dex.homelab.ntbc.io
-  connectors:
-    - type: google
-      id: google
-      name: Google
-      config:
-        clientID: $GOOGLE_CLIENT_ID
-        clientSecret: $GOOGLE_CLIENT_SECRET
-        redirectURI: https://dex.homelab.ntbc.io/callback
-        promptType: select_account
+  issuer: https://dex.homelab.local
   staticClients:
     - id: argocd
       name: Argo CD
       redirectURIs:
-        - https://argocd.homelab.ntbc.io/auth/callback
+        - https://argocd.homelab.local/auth/callback
       secretEnv: ARGOCD_OIDC_CLIENT_SECRET
     - id: argo-workflows
       name: Argo Workflows
       redirectURIs:
-        - https://argoworkflows.homelab.ntbc.io/oauth2/callback
+        - https://argoworkflows.homelab.local/oauth2/callback
       secretEnv: ARGO_WORKFLOWS_OIDC_CLIENT_SECRET
     - id: grafana
       name: Grafana
       redirectURIs:
-        - https://grafana.homelab.ntbc.io/login/generic_oauth
+        - https://grafana.homelab.local/login/generic_oauth
       secretEnv: GRAFANA_OIDC_CLIENT_SECRET
     - id: prometheus
       name: Prometheus
       redirectURIs:
-        - https://prometheus.homelab.ntbc.io/oauth2/callback
+        - https://prometheus.homelab.local/oauth2/callback
       secretEnv: PROMETHEUS_OIDC_CLIENT_SECRET
     - id: alertmanager
       name: Alertmanager
       redirectURIs:
-        - https://alertmanager.homelab.ntbc.io/oauth2/callback
+        - https://alertmanager.homelab.local/oauth2/callback
       secretEnv: ALERTMANAGER_OIDC_CLIENT_SECRET
+  staticPasswords:
+    - email: nosmoht
+      # bcrypt hash generated for the local Dex password auth user.
+      hash: $2y$12$oB5CvF4Wl.8NXA3QvhK6nuFVQiHwiLJGF30DgTL4F1RBJTQGREHbq
+      userID: 4f8c860e-06f9-44d6-bf8a-4208d7c9ff90
+      username: nosmoht
 
 envVars:
-  - name: GOOGLE_CLIENT_ID
-    valueFrom:
-      secretKeyRef:
-        name: dex-oidc-secrets
-        key: google-client-id
-  - name: GOOGLE_CLIENT_SECRET
-    valueFrom:
-      secretKeyRef:
-        name: dex-oidc-secrets
-        key: google-client-secret
   - name: ARGOCD_OIDC_CLIENT_SECRET
     valueFrom:
       secretKeyRef:

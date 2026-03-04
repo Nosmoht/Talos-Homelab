@@ -18,6 +18,13 @@ spec:
           - prometheus-oauth2-proxy
           - alertmanager-oauth2-proxy
   ingress:
+    # Direct local LAN access to Prometheus/Alertmanager oauth2-proxy frontends
+    - fromCIDRSet:
+        - cidr: 192.168.2.0/24
+      toPorts:
+        - ports:
+            - port: "4180"
+              protocol: TCP
     # Gateway proxy traffic (Cilium external Envoy proxy uses reserved:ingress identity)
     - fromEntities:
         - ingress
@@ -61,11 +68,4 @@ spec:
             - port: "53"
               protocol: UDP
             - port: "53"
-              protocol: TCP
-    # External HTTPS (Dex OIDC discovery via public URL)
-    - toFQDNs:
-        - matchName: dex.homelab.ntbc.io
-      toPorts:
-        - ports:
-            - port: "443"
               protocol: TCP

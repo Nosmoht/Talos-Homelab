@@ -17,7 +17,7 @@ spec:
       namespace: default
       sectionName: https
   hostnames:
-    - argocd.homelab.ntbc.io
+    - argocd.homelab.local
   rules:
     - matches:
         - path:

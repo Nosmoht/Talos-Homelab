@@ -20,5 +20,5 @@ spec:
     name: homelab
     kind: ClusterIssuer
   dnsNames:
-    - homelab.ntbc.io
-    - "*.homelab.ntbc.io"
+    - homelab.local
+    - "*.homelab.local"

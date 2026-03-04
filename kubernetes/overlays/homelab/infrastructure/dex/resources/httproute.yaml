@@ -17,7 +17,7 @@ spec:
       namespace: default
       sectionName: https
   hostnames:
-    - dex.homelab.ntbc.io
+    - dex.homelab.local
   rules:
     - matches:
         - path:

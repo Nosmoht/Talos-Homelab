@@ -54,17 +54,26 @@ configMapGenerator:
       labels:
         grafana_dashboard: "1"
       disableNameSuffixHash: true
+  - name: dashboard-vault
+    namespace: monitoring
+    files:
+      - dashboards/vault.json
+    options:
+      labels:
+        grafana_dashboard: "1"
+      disableNameSuffixHash: true
 
 resources:
+  - grafana-httproute.yaml
+  - prometheus-httproute.yaml
+  - alertmanager-httproute.yaml
+  - grafana-ui-lb.yaml
   - thanos-query.yaml
   - etcd-service.yaml
   - etcd-endpointslice.yaml
   - etcd-servicemonitor.yaml
   - cilium-servicemonitors.yaml
   - prometheus-rules.yaml
-  - grafana-httproute.yaml
-  - prometheus-httproute.yaml
-  - alertmanager-httproute.yaml
   - oauth2-proxy-prometheus.yaml
   - oauth2-proxy-allowed-emails.yaml
   - oauth2-proxy-alertmanager.yaml
