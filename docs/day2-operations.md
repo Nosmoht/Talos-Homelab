@@ -44,6 +44,10 @@ talosctl -n 192.168.2.61 -e 192.168.2.61 version
 **Important:** Always use explicit `-n` and `-e` flags when VIP or default
 endpoints are unreachable.
 
+`talos/Makefile` apply/dry-run/upgrade targets use per-node explicit endpoints
+by default (`--nodes <ip> --endpoints <ip>`) to avoid endpoint ambiguity during
+partial control-plane outages.
+
 ## Applying Config Changes
 
 ### Workflow
