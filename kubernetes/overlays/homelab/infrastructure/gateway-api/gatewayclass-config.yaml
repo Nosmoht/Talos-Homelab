@@ -10,7 +10,9 @@ metadata:
     app.kubernetes.io/part-of: homelab
     app.kubernetes.io/managed-by: argocd
 spec:
-  description: Preserve client source IP on Gateway Service.
+  description: Gateway service profile for in-cluster edge with Cilium L2 announcements.
   service:
-    externalTrafficPolicy: Local
+    # L2 announcements with externalTrafficPolicy=Local can blackhole traffic on
+    # announcer nodes without a local gateway endpoint.
+    externalTrafficPolicy: Cluster
     allocateLoadBalancerNodePorts: false
