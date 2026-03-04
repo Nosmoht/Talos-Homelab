@@ -59,6 +59,8 @@ config:
       name: Grafana
       redirectURIs:
         - https://grafana-int.homelab.ntbc.io/login/generic_oauth
+        - http://127.0.0.1:3000/login/generic_oauth
+        - http://localhost:3000/login/generic_oauth
       secretEnv: GRAFANA_OIDC_CLIENT_SECRET
     - id: prometheus
       name: Prometheus
