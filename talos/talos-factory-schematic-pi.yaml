@@ -1,3 +1,8 @@
+overlay:
+  # Required for Raspberry Pi firmware boot assets (U-Boot/config.txt/EFI bits).
+  name: rpi_generic
+  image: siderolabs/sbc-raspberrypi
+
 customization:
   # Pi image profile is intentionally separate from x86 schematics.
   extraKernelArgs:
