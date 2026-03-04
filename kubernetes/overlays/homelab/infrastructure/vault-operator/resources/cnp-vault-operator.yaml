@@ -30,6 +30,18 @@ spec:
             - port: "8383"
               protocol: TCP
   egress:
+    # Vault API (operator reconciliation and health checks)
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: vault
+            app.kubernetes.io/name: vault
+            vault_cr: vault
+      toPorts:
+        - ports:
+            - port: "8200"
+              protocol: TCP
+            - port: "8201"
+              protocol: TCP
     # Kubernetes API
     - toCIDRSet:
         - cidr: 10.96.0.1/32
