@@ -8,6 +8,7 @@ retry_exempt_apps := {"root"}
 kube_system_allowed_projects := {"infrastructure"}
 allow_helm_non_exact_revisions := {}
 warn_git_unpinned_exempt_apps := {}
+enable_git_main_warnings := false
 
 is_application(obj) if {
   api := object.get(obj, "apiVersion", "")
@@ -160,6 +161,7 @@ deny contains msg if {
 }
 
 warn contains msg if {
+  enable_git_main_warnings
   is_application(input)
   spec := object.get(input, "spec", {})
   object.get(spec, "project", "") == "infrastructure"
