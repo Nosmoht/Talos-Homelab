@@ -17,7 +17,7 @@ jobs:
       run:
         shell: sh
     env:
-      KUSTOMIZE_VERSION: v5.3.0
+      KUSTOMIZE_VERSION: 5.3.0
       KUSTOMIZE_SHA256_LINUX_AMD64: 3ab32f92360d752a2a53e56be073b649abc1e7351b912c0fb32b960d1def854c
       CONFTEST_VERSION: v0.53.0
       TRIVY_VERSION: v0.50.2
@@ -34,6 +34,11 @@ jobs:
         with:
           version: ${{ env.KUSTOMIZE_VERSION }}
           sha256-checksum: ${{ env.KUSTOMIZE_SHA256_LINUX_AMD64 }}
+
+      - name: Verify kustomize install
+        run: |
+          set -eu
+          kustomize version --short
 
       - name: Setup conftest
         uses: princespaghetti/setup-conftest@v1.2.0
@@ -150,11 +155,19 @@ jobs:
             trivy_failures=$(awk '/Failures:/ {sum += $2} END {if (sum == "") sum = 0; print sum}' .work/trivy-report.txt)
           fi
 
+          early_failure_note=""
+          if [ ! -f .work/kustomize-targets.txt ] && [ ! -f .work/conftest-rendered.txt ] && [ ! -f .work/trivy-report.txt ]; then
+            early_failure_note="Validation likely failed during tool setup before repository checks started."
+          fi
+
           {
             echo "<!-- gitops-validate-report -->"
             echo "## GitOps Validate Report"
             echo ""
             echo "- Job status: \`$JOB_STATUS\`"
+            if [ -n "$early_failure_note" ]; then
+              echo "- Note: $early_failure_note"
+            fi
             echo "- Kustomize targets discovered: \`$(count_or_zero .work/kustomize-targets.txt)\`"
             echo "- Safe rendered targets: \`$(count_or_zero .work/kustomize-safe-targets.txt)\`"
             echo "- Unsafe skipped targets: \`$(count_or_zero .work/kustomize-unsafe-targets.txt)\`"
