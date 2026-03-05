@@ -17,7 +17,7 @@ spec:
   duration: 2160h
   renewBefore: 720h
   issuerRef:
-    name: homelab
+    name: vault-internal
     kind: ClusterIssuer
   dnsNames:
     - homelab.local
