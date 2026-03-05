@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: alloy
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "4"
   labels:
     app.kubernetes.io/name: alloy
     app.kubernetes.io/instance: homelab

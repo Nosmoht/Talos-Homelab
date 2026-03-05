@@ -3,6 +3,8 @@ kind: Application
 metadata:
   name: piraeus-operator
   namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
   labels:
     app.kubernetes.io/name: piraeus-datastore
     app.kubernetes.io/instance: homelab
