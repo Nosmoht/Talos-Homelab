@@ -29,6 +29,7 @@ spec:
     - https://ot-container-kit.github.io/helm-charts
     - https://strimzi.io/charts/
     - ghcr.io/bank-vaults/helm-charts*
+    - https://redhat-cop.github.io/vault-config-operator
     - https://operator.min.io/
   destinations:
     - namespace: argocd
