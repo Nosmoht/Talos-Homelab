@@ -22,18 +22,28 @@ has_top_level_sops_json() {
   if command -v jq >/dev/null 2>&1; then
     jq -e 'type == "object" and has("sops")' "$file" >/dev/null 2>&1
   else
-    rg -q '"sops"[[:space:]]*:' "$file"
+    grep -Eq '"sops"[[:space:]]*:' "$file"
+  fi
+}
+
+has_pattern() {
+  pattern=$1
+  file=$2
+  if command -v rg >/dev/null 2>&1; then
+    rg -q "$pattern" "$file"
+  else
+    grep -Eq "$pattern" "$file"
   fi
 }
 
 has_sops_backend_keys() {
   file=$1
-  rg -q '(^|[[:space:]"])(age|pgp|kms|gcp_kms|azure_kv|hc_vault|hc_vault_transit_uri)[[:space:]"]*:' "$file"
+  has_pattern '(^|[[:space:]"])(age|pgp|kms|gcp_kms|azure_kv|hc_vault|hc_vault_transit_uri)[[:space:]"]*:' "$file"
 }
 
 has_sops_recipients() {
   file=$1
-  rg -q '(^|[[:space:]"])(recipient|fp|arn|resource_id|vault_url|keyvault_url|aad_client_id|hc_vault_transit_uri)[[:space:]"]*:' "$file"
+  has_pattern '(^|[[:space:]"])(recipient|fp|arn|resource_id|vault_url|keyvault_url|aad_client_id|hc_vault_transit_uri)[[:space:]"]*:' "$file"
 }
 
 tmp_file_list=$(mktemp)
