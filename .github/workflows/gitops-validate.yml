@@ -55,7 +55,7 @@ jobs:
           set -eu
           mkdir -p "$HOME/.local/bin"
 
-          curl -fsSL "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION#v}.linux.amd64" -o "$HOME/.local/bin/sops"
+          curl -fsSL "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION}.linux.amd64" -o "$HOME/.local/bin/sops"
           chmod +x "$HOME/.local/bin/sops"
 
           curl -fsSL "https://github.com/viaduct-ai/kustomize-sops/releases/download/${KSOPS_VERSION}/ksops_${KSOPS_VERSION#v}_Linux_x86_64.tar.gz" -o /tmp/ksops.tar.gz
