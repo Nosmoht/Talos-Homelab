@@ -108,19 +108,6 @@ spec:
                 key_bits=256 \
                 max_ttl="2160h"
 
-              cat <<'EOF' >/tmp/cert-manager-pki.hcl
-              path "pki_int/sign/cert-manager-internal" {
-                capabilities = ["update"]
-              }
-              path "pki_int/issue/cert-manager-internal" {
-                capabilities = ["update"]
-              }
-              path "pki_int/cert/ca" {
-                capabilities = ["read"]
-              }
-              EOF
-              vault policy write cert-manager-pki /tmp/cert-manager-pki.hcl
-
               if ! vault auth list -format=json | grep -q '"kubernetes/"'; then
                 vault auth enable kubernetes
               fi
