@@ -118,10 +118,25 @@ jobs:
           scan-type: config
           scan-ref: .
           severity: HIGH,CRITICAL
-          exit-code: '1'
+          exit-code: '0'
           format: table
           output: .work/trivy-report.txt
           version: ${{ env.TRIVY_VERSION }}
+
+      - name: Trivy gate
+        run: |
+          set -eu
+          if [ ! -f .work/trivy-report.txt ]; then
+            echo "error: trivy report file not found at .work/trivy-report.txt"
+            exit 1
+          fi
+
+          failures=$(awk '/Failures:/ {sum += $2} END {if (sum == "") sum = 0; print sum}' .work/trivy-report.txt)
+          echo "trivy HIGH/CRITICAL failures: $failures"
+          if [ "$failures" -gt 0 ]; then
+            echo "error: trivy found HIGH/CRITICAL findings"
+            exit 1
+          fi
 
       - name: Build PR summary
         if: always()
