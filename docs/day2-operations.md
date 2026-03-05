@@ -166,6 +166,29 @@ talosctl -n 192.168.2.61 -e 192.168.2.61 version
 
 ## Cluster Health Checks
 
+### Vault Config Operator PKI Post-Deploy
+
+Use this checklist after changes under:
+- `kubernetes/overlays/homelab/infrastructure/vault-config-operator/`
+- `kubernetes/overlays/homelab/infrastructure/vault-operator/`
+- `kubernetes/overlays/homelab/infrastructure/cert-manager/`
+
+```bash
+# Argo CD application status
+kubectl -n argocd get application vault-operator vault-config-operator cert-manager
+
+# Vault Config Operator pod status and recent logs
+kubectl -n vault get pods -l app.kubernetes.io/name=vault-config-operator
+kubectl -n vault logs deploy/vault-config-operator --tail=100
+
+# cert-manager issuer readiness (must stay Ready)
+kubectl -n cert-manager get clusterissuer vault-internal -o yaml | yq '.status.conditions'
+
+# Canary certificate readiness
+kubectl -n cert-manager get certificate vault-pki-canary vault-pki-canary-atlas-svc
+kubectl -n cert-manager get certificaterequest --sort-by=.metadata.creationTimestamp | tail -n 5
+```
+
 ### Talos Level
 
 ```bash
