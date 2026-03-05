@@ -8,4 +8,3 @@ resources:
   - networkpolicy-vault-metrics.yaml
   - networkpolicy-vault-api.yaml
   - rbac-vault-pki-bootstrap.yaml
-  - job-vault-pki-bootstrap.yaml
