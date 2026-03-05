@@ -1,35 +1,37 @@
 package conftest.k8s
 
+import rego.v1
+
 # Namespaces where strict workload checks are relaxed for system components.
 allowed_system_namespaces := {"kube-system"}
 
 workload_kinds := {"Deployment", "StatefulSet", "DaemonSet"}
 
-podspec(obj) = spec {
+podspec(obj) := spec if {
   obj.kind == "Deployment"
   spec := obj.spec.template.spec
 }
 
-podspec(obj) = spec {
+podspec(obj) := spec if {
   obj.kind == "StatefulSet"
   spec := obj.spec.template.spec
 }
 
-podspec(obj) = spec {
+podspec(obj) := spec if {
   obj.kind == "DaemonSet"
   spec := obj.spec.template.spec
 }
 
-containers(spec) = all_containers {
+containers(spec) := all_containers if {
   all_containers := array.concat(object.get(spec, "containers", []), object.get(spec, "initContainers", []))
 }
 
-is_system_namespace(obj) {
+is_system_namespace(obj) if {
   ns := object.get(object.get(obj, "metadata", {}), "namespace", "default")
   allowed_system_namespaces[ns]
 }
 
-deny[msg] {
+deny contains msg if {
   workload_kinds[input.kind]
   not is_system_namespace(input)
   spec := podspec(input)
@@ -38,7 +40,7 @@ deny[msg] {
   msg := sprintf("%s/%s enables hostNetwork", [input.kind, name])
 }
 
-deny[msg] {
+deny contains msg if {
   workload_kinds[input.kind]
   not is_system_namespace(input)
   spec := podspec(input)
@@ -50,7 +52,7 @@ deny[msg] {
   msg := sprintf("%s/%s container %s is privileged", [input.kind, name, cname])
 }
 
-deny[msg] {
+deny contains msg if {
   workload_kinds[input.kind]
   not is_system_namespace(input)
   spec := podspec(input)
@@ -62,7 +64,7 @@ deny[msg] {
   msg := sprintf("%s/%s container %s is missing resources", [input.kind, name, cname])
 }
 
-deny[msg] {
+deny contains msg if {
   workload_kinds[input.kind]
   not is_system_namespace(input)
   spec := podspec(input)
@@ -74,7 +76,7 @@ deny[msg] {
   msg := sprintf("%s/%s container %s is missing resources.requests", [input.kind, name, cname])
 }
 
-deny[msg] {
+deny contains msg if {
   workload_kinds[input.kind]
   not is_system_namespace(input)
   spec := podspec(input)
