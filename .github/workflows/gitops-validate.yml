@@ -171,6 +171,28 @@ jobs:
             trivy_failures=$(awk '/Failures:/ {sum += $2} END {if (sum == "") sum = 0; print sum}' .work/trivy-report.txt)
           fi
 
+          conftest_warning_lines=".work/conftest-warnings-summary.txt"
+          trivy_top_lines=".work/trivy-top-findings.txt"
+          trivy_file_lines=".work/trivy-file-summary.txt"
+          : > "$conftest_warning_lines"
+          : > "$trivy_top_lines"
+          : > "$trivy_file_lines"
+
+          if [ -f .work/conftest-rendered.txt ] || [ -f .work/conftest-applications.txt ]; then
+            {
+              [ -f .work/conftest-rendered.txt ] && cat .work/conftest-rendered.txt
+              [ -f .work/conftest-applications.txt ] && cat .work/conftest-applications.txt
+            } | LC_ALL=C sed -E 's/\x1b\[[0-9;]*m//g' | awk '/WARN/ {print}' | head -n 10 > "$conftest_warning_lines" || true
+          fi
+
+          if [ -f .work/trivy-report.txt ]; then
+            awk '/KSV-[0-9]+ \((HIGH|CRITICAL)\):/ {print}' .work/trivy-report.txt | head -n 10 > "$trivy_top_lines" || true
+            awk '
+              /\.ya?ml \(kubernetes\)$/ {file=$1}
+              /^Failures:/ {print file " (" $2 ")"}
+            ' .work/trivy-report.txt | head -n 10 > "$trivy_file_lines" || true
+          fi
+
           early_failure_note=""
           if [ ! -f .work/kustomize-targets.txt ] && [ ! -f .work/conftest-rendered.txt ] && [ ! -f .work/trivy-report.txt ]; then
             early_failure_note="Validation likely failed during tool setup before repository checks started."
@@ -193,6 +215,28 @@ jobs:
             echo "- Conftest rendered summary: \`$rendered_summary\`"
             echo "- Conftest applications summary: \`$apps_summary\`"
             echo "- Trivy HIGH/CRITICAL failures: \`$trivy_failures\`"
+            echo "- Runtime validation: \`not executed in this workflow\`"
+            echo ""
+            echo "### Top Conftest Warnings"
+            if [ -s "$conftest_warning_lines" ]; then
+              sed 's/^/- /' "$conftest_warning_lines"
+            else
+              echo "- none"
+            fi
+            echo ""
+            echo "### Trivy Affected Files"
+            if [ -s "$trivy_file_lines" ]; then
+              sed 's/^/- /' "$trivy_file_lines"
+            else
+              echo "- none"
+            fi
+            echo ""
+            echo "### Top Trivy Findings"
+            if [ -s "$trivy_top_lines" ]; then
+              sed 's/^/- /' "$trivy_top_lines"
+            else
+              echo "- none"
+            fi
             echo ""
             echo "Artifacts in \`.work/\` include target lists and detailed reports."
           } > .work/pr-comment.md
