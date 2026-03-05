@@ -101,7 +101,7 @@ spec:
                 crl_distribution_points="${VAULT_ADDR}/v1/pki_int/crl"
 
               vault write pki_int/roles/cert-manager-internal \
-                allowed_domains="homelab.local" \
+                allowed_domains="homelab.local,svc.cluster.local" \
                 allow_bare_domains=true \
                 allow_subdomains=true \
                 allow_glob_domains=true \

@@ -10,3 +10,4 @@ resources:
   - cluster-issuer-vault-internal.yaml
   - role-cert-manager-vault-tokenrequest.yaml
   - certificate-vault-pki-canary.yaml
+  - certificate-vault-pki-canary-atlas-svc.yaml
