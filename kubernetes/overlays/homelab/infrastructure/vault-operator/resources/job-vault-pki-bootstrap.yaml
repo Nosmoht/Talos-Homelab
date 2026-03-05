@@ -43,7 +43,10 @@ spec:
             capabilities:
               drop:
                 - ALL
+            readOnlyRootFilesystem: true
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             - name: vault-tls
               mountPath: /vault/tls
               readOnly: true
@@ -126,7 +129,10 @@ spec:
             capabilities:
               drop:
                 - ALL
+            readOnlyRootFilesystem: true
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             - name: vault-bootstrap
               mountPath: /vault/bootstrap
               readOnly: true
@@ -134,6 +140,8 @@ spec:
               mountPath: /vault/tls
               readOnly: true
       volumes:
+        - name: tmp
+          emptyDir: {}
         - name: vault-bootstrap
           secret:
             secretName: vault-unseal-keys
