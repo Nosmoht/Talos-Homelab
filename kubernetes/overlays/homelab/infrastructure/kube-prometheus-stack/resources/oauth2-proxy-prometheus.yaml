@@ -47,6 +47,13 @@ spec:
         app.kubernetes.io/component: oauth2-proxy
         app.kubernetes.io/part-of: homelab
     spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile:
+          type: RuntimeDefault
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
@@ -99,10 +106,18 @@ spec:
                   name: oauth2-proxy-secrets
                   key: prometheus-cookie-secret
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             - name: allowed-emails
               mountPath: /etc/oauth2-proxy/allowed-emails
               subPath: allowed-emails
               readOnly: true
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
           readinessProbe:
             httpGet:
               path: /ping
@@ -119,6 +134,8 @@ spec:
               cpu: 250m
               memory: 256Mi
       volumes:
+        - name: tmp
+          emptyDir: {}
         - name: allowed-emails
           configMap:
             name: oauth2-proxy-allowed-emails
