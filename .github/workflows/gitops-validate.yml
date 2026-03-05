@@ -1,0 +1,126 @@
+name: GitOps Validate
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  push:
+    branches: ["main"]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: sh
+    env:
+      KUSTOMIZE_VERSION: v5.3.0
+      KUSTOMIZE_SHA256_LINUX_AMD64: 3ab32f92360d752a2a53e56be073b649abc1e7351b912c0fb32b960d1def854c
+      CONFTEST_VERSION: v0.53.0
+      TRIVY_VERSION: v0.50.2
+      SOPS_VERSION: v3.8.1
+      KSOPS_VERSION: v4.3.3
+      KUBECONFORM_VERSION: 0.6.7
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kustomize
+        uses: kustomize-everything/action-kustomize@v2.1.0
+        with:
+          version: ${{ env.KUSTOMIZE_VERSION }}
+          sha256-checksum: ${{ env.KUSTOMIZE_SHA256_LINUX_AMD64 }}
+
+      - name: Setup conftest
+        uses: princespaghetti/setup-conftest@v1.2.0
+        with:
+          version: ${{ env.CONFTEST_VERSION }}
+
+      - name: Setup kubeconform
+        uses: bmuschko/setup-kubeconform@v1.0.0
+        with:
+          kubeconform-version: ${{ env.KUBECONFORM_VERSION }}
+
+      - name: Install sops and ksops (no decryption)
+        run: |
+          set -eu
+          mkdir -p "$HOME/.local/bin"
+
+          curl -fsSL "https://github.com/getsops/sops/releases/download/${SOPS_VERSION}/sops-${SOPS_VERSION#v}.linux.amd64" -o "$HOME/.local/bin/sops"
+          chmod +x "$HOME/.local/bin/sops"
+
+          curl -fsSL "https://github.com/viaduct-ai/kustomize-sops/releases/download/${KSOPS_VERSION}/ksops_${KSOPS_VERSION#v}_Linux_x86_64.tar.gz" -o /tmp/ksops.tar.gz
+          tar -xzf /tmp/ksops.tar.gz -C /tmp
+          install -m 0755 /tmp/ksops "$HOME/.local/bin/ksops"
+
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Show tool versions
+        run: |
+          set -eu
+          mkdir -p .work
+          {
+            echo "kustomize: $(kustomize version --short || true)"
+            echo "conftest: $(conftest --version || true)"
+            echo "kubeconform: $(kubeconform -v || true)"
+            echo "trivy target version: ${TRIVY_VERSION}"
+            echo "sops: $(sops --version | head -n 1 || true)"
+            echo "ksops: $(ksops version 2>/dev/null || true)"
+          } | tee .work/tool-versions.txt
+
+      - name: Discover kustomize targets
+        run: ./scripts/discover_kustomize_targets.sh
+
+      - name: Render safe kustomize targets
+        run: ./scripts/render_kustomize_safe.sh
+
+      - name: Discover Argo CD Application manifests
+        run: ./scripts/discover_argocd_apps.sh
+
+      - name: Verify SOPS metadata (no decryption)
+        run: ./scripts/verify_sops_files.sh
+
+      - name: Kubeconform rendered manifests
+        run: |
+          set -eu
+          if [ ! -f .work/kustomize-rendered-files.txt ]; then
+            echo "notice: rendered file list not found, skipping kubeconform"
+            exit 0
+          fi
+
+          count=0
+          while IFS= read -r f; do
+            [ -n "$f" ] || continue
+            [ -f "$f" ] || continue
+            count=$((count + 1))
+            echo "kubeconform: $f"
+            # Ignore missing schemas for CRDs that are not vendored in CI.
+            kubeconform -strict -ignore-missing-schemas "$f"
+          done < .work/kustomize-rendered-files.txt
+
+          echo "kubeconform tested files: $count"
+
+      - name: Conftest policy checks
+        run: ./scripts/run_conftest.sh
+
+      - name: Trivy config scan
+        uses: aquasecurity/trivy-action@0.34.2
+        with:
+          scan-type: config
+          scan-ref: .
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+          format: table
+          version: ${{ env.TRIVY_VERSION }}
+
+      - name: Upload diagnostics (failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitops-validate-diagnostics
+          path: |
+            .work/
+            .work/argocd-applications.txt
