@@ -23,9 +23,6 @@ spec:
     - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
       targetRevision: main
       ref: values
-    - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
-      targetRevision: main
-      path: kubernetes/overlays/homelab/infrastructure/external-secrets/resources
   destination:
     server: https://kubernetes.default.svc
     namespace: external-secrets
