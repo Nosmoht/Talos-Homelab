@@ -102,15 +102,6 @@ spec:
         - ports:
             - port: "9091"
               protocol: TCP
-    # Vault Config Operator metrics (cross-namespace hotfix)
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: vault
-            control-plane: vault-config-operator
-      toPorts:
-        - ports:
-            - port: "8443"
-              protocol: TCP
     # cilium and hubble metrics (cross-namespace)
     - toEndpoints:
         - matchLabels:
