@@ -102,15 +102,6 @@ spec:
         - ports:
             - port: "9091"
               protocol: TCP
-    # External Secrets metrics (cross-namespace)
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: external-secrets
-            app.kubernetes.io/name: external-secrets
-      toPorts:
-        - ports:
-            - port: "8080"
-              protocol: TCP
     # cilium and hubble metrics (cross-namespace)
     - toEndpoints:
         - matchLabels:

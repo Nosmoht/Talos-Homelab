@@ -123,6 +123,7 @@ The following core flows are currently implemented through platform-owned PNI po
 
 - Monitoring DNS visibility: `monitoring` -> `kube-dns` (`53/TCP,UDP`)
 - Monitoring scrape to Vault Config Operator metrics: `prometheus` -> `vault-config-operator` (`8443/TCP`)
+- Monitoring scrape to External Secrets metrics: `prometheus` -> `external-secrets`, `external-secrets-webhook`, `external-secrets-cert-controller` (`8080/TCP`)
 - Redis operator control-plane baseline: `redis-operator` -> API server + DNS
 - Redis operator data-plane access: `redis-operator` -> managed Redis pods (`6379/TCP`, `26379/TCP`)
 - Strimzi operator control-plane baseline: `strimzi-cluster-operator` -> API server + DNS
