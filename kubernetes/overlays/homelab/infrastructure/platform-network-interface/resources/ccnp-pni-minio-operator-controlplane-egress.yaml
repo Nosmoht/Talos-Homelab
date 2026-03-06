@@ -1,10 +1,9 @@
 apiVersion: cilium.io/v2
-kind: CiliumNetworkPolicy
+kind: CiliumClusterwideNetworkPolicy
 metadata:
-  name: minio-operator
-  namespace: minio-operator
+  name: pni-minio-operator-controlplane-egress
   labels:
-    app.kubernetes.io/name: minio-operator
+    app.kubernetes.io/name: platform-network-interface
     app.kubernetes.io/instance: homelab
     app.kubernetes.io/component: network-policy
     app.kubernetes.io/part-of: homelab
@@ -12,31 +11,28 @@ metadata:
 spec:
   endpointSelector:
     matchLabels:
+      k8s:io.kubernetes.pod.namespace: minio-operator
       app.kubernetes.io/name: operator
-  ingress:
-    # Health probes from kubelet
-    - fromEntities:
-        - host
-        - remote-node
+  egress:
+    - toCIDRSet:
+        - cidr: 10.96.0.1/32
       toPorts:
         - ports:
-            - port: "4221"
+            - port: "443"
               protocol: TCP
-    # Webhook calls from kube-apiserver
-    - fromEntities:
+    - toEntities:
         - kube-apiserver
       toPorts:
         - ports:
-            - port: "4221"
+            - port: "6443"
               protocol: TCP
-  egress:
-    # Tenant pods for lifecycle management
     - toEndpoints:
         - matchLabels:
-            k8s:io.kubernetes.pod.namespace: minio
+            k8s:io.kubernetes.pod.namespace: kube-system
+            k8s-app: kube-dns
       toPorts:
         - ports:
-            - port: "9000"
-              protocol: TCP
-            - port: "9443"
+            - port: "53"
+              protocol: UDP
+            - port: "53"
               protocol: TCP
