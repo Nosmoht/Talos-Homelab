@@ -96,7 +96,7 @@ Admission policy (Kyverno) enforces this separation.
 
 | Capability | Provider Components | Typical Consumer Use |
 |---|---|---|
-| `monitoring-scrape` | `kube-prometheus-stack` | Prometheus metrics scraping |
+| `monitoring-scrape` | `kube-prometheus-stack`, `vault-config-operator` | Prometheus metrics scraping |
 | `logging-ship` | `alloy`, `loki` | Log forwarding and ingestion |
 | `vault-secrets` | `vault-operator`, `vault-config-operator` | Secret and PKI integration |
 | `cnpg-postgres` | `cloudnative-pg` | Managed PostgreSQL workloads |
@@ -116,6 +116,26 @@ Admission policy (Kyverno) enforces this separation.
 3. Opt in only to required capabilities using `platform.io/consume.<capability>: "true"`.
 4. Deploy your workloads or custom resources.
 5. Validate connectivity and policy behavior.
+
+## Current Policy Coverage (Core Platform)
+
+The following core flows are currently implemented through platform-owned PNI policies:
+
+- Monitoring DNS visibility: `monitoring` -> `kube-dns` (`53/TCP,UDP`)
+- Monitoring scrape to Vault Config Operator metrics: `prometheus` -> `vault-config-operator` (`8443/TCP`)
+- Redis operator control-plane baseline: `redis-operator` -> API server + DNS
+- Redis operator data-plane access: `redis-operator` -> managed Redis pods (`6379/TCP`, `26379/TCP`)
+- Strimzi operator control-plane baseline: `strimzi-cluster-operator` -> API server + DNS
+- Strimzi operator data-plane access: `strimzi-cluster-operator` -> managed Kafka pods (`9090/TCP`, `9091/TCP`, `9092/TCP`)
+- Vault operator control-plane baseline: `vault-operator` -> API server + DNS
+- MinIO operator control-plane baseline: `minio-operator` -> API server + DNS
+- Piraeus operator control-plane baseline: `piraeus-operator` -> API server + DNS
+
+Implementation rules:
+
+- Policies are platform-owned and reusable.
+- Selectors should be provider/generic label-based.
+- Do not encode consumer deployment names or tenant-specific namespace names in PNI policies.
 
 ## Minimal Example
 
