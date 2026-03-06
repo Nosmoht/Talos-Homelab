@@ -638,17 +638,17 @@ pcie_aspm=off                            # PCIe Link-Power-Management aus
 workqueue.power_efficient=0              # Workqueues CPU-gebunden halten
 ```
 
-Aktuell 18 Boot-Parameter pro Schematic. `make schematics` + `make gen-configs` durchgeführt.
-Nodes müssen noch per `make upgrade-<node>` auf das neue Image aktualisiert werden.
+Aktuell 18 Boot-Parameter pro Schematic. `make -C talos schematics` + `make -C talos gen-configs` durchgeführt.
+Nodes müssen noch per `make -C talos upgrade-<node>` auf das neue Image aktualisiert werden.
 
 ### 8.3 Config-Apply auf alle Nodes
 
 Sysctls aus `patches/common.yaml` sind auf allen Nodes verifiziert und aktiv. Die 18
-Schematic-Boot-Parameter sind **noch nicht angewendet** — erfordern `make upgrade-<node>`
+Schematic-Boot-Parameter sind **noch nicht angewendet** — erfordern `make -C talos upgrade-<node>`
 pro Node (mit DRBD-Drain vor jedem Reboot).
 
 Empfohlene Reihenfolge:
-1. `make upgrade-<node>` pro Node (mit DRBD-Drain vor jedem Node-Reboot)
+1. `make -C talos upgrade-<node>` pro Node (mit DRBD-Drain vor jedem Node-Reboot)
 2. Verifikation aller Boot-Parameter (siehe [9. Verifikation](#9-verifikation))
 
 ### ~~8.4 M920q CPU-Variante ermitteln~~ ✅ Erledigt

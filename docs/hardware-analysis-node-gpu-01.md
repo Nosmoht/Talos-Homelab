@@ -225,13 +225,13 @@ GDS is mitigated via microcode. Several mitigations show **"SMT vulnerable"** du
 | selinux=1 | No (Talos default) | Yes | OK |
 | module.sig_enforce=1 | No (Talos default) | Yes | OK |
 
-**Note:** All 18 schematic `extraKernelArgs` are missing from `/proc/cmdline`. The node has not been upgraded to the factory image with the current schematic yet. Boot parameters are baked into the UKI image and require `make upgrade-node-gpu-01` to take effect. Live state:
+**Note:** All 18 schematic `extraKernelArgs` are missing from `/proc/cmdline`. The node has not been upgraded to the factory image with the current schematic yet. Boot parameters are baked into the UKI image and require `make -C talos upgrade-node-gpu-01` to take effect. Live state:
 - **CPU governor:** powersave (schematic wants `performance`)
 - **THP:** `always [madvise] never` -- madvise is active (matches schematic intent, likely Talos default)
 - **THP defrag:** `always defer defer+madvise [madvise] never` -- madvise mode
 - **IOMMU:** Active (confirmed by NFD `DMA-FQ` on all PCI devices -- enabled via BIOS/UEFI, not via boot param)
 - **Turbo Boost:** **Disabled** (no_turbo = 1) -- the i7-7700K supports Turbo up to 4.50GHz but it is explicitly disabled. This may be a BIOS setting or a stability measure for the mining board under multi-GPU load.
-- **WARNING: `debugfs=off` is in the schematic.** Per CLAUDE.md: "Do NOT use `debugfs=off` -- Talos needs debugfs to create root filesystem; causes 'failed to create root filesystem' boot loop." This parameter must be removed from `talos-factory-schematic-gpu.yaml` before running `make upgrade-node-gpu-01`.
+- **WARNING: `debugfs=off` is in the schematic.** Per CLAUDE.md: "Do NOT use `debugfs=off` -- Talos needs debugfs to create root filesystem; causes 'failed to create root filesystem' boot loop." This parameter must be removed from `talos-factory-schematic-gpu.yaml` before running `make -C talos upgrade-node-gpu-01`.
 
 ### 6.4 Sysctl Verification
 
@@ -290,7 +290,7 @@ Traffic statistics (since last boot, 2026-02-28T13:56):
 The 19,766 RX drops represent 0.75% of total RX packets. While improved from earlier snapshots, this is still significantly higher than other nodes (~0.1%). The USB Ethernet adapter has limited buffer capacity and the RTL8153 firmware is missing.
 
 **Firmware warnings:**
-- `r8152`: "Direct firmware load for rtl_nic/rtl8153b-2.fw failed with error -2" -- the USB NIC firmware is not available. The adapter works but lacks hardware offload features (checksum offload, segmentation offload). The `siderolabs/realtek-firmware` extension is listed in the GPU schematic but is **not installed** -- this will be resolved when `make upgrade-node-gpu-01` is run.
+- `r8152`: "Direct firmware load for rtl_nic/rtl8153b-2.fw failed with error -2" -- the USB NIC firmware is not available. The adapter works but lacks hardware offload features (checksum offload, segmentation offload). The `siderolabs/realtek-firmware` extension is listed in the GPU schematic but is **not installed** -- this will be resolved when `make -C talos upgrade-node-gpu-01` is run.
 - `r8169`: "Unable to load firmware rtl_nic/rtl8105e-1.fw" -- firmware missing for the onboard PCI NIC (unused, link down).
 
 ## 9. GPU Profile
@@ -352,7 +352,7 @@ The i915 driver takes the primary DRM device (minor 0), while NVIDIA GPUs are on
 | nvidia-open-gpu-kernel-modules-lts | 580.126.16-v1.12.4 | NVIDIA open kernel GPU driver |
 | nvidia-container-toolkit-lts | 580.126.16-v1.18.2 | NVIDIA Container Toolkit for GPU containers |
 
-**Not installed but in schematic:** gvisor, realtek-firmware -- these will be available after `make upgrade-node-gpu-01`.
+**Not installed but in schematic:** gvisor, realtek-firmware -- these will be available after `make -C talos upgrade-node-gpu-01`.
 
 **Schematic ID:** `60b815d95e1e79a818edadfffafa3cf3e2dcab27c7e6bb4cd53ed4aa52f5df84`
 
@@ -362,9 +362,9 @@ The i915 driver takes the primary DRM device (minor 0), while NVIDIA GPUs are on
 
 ### Critical Issues
 
-1. **`debugfs=off` in GPU schematic will cause boot loop.** The `talos-factory-schematic-gpu.yaml` includes `debugfs=off` in `extraKernelArgs`. Per project documentation, Talos needs debugfs to create the root filesystem. Running `make upgrade-node-gpu-01` with this parameter will render the node unbootable. **Remove `debugfs=off` from `talos-factory-schematic-gpu.yaml` before upgrading.**
+1. **`debugfs=off` in GPU schematic will cause boot loop.** The `talos-factory-schematic-gpu.yaml` includes `debugfs=off` in `extraKernelArgs`. Per project documentation, Talos needs debugfs to create the root filesystem. Running `make -C talos upgrade-node-gpu-01` with this parameter will render the node unbootable. **Remove `debugfs=off` from `talos-factory-schematic-gpu.yaml` before upgrading.**
 
-2. **All boot parameters pending.** All 18 schematic `extraKernelArgs` are missing from `/proc/cmdline`. The node is running on the old factory image. Run `make upgrade-node-gpu-01` (after fixing the debugfs issue) to apply performance and security boot parameters.
+2. **All boot parameters pending.** All 18 schematic `extraKernelArgs` are missing from `/proc/cmdline`. The node is running on the old factory image. Run `make -C talos upgrade-node-gpu-01` (after fixing the debugfs issue) to apply performance and security boot parameters.
 
 3. **PCIe running at Gen1 x1 on all GPUs.** All three GPUs report current link speed of 2.5 GT/s x1 vs their maximum of 16.0 GT/s x16. This is a 128x bandwidth reduction. On the BTC B250C mining board, this is likely by design (PCIe x1 risers for mining slots). For CUDA compute/inference workloads where data fits in GPU VRAM, this is acceptable. For workloads requiring frequent host-GPU data transfer, this is a severe bottleneck.
 

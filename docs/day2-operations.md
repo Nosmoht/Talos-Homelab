@@ -7,16 +7,16 @@ after initial installation is complete.
 
 | Target | Description |
 |--------|-------------|
-| `make gen-configs` | Generate configs (SOPS decryption automatic) |
-| `make schematics` | Create factory schematics, update image URLs in patches |
-| `make install-<node>` | Initial config apply to fresh node (`--insecure`) |
-| `make bootstrap` | Bootstrap etcd on node-01 |
-| `make apply-<node>` | Apply config to node (192.168.2.x) |
-| `make apply-all` | Apply config to all nodes |
-| `make dry-run-<node>` | Dry-run (192.168.2.x) |
-| `make upgrade-<node>` | Apply config + upgrade to new install image |
-| `make talosconfig` | Regenerate talosconfig |
-| `make clean` | Remove generated configs + decrypted secrets |
+| `make -C talos gen-configs` | Generate configs (SOPS decryption automatic) |
+| `make -C talos schematics` | Create factory schematics, update image URLs in patches |
+| `make -C talos install-<node>` | Initial config apply to fresh node (`--insecure`) |
+| `make -C talos bootstrap` | Bootstrap etcd on node-01 |
+| `make -C talos apply-<node>` | Apply config to node (192.168.2.x) |
+| `make -C talos apply-all` | Apply config to all nodes |
+| `make -C talos dry-run-<node>` | Dry-run (192.168.2.x) |
+| `make -C talos upgrade-<node>` | Apply config + upgrade to new install image |
+| `make -C talos talosconfig` | Regenerate talosconfig |
+| `make -C talos clean` | Remove generated configs + decrypted secrets |
 
 ## Cluster Access
 
@@ -57,13 +57,13 @@ partial control-plane outages.
 vim patches/common.yaml
 
 # 2. Regenerate configs
-make gen-configs
+make -C talos gen-configs
 
 # 3. Dry-run
-make dry-run-node-01
+make -C talos dry-run-node-01
 
 # 4. Apply
-make apply-node-01
+make -C talos apply-node-01
 ```
 
 ### Order for Cluster-Wide Changes
@@ -105,26 +105,26 @@ only a physical power cycle resolves this.
 
 ```bash
 # 1. Update schematics (if boot params or extensions changed)
-make schematics
+make -C talos schematics
 
-# 2. For a Talos version bump: update TALOS_VERSION in the Makefile
+# 2. For a Talos/Kubernetes/Cilium version bump: update talos/versions.mk
 
 # 3. Generate configs
-make gen-configs
+make -C talos gen-configs
 
 # 4. Per node: apply config + upgrade
-make upgrade-node-01
+make -C talos upgrade-node-01
 # Wait until node is Ready again, then proceed to the next
-make upgrade-node-02
-make upgrade-node-03
-make upgrade-node-04
-make upgrade-node-05
-make upgrade-node-06
-make upgrade-node-gpu-01
-make upgrade-node-pi-01
+make -C talos upgrade-node-02
+make -C talos upgrade-node-03
+make -C talos upgrade-node-04
+make -C talos upgrade-node-05
+make -C talos upgrade-node-06
+make -C talos upgrade-node-gpu-01
+make -C talos upgrade-node-pi-01
 ```
 
-`make upgrade-<node>` performs two steps:
+`make -C talos upgrade-<node>` performs two steps:
 1. `talosctl apply-config` — set new config (sysctls, install image)
 2. `talosctl upgrade --image <image> --wait --timeout 10m` — install the new
    UKI image and reboot the node
@@ -327,11 +327,11 @@ make clean    # also removes .secrets.dec.yaml
 ### Regenerate Talosconfig
 
 ```bash
-make talosconfig
+make -C talos talosconfig
 ```
 
 Uses the (unencrypted) secrets directly. If `secrets.yaml` is SOPS-encrypted,
-manually decrypt first or run `make gen-configs` beforehand (creates
+manually decrypt first or run `make -C talos gen-configs` beforehand (creates
 `.secrets.dec.yaml`).
 
 ## IP Reference

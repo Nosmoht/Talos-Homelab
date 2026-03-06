@@ -352,7 +352,7 @@ These are Talos KSPP boot parameters, always present:
 | Memory Zeroing | init_on_free=1 (freed memory zeroed) | Not active | Freed memory may contain stale data |
 | I/O Scheduler | none (noop) | mq-deadline | mq-deadline is actually better for the HDD |
 
-**Action required:** Run `make upgrade-node-gpu-01` to burn the schematic's extraKernelArgs
+**Action required:** Run `make -C talos upgrade-node-gpu-01` to burn the schematic's extraKernelArgs
 into the UKI image. This requires a node reboot.
 
 ---
@@ -451,7 +451,7 @@ kernel-tuning.md Section 7 for full analysis.
 
 ### 9.3 Immediate: Apply Schematic (upgrade)
 
-Run `make upgrade-node-gpu-01` to apply the factory schematic boot parameters. The node has
+Run `make -C talos upgrade-node-gpu-01` to apply the factory schematic boot parameters. The node has
 **never** been upgraded with the GPU schematic — all 14 extraKernelArgs are not applied.
 
 ### 9.4 BIOS Changes (manual, requires physical access)

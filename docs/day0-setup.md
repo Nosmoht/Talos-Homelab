@@ -97,7 +97,7 @@ and a role patch — `--config-patch` appends arrays.
 Only for a **brand new** cluster.
 
 ```bash
-make gen-secrets
+make -C talos gen-secrets
 ```
 
 Creates `secrets.yaml` containing cluster CA, etcd certificates, ServiceAccount keys, etc.
@@ -114,7 +114,7 @@ Schematics define the Talos extensions (DRBD, Intel firmware, NVMe CLI, etc.)
 and boot kernel parameters (CPU governor, C-states, IOMMU, security hardening).
 
 ```bash
-make schematics
+make -C talos schematics
 ```
 
 This target:
@@ -123,9 +123,9 @@ This target:
    to the Image Factory API (`factory.talos.dev`)
 2. Extracts schematic IDs from the JSON response
 3. Writes IDs (`SCHEMATIC_ID`, `GPU_SCHEMATIC_ID`, `PI_SCHEMATIC_ID`) to `.schematic-ids.mk`
-   (committed, used by `make gen-configs`)
+(committed, used by `make -C talos gen-configs`)
 
-Install image URLs are constructed at Make time from the schematic IDs + `TALOS_VERSION`:
+Install image URLs are constructed at Make time from the schematic IDs + `TALOS_VERSION` (from `talos/versions.mk`):
 ```
 factory.talos.dev/metal-installer/<schematic-id>:$(TALOS_VERSION)
 ```
@@ -133,7 +133,7 @@ factory.talos.dev/metal-installer/<schematic-id>:$(TALOS_VERSION)
 ### 3. Generate Configs
 
 ```bash
-make gen-configs
+make -C talos gen-configs
 ```
 
 Automatically decrypts `secrets.yaml` via SOPS to `.secrets.dec.yaml` and
@@ -165,23 +165,23 @@ talosctl validate -m metal -c generated/worker/node-gpu-01.yaml
 ### 5. Install Talos on Nodes
 
 Boot nodes with the Talos installer ISO (USB or PXE). Then apply configs
-using `make install-<node>` (applies config with `--insecure` since nodes
+using `make -C talos install-<node>` (applies config with `--insecure` since nodes
 have no TLS certificates yet):
 
 ```bash
 # First control plane node
-make install-node-01
-make bootstrap            # bootstraps etcd on node-01
+make -C talos install-node-01
+make -C talos bootstrap            # bootstraps etcd on node-01
 
 # Remaining control plane nodes
-make install-node-02
-make install-node-03
+make -C talos install-node-02
+make -C talos install-node-03
 
 # Worker nodes
-make install-node-04
-make install-node-05
-make install-node-06
-make install-node-gpu-01
+make -C talos install-node-04
+make -C talos install-node-05
+make -C talos install-node-06
+make -C talos install-node-gpu-01
 ```
 
 ### 6. Retrieve Kubeconfig

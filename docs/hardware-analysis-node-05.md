@@ -302,7 +302,7 @@ Note: The standard schematic (`talos-factory-schematic.yaml`) no longer includes
 
 ## 11. Observations
 
-- **Boot parameters fully applied:** All 17 schematic `extraKernelArgs` are present in `/proc/cmdline`. The node has been successfully upgraded to the factory image with the current schematic. No `make upgrade-node-05` required.
+- **Boot parameters fully applied:** All 17 schematic `extraKernelArgs` are present in `/proc/cmdline`. The node has been successfully upgraded to the factory image with the current schematic. No `make -C talos upgrade-node-05` required.
 - **CPU governor correct:** Running `performance` as intended. C-states are disabled (intel_idle.max_cstate=0, processor.max_cstate=0). Turbo boost is enabled with a max frequency of 3.30 GHz.
 - **Sysctls fully applied:** All configured sysctls from `patches/common.yaml` match the live values.
 - **IOMMU fully active:** Intel VT-d is enabled with strict DMA isolation, Queued invalidation, and IRQ remapping in x2apic mode. All 12 PCI devices are in IOMMU groups.

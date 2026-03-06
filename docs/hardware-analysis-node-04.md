@@ -371,7 +371,7 @@ No discrete GPU present. The i915 extension provides the Intel GPU kernel driver
 
 ## 11. Observations
 
-1. **All boot parameters applied.** All 16 schematic `extraKernelArgs` plus sd-boot bootloader are confirmed active in `/proc/cmdline`. The node has been successfully upgraded to the factory image with the current schematic. No `make upgrade-node-04` is pending.
+1. **All boot parameters applied.** All 16 schematic `extraKernelArgs` plus sd-boot bootloader are confirmed active in `/proc/cmdline`. The node has been successfully upgraded to the factory image with the current schematic. No `make -C talos upgrade-node-04` is pending.
 
 2. **All sysctls verified.** Every sysctl from `patches/common.yaml` matches its live runtime value. No configuration drift detected.
 
