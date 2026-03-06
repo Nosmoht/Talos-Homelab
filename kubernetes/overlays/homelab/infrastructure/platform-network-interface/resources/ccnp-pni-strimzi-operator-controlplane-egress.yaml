@@ -15,6 +15,19 @@ spec:
       name: strimzi-cluster-operator
       strimzi.io/kind: cluster-operator
   egress:
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: atlas-system
+            app.kubernetes.io/managed-by: strimzi-cluster-operator
+            app.kubernetes.io/name: kafka
+      toPorts:
+        - ports:
+            - port: "9090"
+              protocol: TCP
+            - port: "9091"
+              protocol: TCP
+            - port: "9092"
+              protocol: TCP
     - toCIDRSet:
         - cidr: 10.96.0.1/32
       toPorts:
