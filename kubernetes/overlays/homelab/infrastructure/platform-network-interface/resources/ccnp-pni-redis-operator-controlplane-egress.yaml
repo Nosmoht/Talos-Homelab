@@ -14,6 +14,19 @@ spec:
       k8s:io.kubernetes.pod.namespace: redis-system
       name: redis-operator
   egress:
+    - toEndpoints:
+        - matchLabels:
+            app.kubernetes.io/name: redis
+            redis_setup_type: replication
+        - matchLabels:
+            app.kubernetes.io/name: redis
+            redis_setup_type: sentinel
+      toPorts:
+        - ports:
+            - port: "6379"
+              protocol: TCP
+            - port: "26379"
+              protocol: TCP
     - toCIDRSet:
         - cidr: 10.96.0.1/32
       toPorts:
