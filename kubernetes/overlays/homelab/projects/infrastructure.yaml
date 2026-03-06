@@ -30,6 +30,7 @@ spec:
     - https://strimzi.io/charts/
     - ghcr.io/bank-vaults/helm-charts*
     - https://redhat-cop.github.io/vault-config-operator
+    - https://charts.external-secrets.io
     - https://operator.min.io/
   destinations:
     - namespace: argocd
@@ -61,6 +62,8 @@ spec:
     - namespace: kafka
       server: https://kubernetes.default.svc
     - namespace: vault
+      server: https://kubernetes.default.svc
+    - namespace: external-secrets
       server: https://kubernetes.default.svc
     - namespace: minio-operator
       server: https://kubernetes.default.svc

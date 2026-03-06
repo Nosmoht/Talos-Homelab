@@ -324,6 +324,28 @@ sops secrets.yaml
 make clean    # also removes .secrets.dec.yaml
 ```
 
+### Customer Runtime Secrets (Vault + ESO)
+
+Bootstrap and platform lifecycle secrets remain in SOPS/KSOPS.
+
+Customer runtime secrets are sourced from Vault and materialized by External
+Secrets Operator (ESO) through `ExternalSecret` resources.
+
+Operational checks:
+
+```bash
+# ESO control plane health
+kubectl -n external-secrets get pods
+kubectl -n argocd get application external-secrets
+
+# Tenant-side resources (example namespace)
+kubectl -n <tenant-namespace> get secretstore,externalsecret,secret
+kubectl -n <tenant-namespace> describe externalsecret <name>
+```
+
+Reference:
+- `docs/external-secrets-customer-guide.md`
+
 ### Regenerate Talosconfig
 
 ```bash

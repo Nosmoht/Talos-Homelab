@@ -15,6 +15,7 @@ resources:
   - cloudnative-pg
   - vault-operator
   - vault-config-operator
+  - external-secrets
   - redis-operator
   - strimzi-kafka-operator
   - dex
