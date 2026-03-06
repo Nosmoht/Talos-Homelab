@@ -25,4 +25,4 @@ spec:
   targetNamespaces:
     targetNamespaces:
       - cert-manager
-  tokenTTL: 1h
+  tokenTTL: 3600
