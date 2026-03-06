@@ -17,9 +17,9 @@ spec:
   egress:
     - toEndpoints:
         - matchLabels:
-            k8s:io.kubernetes.pod.namespace: atlas-system
             app.kubernetes.io/managed-by: strimzi-cluster-operator
             app.kubernetes.io/name: kafka
+            strimzi.io/component-type: kafka
       toPorts:
         - ports:
             - port: "9090"
