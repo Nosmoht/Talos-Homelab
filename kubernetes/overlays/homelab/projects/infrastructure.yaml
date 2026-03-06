@@ -91,6 +91,8 @@ spec:
       kind: GatewayClass
     - group: cilium.io
       kind: CiliumClusterwideNetworkPolicy
+    - group: kyverno.io
+      kind: ClusterPolicy
     - group: nfd.k8s-sigs.io
       kind: NodeFeatureRule
     - group: piraeus.io

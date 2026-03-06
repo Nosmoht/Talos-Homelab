@@ -1,0 +1,13 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - capability-registry-configmap.yaml
+  - kyverno-clusterpolicy-pni-contract-audit.yaml
+  - kyverno-clusterpolicy-pni-reserved-labels-audit.yaml
+  - ccnp-pni-monitoring-dns-visibility.yaml
+  - ccnp-pni-redis-operator-controlplane-egress.yaml
+  - ccnp-pni-strimzi-operator-controlplane-egress.yaml
+  - ccnp-pni-vault-operator-controlplane-egress.yaml
+  - ccnp-pni-piraeus-operator-controlplane-egress.yaml
+  - ccnp-pni-minio-operator-controlplane-egress.yaml
