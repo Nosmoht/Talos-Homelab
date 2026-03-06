@@ -130,6 +130,7 @@ The following core flows are currently implemented through platform-owned PNI po
 - Strimzi operator data-plane access: `strimzi-cluster-operator` -> managed Kafka pods (`9090/TCP`, `9091/TCP`, `9092/TCP`)
 - Vault operator control-plane baseline: `vault-operator` -> API server + DNS
 - External Secrets operator control-plane baseline: `external-secrets` -> API server + DNS + Vault API (`8200/TCP`)
+- Vault CA distribution for consumers: `cert-manager/vault-ca` -> namespaces labeled `platform.io/network-interface-version=v1` and `platform.io/consume.vault-secrets=true`
 - MinIO operator control-plane baseline: `minio-operator` -> API server + DNS
 - Piraeus operator control-plane baseline: `piraeus-operator` -> API server + DNS
 

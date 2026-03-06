@@ -61,6 +61,7 @@ Platform team responsibilities:
 - Create/maintain Vault Kubernetes auth roles per namespace.
 - Ensure ESO is deployed and healthy.
 - Own ESO control-plane network policy via platform PNI policies.
+- Distribute `vault-ca` secret to opted-in tenant namespaces.
 
 Customer responsibilities:
 - Define `ExternalSecret` resources in own namespace.
@@ -103,6 +104,10 @@ spec:
       server: https://vault.vault.svc.cluster.local:8200
       path: secret
       version: v2
+      caProvider:
+        type: Secret
+        name: vault-ca
+        key: ca.crt
       auth:
         kubernetes:
           mountPath: kubernetes
@@ -110,6 +115,8 @@ spec:
           serviceAccountRef:
             name: eso-store
 ```
+
+`vault-ca` is platform-managed. Tenants should reference it but should not create or update it.
 
 ## Step 3: Create an ExternalSecret
 
@@ -170,6 +177,7 @@ For `team-a` in namespaces `team-a-apps` and `team-a-jobs`:
 3. Store is not Ready:
 - Vault endpoint/TLS/auth config mismatch.
 - ESO controller logs show provider auth errors.
+- Missing `vault-ca` secret in tenant namespace.
 
 Useful commands:
 

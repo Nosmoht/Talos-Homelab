@@ -5,6 +5,7 @@ resources:
   - capability-registry-configmap.yaml
   - kyverno-clusterpolicy-pni-contract-audit.yaml
   - kyverno-clusterpolicy-pni-reserved-labels-audit.yaml
+  - kyverno-clusterpolicy-vault-ca-distribution.yaml
   - ccnp-pni-monitoring-dns-visibility.yaml
   - ccnp-pni-monitoring-vault-config-operator-metrics-egress.yaml
   - ccnp-pni-monitoring-external-secrets-metrics-egress.yaml
