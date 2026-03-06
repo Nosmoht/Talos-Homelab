@@ -1,7 +1,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: vault-api-from-cert-manager-and-bootstrap
+  name: vault-api-from-cert-manager-bootstrap-and-external-secrets
   namespace: vault
   labels:
     app.kubernetes.io/name: vault
@@ -30,6 +30,12 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: vault-pki-bootstrap
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: external-secrets
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: external-secrets
       ports:
         - port: 8200
           protocol: TCP
