@@ -60,10 +60,12 @@ Platform team responsibilities:
 - Create/maintain Vault policy for tenant path.
 - Create/maintain Vault Kubernetes auth roles per namespace.
 - Ensure ESO is deployed and healthy.
+- Own ESO control-plane network policy via platform PNI policies.
 
 Customer responsibilities:
 - Define `ExternalSecret` resources in own namespace.
 - Reference only approved Vault keys/paths.
+- Do not manage ESO control-plane Cilium policies.
 
 ## Step 1: Put a Secret into Vault
 

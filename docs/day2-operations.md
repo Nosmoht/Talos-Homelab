@@ -331,6 +331,9 @@ Bootstrap and platform lifecycle secrets remain in SOPS/KSOPS.
 Customer runtime secrets are sourced from Vault and materialized by External
 Secrets Operator (ESO) through `ExternalSecret` resources.
 
+Network baseline for ESO is platform-owned and managed in PNI resources.
+Customer namespaces do not own ESO control-plane network policy.
+
 Operational checks:
 
 ```bash
