@@ -16,6 +16,7 @@ data:
       - id: monitoring-scrape
         providers:
           - kube-prometheus-stack
+          - vault-config-operator
       - id: logging-ship
         providers:
           - alloy

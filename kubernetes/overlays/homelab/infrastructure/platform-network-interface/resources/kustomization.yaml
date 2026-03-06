@@ -6,6 +6,7 @@ resources:
   - kyverno-clusterpolicy-pni-contract-audit.yaml
   - kyverno-clusterpolicy-pni-reserved-labels-audit.yaml
   - ccnp-pni-monitoring-dns-visibility.yaml
+  - ccnp-pni-monitoring-vault-config-operator-metrics-egress.yaml
   - ccnp-pni-redis-operator-controlplane-egress.yaml
   - ccnp-pni-strimzi-operator-controlplane-egress.yaml
   - ccnp-pni-vault-operator-controlplane-egress.yaml
