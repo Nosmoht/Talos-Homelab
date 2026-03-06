@@ -23,13 +23,13 @@ spec:
         deny:
           conditions:
             any:
-              - key: "{{ request.object.metadata.labels.'platform.io/provider' || '' }}"
+              - key: "{{ request.object.metadata.labels.\"platform.io/provider\" || '' }}"
                 operator: NotEquals
                 value: ""
-              - key: "{{ request.object.metadata.labels.'platform.io/managed-by' || '' }}"
+              - key: "{{ request.object.metadata.labels.\"platform.io/managed-by\" || '' }}"
                 operator: NotEquals
                 value: ""
-              - key: "{{ request.object.metadata.labels.'platform.io/capability' || '' }}"
+              - key: "{{ request.object.metadata.labels.\"platform.io/capability\" || '' }}"
                 operator: NotEquals
                 value: ""
     - name: reserved-pni-labels-workload
@@ -64,12 +64,12 @@ spec:
         deny:
           conditions:
             any:
-              - key: "{{ request.object.metadata.labels.'platform.io/provider' || '' }}"
+              - key: "{{ request.object.metadata.labels.\"platform.io/provider\" || '' }}"
                 operator: NotEquals
                 value: ""
-              - key: "{{ request.object.metadata.labels.'platform.io/managed-by' || '' }}"
+              - key: "{{ request.object.metadata.labels.\"platform.io/managed-by\" || '' }}"
                 operator: NotEquals
                 value: ""
-              - key: "{{ request.object.metadata.labels.'platform.io/capability' || '' }}"
+              - key: "{{ request.object.metadata.labels.\"platform.io/capability\" || '' }}"
                 operator: NotEquals
                 value: ""
