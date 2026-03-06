@@ -25,6 +25,7 @@ data:
         providers:
           - vault-operator
           - vault-config-operator
+          - external-secrets
       - id: cnpg-postgres
         providers:
           - cloudnative-pg

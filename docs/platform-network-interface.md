@@ -98,7 +98,7 @@ Admission policy (Kyverno) enforces this separation.
 |---|---|---|
 | `monitoring-scrape` | `kube-prometheus-stack`, `vault-config-operator` | Prometheus metrics scraping |
 | `logging-ship` | `alloy`, `loki` | Log forwarding and ingestion |
-| `vault-secrets` | `vault-operator`, `vault-config-operator` | Secret and PKI integration |
+| `vault-secrets` | `vault-operator`, `vault-config-operator`, `external-secrets` | Secret and PKI integration |
 | `cnpg-postgres` | `cloudnative-pg` | Managed PostgreSQL workloads |
 | `redis-managed` | `redis-operator` | Managed Redis instances |
 | `kafka-managed` | `strimzi-kafka-operator` | Managed Kafka clusters/topics |
@@ -128,6 +128,7 @@ The following core flows are currently implemented through platform-owned PNI po
 - Strimzi operator control-plane baseline: `strimzi-cluster-operator` -> API server + DNS
 - Strimzi operator data-plane access: `strimzi-cluster-operator` -> managed Kafka pods (`9090/TCP`, `9091/TCP`, `9092/TCP`)
 - Vault operator control-plane baseline: `vault-operator` -> API server + DNS
+- External Secrets operator control-plane baseline: `external-secrets` -> API server + DNS + Vault API (`8200/TCP`)
 - MinIO operator control-plane baseline: `minio-operator` -> API server + DNS
 - Piraeus operator control-plane baseline: `piraeus-operator` -> API server + DNS
 
