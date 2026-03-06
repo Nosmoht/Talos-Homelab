@@ -135,6 +135,7 @@ The following core flows are currently implemented through platform-owned PNI po
 Implementation rules:
 
 - Policies are platform-owned and reusable.
+- Operator control-plane baselines (including `external-secrets`) are implemented as platform-owned `CiliumClusterwideNetworkPolicy` resources under PNI.
 - Selectors should be provider/generic label-based.
 - Do not encode consumer deployment names or tenant-specific namespace names in PNI policies.
 

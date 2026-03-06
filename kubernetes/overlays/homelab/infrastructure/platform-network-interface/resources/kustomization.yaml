@@ -10,5 +10,6 @@ resources:
   - ccnp-pni-redis-operator-controlplane-egress.yaml
   - ccnp-pni-strimzi-operator-controlplane-egress.yaml
   - ccnp-pni-vault-operator-controlplane-egress.yaml
+  - ccnp-pni-external-secrets-controlplane-egress.yaml
   - ccnp-pni-piraeus-operator-controlplane-egress.yaml
   - ccnp-pni-minio-operator-controlplane-egress.yaml
