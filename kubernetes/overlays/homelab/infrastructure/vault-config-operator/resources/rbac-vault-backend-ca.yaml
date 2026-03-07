@@ -3,6 +3,10 @@ kind: Role
 metadata:
   name: vault-backend-ca
   namespace: vault
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "-2"
   labels:
     app.kubernetes.io/name: vault
     app.kubernetes.io/instance: homelab
@@ -27,6 +31,10 @@ kind: RoleBinding
 metadata:
   name: vault-backend-ca
   namespace: vault
+  annotations:
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: BeforeHookCreation
+    argocd.argoproj.io/sync-wave: "-2"
   labels:
     app.kubernetes.io/name: vault
     app.kubernetes.io/instance: homelab
