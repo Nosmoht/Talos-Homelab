@@ -12,7 +12,6 @@ metadata:
 spec:
   podSelector:
     matchLabels:
-      app.kubernetes.io/name: vault
       vault_cr: vault
   policyTypes:
     - Ingress
@@ -36,6 +35,14 @@ spec:
           podSelector:
             matchLabels:
               app.kubernetes.io/name: external-secrets
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+          podSelector:
+            matchLabels:
+              k8s-app: cilium-envoy
+        - ipBlock:
+            cidr: 192.168.2.0/24
       ports:
         - port: 8200
           protocol: TCP
