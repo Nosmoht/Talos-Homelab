@@ -18,11 +18,16 @@ rules:
       - ""
     resources:
       - configmaps
+    verbs:
+      - create
+  - apiGroups:
+      - ""
+    resources:
+      - configmaps
     resourceNames:
       - vault-backend-ca
     verbs:
       - get
-      - create
       - update
       - patch
 ---
