@@ -6,7 +6,6 @@
 
 ## Fixed UI IP Allocations
 - `192.168.2.131` -> `dex.homelab.local` (`dex`)
-- `192.168.2.132` -> `grafana.homelab.local` (`monitoring-grafana`)
 - `192.168.2.133` -> `prometheus.homelab.local` (`prometheus-oauth2-proxy`)
 - `192.168.2.134` -> `alertmanager.homelab.local` (`alertmanager-oauth2-proxy`)
 
@@ -19,7 +18,7 @@
 ```text
 192.168.2.70 argocd.homelab.local
 192.168.2.131 dex.homelab.local
-192.168.2.132 grafana.homelab.local
+192.168.2.70 grafana.homelab.local
 192.168.2.133 prometheus.homelab.local
 192.168.2.134 alertmanager.homelab.local
 ```

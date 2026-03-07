@@ -11,9 +11,9 @@ after initial installation is complete.
 | `make -C talos schematics` | Create factory schematics, update image URLs in patches |
 | `make -C talos install-<node>` | Initial config apply to fresh node (`--insecure`) |
 | `make -C talos bootstrap` | Bootstrap etcd on node-01 |
-| `make -C talos apply-<node>` | Apply config to node (192.168.2.x) |
+| `make -C talos apply-<node>` | Dry-run then apply config to node (192.168.2.x) |
 | `make -C talos apply-all` | Apply config to all nodes |
-| `make -C talos dry-run-<node>` | Dry-run (192.168.2.x) |
+| `make -C talos dry-run-<node>` | Regenerate configs, then dry-run (192.168.2.x) |
 | `make -C talos upgrade-<node>` | Apply config + upgrade to new install image |
 | `make -C talos talosconfig` | Regenerate talosconfig |
 | `make -C talos clean` | Remove generated configs + decrypted secrets |
@@ -56,13 +56,10 @@ partial control-plane outages.
 # 1. Edit patch files (patches/ or nodes/)
 vim patches/common.yaml
 
-# 2. Regenerate configs
-make -C talos gen-configs
-
-# 3. Dry-run
+# 2. Dry-run (regenerates configs automatically)
 make -C talos dry-run-node-01
 
-# 4. Apply
+# 3. Apply (runs dry-run-node-01 first)
 make -C talos apply-node-01
 ```
 
