@@ -208,7 +208,7 @@ kubectl get nodes -o wide
 | File | Contents |
 |------|----------|
 | `patches/common.yaml` | CNI: none (Cilium), kube-proxy: disabled, KubePrism:7445, DRBD modules, kubelet cert rotation, search domain disabled, **all sysctls** (performance + security), NTP config |
-| `patches/controlplane.yaml` | `allowSchedulingOnControlPlanes`, Gateway API CRDs + Cilium bootstrap as `extraManifests`, etcd metrics endpoint args |
+| `patches/controlplane.yaml` | `allowSchedulingOnControlPlanes`, Gateway API experimental CRDs + Cilium bootstrap as `extraManifests`, etcd metrics endpoint args |
 | `patches/worker-gpu.yaml` | NVIDIA kernel modules (nvidia, nvidia_uvm, nvidia_modeset, nvidia_drm), `bpf_jit_harden: 1` (override of Talos default 2) |
 | `.schematic-ids.mk` | Schematic IDs for standard and GPU images — install image URLs constructed dynamically from IDs + `TALOS_VERSION` |
 

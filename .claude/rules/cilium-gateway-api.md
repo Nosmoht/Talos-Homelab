@@ -15,7 +15,7 @@ paths:
 
 ## Gateway API
 - Cilium is the Gateway API implementation (Envoy proxies)
-- Gateway API CRDs (v1.2.1) installed via `extraManifests` — must appear **before** Cilium URL (CRDs must exist before Cilium watches them)
+- Gateway API CRDs (v1.2.1 experimental channel) installed via `extraManifests` — must appear **before** Cilium URL (CRDs must exist before Cilium watches them)
 - Enabled via `enable-gateway-api: "true"` in Cilium ConfigMap + RBAC in cilium-operator ClusterRole
 - Cilium auto-creates `cilium` GatewayClass
 - For each Gateway: creates `cilium-gateway-<name>` Deployment (Envoy) + LoadBalancer Service

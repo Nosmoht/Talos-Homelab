@@ -31,9 +31,6 @@ spec:
         certificateRefs:
           - group: ""
             kind: Secret
-            name: argocd-homelab-local-tls
-          - group: ""
-            kind: Secret
             name: homelab-wildcard-tls
       allowedRoutes:
         namespaces:

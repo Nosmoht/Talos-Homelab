@@ -288,6 +288,7 @@ data:
   nat-map-stats-interval: "30s"
   enable-lb-ipam: "true"
   enable-gateway-api: "true"
+  enable-gateway-api-app-protocol: "true"
   enable-envoy-config: "true"
   enable-non-default-deny-policies: "true"
   enable-source-ip-verification: "true"
@@ -2412,4 +2413,3 @@ spec:
           serviceAccountName: "hubble-generate-certs"
           automountServiceAccountToken: true
           restartPolicy: OnFailure
-
