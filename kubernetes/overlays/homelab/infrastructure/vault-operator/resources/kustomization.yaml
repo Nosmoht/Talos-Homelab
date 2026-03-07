@@ -4,6 +4,7 @@ kind: Kustomization
 resources:
   - vault.yaml
   - cnp-vault-operator.yaml
+  - cnp-vault-ui.yaml
   - servicemonitor-vault.yaml
   - networkpolicy-vault-metrics.yaml
   - networkpolicy-vault-api.yaml

@@ -2,7 +2,10 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
 resources:
+  - rbac-vault-backend-ca.yaml
   - job-vault-config-bootstrap.yaml
+  - backendtlspolicy-vault-ui.yaml
+  - httproute-vault.yaml
   - policy-cert-manager-pki.yaml
   - kubernetes-auth-role-cert-manager-pki.yaml
   - secret-engine-mount-pki-root.yaml

@@ -39,6 +39,9 @@ spec:
               kubectl -n cert-manager create secret generic vault-ca \
                 --from-file=ca.crt=/vault/tls/ca.crt \
                 --dry-run=client -o yaml | kubectl apply -f -
+              kubectl -n vault create configmap vault-backend-ca \
+                --from-file=ca.crt=/vault/tls/ca.crt \
+                --dry-run=client -o yaml | kubectl apply -f -
           securityContext:
             allowPrivilegeEscalation: false
             capabilities:
