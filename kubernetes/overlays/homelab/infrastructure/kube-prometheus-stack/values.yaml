@@ -85,11 +85,8 @@ kube-state-metrics:
 grafana:
   replicas: 1
   service:
-    type: LoadBalancer
-    loadBalancerIP: 192.168.2.132
-    sessionAffinity: ClientIP
-    labels:
-      "homelab.local/expose": "true"
+    type: ClusterIP
+    sessionAffinity: None
   affinity:
     podAntiAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
@@ -115,8 +112,8 @@ grafana:
     GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: "true"
   grafana.ini:
     server:
-      domain: localhost
-      root_url: http://localhost:3000
+      domain: grafana.homelab.local
+      root_url: https://grafana.homelab.local
     analytics:
       reporting_enabled: false
       check_for_updates: false
@@ -124,7 +121,7 @@ grafana:
       feedback_links_enabled: false
     security:
       disable_initial_admin_creation: true
-      cookie_secure: false
+      cookie_secure: true
       cookie_samesite: lax
     auth:
       disable_login_form: false

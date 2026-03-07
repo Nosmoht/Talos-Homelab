@@ -14,21 +14,6 @@ spec:
     matchLabels:
       app.kubernetes.io/name: grafana
   ingress:
-    # Direct local LAN access plus SNATed LB forwarding from cluster PodCIDR
-    - fromCIDRSet:
-        - cidr: 192.168.2.0/24
-        - cidr: 10.244.0.0/16
-      toPorts:
-        - ports:
-            - port: "3000"
-              protocol: TCP
-    # Cilium may classify cross-node LB forwarding as world on backend nodes
-    - fromEntities:
-        - world
-      toPorts:
-        - ports:
-            - port: "3000"
-              protocol: TCP
     # Prometheus -> Grafana metrics (ServiceMonitor monitoring-grafana)
     - fromEndpoints:
         - matchLabels:
