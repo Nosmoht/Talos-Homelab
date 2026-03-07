@@ -5,7 +5,6 @@
 - Selector: `homelab.local/expose: "true"`
 
 ## Fixed UI IP Allocations
-- `192.168.2.130` -> `argocd.homelab.local` (`argocd-server`)
 - `192.168.2.131` -> `dex.homelab.local` (`dex`)
 - `192.168.2.132` -> `grafana.homelab.local` (`monitoring-grafana`)
 - `192.168.2.133` -> `prometheus.homelab.local` (`prometheus-oauth2-proxy`)
@@ -18,7 +17,7 @@
 
 ## Example /etc/hosts entries
 ```text
-192.168.2.130 argocd.homelab.local
+192.168.2.70 argocd.homelab.local
 192.168.2.131 dex.homelab.local
 192.168.2.132 grafana.homelab.local
 192.168.2.133 prometheus.homelab.local
