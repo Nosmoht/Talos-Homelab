@@ -13,6 +13,7 @@ spec:
   description: Cluster infrastructure components
   sourceRepos:
     - https://github.com/Nosmoht/Talos-Homelab.git
+    - https://github.com/rancher/local-path-provisioner.git
     - https://argoproj.github.io/argo-helm
     - https://charts.jetstack.io
     - https://github.com/alex1989hu/kubelet-serving-cert-approver.git

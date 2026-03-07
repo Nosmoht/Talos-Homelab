@@ -21,6 +21,7 @@ resources:
   - dex
   - kyverno
   - platform-network-interface
+  - local-path-provisioner
   - kube-prometheus-stack
   - loki
   - alloy
