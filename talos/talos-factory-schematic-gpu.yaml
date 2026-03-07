@@ -18,6 +18,9 @@ customization:
     - pcie_aspm=off
     - workqueue.power_efficient=0
     - usbcore.autosuspend=-1
+    # PCIe riser stability (BTC B250C mining board)
+    - pci=noaer
+    - rcutree.rcu_idle_gp_delay=1
     # IOMMU (DMA isolation, requires VT-d enabled in BIOS)
     - intel_iommu=on
     - iommu=force
