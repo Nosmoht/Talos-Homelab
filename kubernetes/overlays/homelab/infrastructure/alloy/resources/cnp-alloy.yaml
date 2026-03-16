@@ -29,6 +29,8 @@ spec:
             app.kubernetes.io/name: loki
       toPorts:
         - ports:
+            - port: "8080"
+              protocol: TCP
             - port: "3100"
               protocol: TCP
     # DNS
