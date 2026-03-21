@@ -95,13 +95,14 @@ git status --short
 talosctl -n 192.168.2.61 -e 192.168.2.61 version
 talosctl -n 192.168.2.62 -e 192.168.2.62 version
 talosctl -n 192.168.2.63 -e 192.168.2.63 version
-talosctl -n 192.168.2.61 -e 192.168.2.61 health --control-plane-nodes 192.168.2.61,192.168.2.62,192.168.2.63
+talosctl -n 192.168.2.61 -e 192.168.2.61 health --control-plane-nodes 192.168.2.61,192.168.2.62,192.168.2.63 --worker-nodes 192.168.2.64,192.168.2.65,192.168.2.66,192.168.2.67,192.168.2.68
 talosctl -n 192.168.2.61 -e 192.168.2.61 etcd members
 kubectl get nodes -o wide
 kubectl get pods -A | grep -v Running
 kubectl -n kube-system get pods -l k8s-app=cilium -o wide
 kubectl linstor node list
 kubectl linstor resource list
+kubectl linstor resource list --faulty
 ```
 
 If the live cluster version does not match the plan’s `from_version`, stop and report drift.
@@ -190,10 +191,18 @@ Use the approved plan’s sequencing. Default order for this repo:
 8. `node-pi-01`
 
 For each node:
-```bash
-make -C talos dry-run-<node>
-make -C talos upgrade-<node>
-```
+
+1. **LINSTOR gate:** `kubectl linstor resource list --faulty` — must be empty before proceeding
+2. **Pre-drain** (worker nodes only — skip for control-plane node-01..03; gracefully evicts workloads; the LINSTOR faulty gate in step 1 protects DRBD nodes specifically):
+   ```bash
+   kubectl drain <node> --delete-emptydir-data --ignore-daemonsets --timeout=120s
+   ```
+3. **Dry-run and upgrade:**
+   ```bash
+   make -C talos dry-run-<node>
+   make -C talos upgrade-<node>
+   ```
+4. **Pi node retry** (node-pi-01 only): If the upgrade times out at "waiting for actor ID", retry `talosctl upgrade` directly with `--timeout 15m`. The node remains at pre-upgrade version and Ready — safe to retry.
 
 Wait for health gates to pass before moving to the next node. Do not parallelize node upgrades.
 
@@ -208,11 +217,16 @@ Minimum per-node health gates:
 ```bash
 kubectl get node <node>
 talosctl -n <node-ip> -e <node-ip> version
-talosctl -n 192.168.2.61 -e 192.168.2.61 health --control-plane-nodes 192.168.2.61,192.168.2.62,192.168.2.63
+talosctl -n 192.168.2.61 -e 192.168.2.61 health --control-plane-nodes 192.168.2.61,192.168.2.62,192.168.2.63 --worker-nodes 192.168.2.64,192.168.2.65,192.168.2.66,192.168.2.67,192.168.2.68
 talosctl -n 192.168.2.61 -e 192.168.2.61 etcd members
 kubectl get nodes -o wide
 kubectl -n kube-system get pods -l k8s-app=cilium -o wide
 kubectl linstor node list
+kubectl linstor resource list --faulty
+# Wait up to 5 min for DRBD resync if faulty; investigate if persistent
+# Verify node is schedulable:
+kubectl get node <node> -o jsonpath='{.spec.unschedulable}'
+# If true, run: kubectl uncordon <node>
 ```
 
 Also run plan-specific verification for:
@@ -232,6 +246,8 @@ Stop immediately if any of the following occur:
 - Cilium fails to recover after a node reboot
 - API server or pod networking is broken
 - a node is stuck shutting down
+- the upgrade sequence is locked (CSI unmount deadlock) — `reboot`, `upgrade --force`, and `reset` all fail with "locked"; requires physical power cycle; node returns at pre-upgrade version and can be retried
+- a node retains SchedulingDisabled after upgrade reports success
 - unexpected CSR, certificate, or bootstrap issues block readiness
 
 Do not continue “to see if it settles” once a stop condition is met.
@@ -253,6 +269,13 @@ kubectl get csr
 kubectl get nodes -o wide
 kubectl -n kube-system get pods -l k8s-app=cilium -o wide
 kubectl linstor resource list
+```
+
+```bash
+# If upgrade sequence is locked (CSI unmount deadlock):
+# 1. Physical power cycle is the ONLY recovery
+# 2. Node boots at pre-upgrade version
+# 3. After power cycle: verify health, then retry with kubectl drain first
 ```
 
 If recovery requires repo reversion:

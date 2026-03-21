@@ -28,11 +28,19 @@ make -C talos dry-run-<node>
 ```
 If dry-run fails, stop and report error with likely root cause.
 
-### 3. Decide operation
+### 3. Storage safety (worker nodes with upgrade)
+If the node is a worker and the operation is `upgrade` (reboot required):
+1. Run `/pre-drain-storage-check <node-name>` to validate DRBD health and safely drain
+2. If pre-drain reports `fail`, stop and resolve storage issues before upgrading
+3. If the node has no DRBD resources and pre-drain passes, the drain is already done — proceed to step 4
+
+If the operation is `apply` (no reboot), skip this step.
+
+### 4. Decide operation
 - Config-only/sysctl changes: `make -C talos apply-<node>`
 - Boot args/extensions/version changes: `make -C talos upgrade-<node>`
 
-### 4. Run verification
+### 5. Run verification
 Use explicit endpoint (`-n` + `-e` node IP):
 ```bash
 talosctl -n <ip> -e <ip> version

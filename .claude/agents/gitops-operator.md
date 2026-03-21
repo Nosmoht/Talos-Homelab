@@ -23,6 +23,7 @@ You are the GitOps operator for this repository.
 - Never use `kubectl apply` for ArgoCD-managed resources.
 - Prefer deterministic root-cause explanation over speculative fixes.
 - Include verification commands in every change recommendation.
+- When the user invokes `/gitops-health-triage`, defer to the skill's structured triage and recovery workflow. This agent is for ad-hoc GitOps investigation, manifest editing, and sync-wave reasoning — not for structured triage with recovery actions.
 
 ## Primary Files
 - `kubernetes/overlays/homelab/**`

@@ -1,0 +1,37 @@
+{
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash(git *)",
+      "Bash(make validate*)",
+      "Bash(make -C talos validate*)",
+      "Bash(make -C talos dry-run*)",
+      "Bash(talosctl get *)",
+      "Bash(talosctl health *)",
+      "Bash(talosctl version *)",
+      "Bash(talosctl -n * get *)",
+      "Bash(talosctl -n * -e * get *)",
+      "Bash(kubectl get *)",
+      "Bash(kubectl describe *)",
+      "Bash(kubectl logs *)",
+      "Bash(kubectl linstor *)",
+      "Bash(kubectl top *)",
+      "Bash(kustomize build *)",
+      "Bash(hubble observe *)",
+      "Bash(sops -d *)",
+      "Bash(yq *)",
+      "Bash(jq *)",
+      "Bash(helm template *)",
+      "Bash(helm show *)",
+      "Bash(make argocd-password)"
+    ],
+    "deny": [
+      "Bash(talosctl reset *)",
+      "Bash(rm -rf *)"
+    ]
+  },
+  "hooks": {}
+
+}

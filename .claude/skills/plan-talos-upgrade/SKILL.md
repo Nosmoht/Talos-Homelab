@@ -157,6 +157,9 @@ Also check for upgrade blast radius:
 - GPU or Pi node image path divergence
 - kubelet CSR or bootstrap token issues after reboot
 - generated config drift caused by version variable changes
+- CSI unmount deadlock risk: DRBD CSI volumes in D-state during Talos's `unmountPodMounts` phase can lock the upgrade sequence with no API recovery; mitigate with explicit `kubectl drain` before `talosctl upgrade` on all DRBD nodes
+- Pi node (ARM64 + USB storage) timeout risk: `talosctl upgrade` may hang at "waiting for actor ID"; plan retry with extended timeout
+- Post-upgrade SchedulingDisabled persistence: nodes may retain cordon status after talosctl reports success; plan explicit uncordon verification
 
 ### 7. Build the migration plan
 The plan must be execution-ready and ordered.
@@ -201,6 +204,11 @@ Require the plan to address:
 - control-plane order `node-01 -> node-02 -> node-03`
 - worker order `node-04 -> node-05 -> node-06 -> node-gpu-01 -> node-pi-01`
 - health gates before proceeding to the next node
+- explicit `kubectl drain <node> --delete-emptydir-data --ignore-daemonsets --timeout=120s` before `talosctl upgrade` for every DRBD node — do NOT rely on Talos's built-in drain alone
+- per-node `kubectl linstor resource list --faulty` gate before starting each node upgrade
+- post-node verification that SchedulingDisabled is cleared, with `kubectl uncordon` as recovery
+- Pi node: extended timeout and retry guidance
+- `talosctl health` commands must include `--worker-nodes` flag
 
 ### 8. Include rollback and safety constraints
 Always address:
@@ -209,6 +217,9 @@ Always address:
 - what health signals must be green before moving to the next node
 - what to do if a node is stuck shutting down, fails to rejoin etcd, or loses networking
 - what to do if kubelet CSR approval or Cilium recovery blocks readiness
+- what to do if the upgrade sequence is locked due to CSI unmount deadlock (physical power cycle is the only recovery; node returns at pre-upgrade version and can be retried cleanly)
+- what to do if a node retains SchedulingDisabled after upgrade (explicit `kubectl uncordon`)
+- what to do if the Pi node times out at "waiting for actor ID" (retry with extended timeout; node is still at pre-upgrade version and Ready)
 
 Never pretend rollback is symmetric if it requires disruptive re-imaging, reset flows, or other exceptional recovery.
 

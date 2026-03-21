@@ -71,7 +71,35 @@ Extract and record:
 
 Search for Cilium dependencies and managed resources with `rg` before writing the plan.
 
-### 2. Resolve `from-version`
+### 2. Cilium Drift Pre-flight Check
+Before proceeding, detect drift between repo intent and live state:
+
+1. Compare `talos/versions.mk` `CILIUM_VERSION` vs live daemonset image tag:
+```bash
+# Repo intent
+grep CILIUM_VERSION talos/versions.mk
+# Live state
+kubectl -n kube-system get ds cilium -o jsonpath='{.spec.template.spec.containers[0].image}'
+```
+
+2. Check extraManifests cache-buster `?v=` matches current version:
+```bash
+# Extract ?v= from controlplane patch
+grep -o '?v=[^ "]*' talos/patches/controlplane.yaml | sed 's/?v=//'
+# Compare with CILIUM_VERSION
+```
+
+3. Compare bootstrap manifest key values vs live ConfigMap:
+```bash
+# Key values from bootstrap
+grep -E '(tag:|version:)' kubernetes/bootstrap/cilium/cilium.yaml | head -5
+# Live ConfigMap
+kubectl -n kube-system get cm cilium-config -o yaml | grep -E '(agent-not-ready-taint-key|tunnel-protocol|enable-)'  | head -10
+```
+
+If drift is detected, include it as a first-class risk in the plan and recommend resolving before upgrade.
+
+### 3. Resolve `from-version`
 If `from-version` was provided, normalize it to `major.minor.patch` and use it.
 
 If omitted, resolve in this order:
@@ -90,7 +118,7 @@ KUBECONFIG=/tmp/homelab-kubeconfig cilium version
 
 Use the daemonset image tag or `cilium version` output as the primary source. Do not rely only on labels.
 
-### 3. Resolve `to-version`
+### 4. Resolve `to-version`
 If `to-version` was provided, normalize it to `major.minor.patch` and use it.
 
 If omitted:
@@ -101,7 +129,7 @@ If omitted:
 
 Record the exact release URL used for the decision.
 
-### 4. Validate the version hop
+### 5. Validate the version hop
 Before reading release notes, check:
 - `from-version` exists and is not newer than `to-version`
 - no downgrade is being planned
@@ -116,7 +144,7 @@ At minimum, inspect Cilium’s documented compatibility notes for:
 
 If the user requested a large skip, call that out explicitly and consider recommending a staged upgrade path if upstream guidance suggests it.
 
-### 5. Read every intermediate release note
+### 6. Read every intermediate release note
 Read the release notes for every version `> from-version` and `<= to-version`.
 
 Rules:
@@ -133,7 +161,7 @@ Capture per release:
 - data-plane, control-plane, and observability changes
 - operational prerequisites and post-upgrade actions
 
-### 6. Perform cluster-specific impact analysis
+### 7. Perform cluster-specific impact analysis
 Do not stop at upstream notes. Map them onto this repo and live cluster.
 
 Check at least:
@@ -152,7 +180,7 @@ Also check for upgrade blast radius:
 - Hubble relay or UI version skew
 - metrics/dashboards/query drift
 
-### 7. Build the migration plan
+### 8. Build the migration plan
 The plan must be execution-ready and ordered.
 
 Include these sections:
@@ -194,7 +222,7 @@ If the version bump changes `CILIUM_VERSION`, require the plan to address:
 
 Do not imply that editing `kubernetes/bootstrap/cilium/cilium.yaml` alone completes rollout.
 
-### 8. Include rollback and safety constraints
+### 9. Include rollback and safety constraints
 Always address:
 - whether downgrade is supported or effectively unsupported
 - how to preserve a copy of the pre-upgrade bootstrap manifest and repo version pin
@@ -204,7 +232,7 @@ Always address:
 
 Never recommend a rollback path that depends on direct apply drift against repo-owned steady state without making that tradeoff explicit.
 
-### 9. Review before presenting
+### 10. Review before presenting
 Critically review the draft plan before returning it.
 
 Review checklist:
@@ -220,7 +248,7 @@ Review checklist:
 
 If the review finds gaps, fix them before presenting the final plan. Do not present the unreviewed draft.
 
-### 10. Save the reviewed plan as a draft artifact
+### 11. Save the reviewed plan as a draft artifact
 After the plan passes self-review, write it to:
 - `docs/cilium-upgrade-plan-<from-version>-to-<to-version>-<yyyy-mm-dd>.md`
 
@@ -243,7 +271,7 @@ Rules:
 - `approved_by` and `approved_at` must be left empty by the planning skill
 - the body below the frontmatter must contain the reviewed plan using the required output sections
 
-### 11. Tell the operator how to approve the plan
+### 12. Tell the operator how to approve the plan
 At the end of the response, instruct the operator to approve the plan by manually editing the frontmatter in the saved file:
 ```yaml
 status: approved

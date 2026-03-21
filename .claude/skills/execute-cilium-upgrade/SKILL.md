@@ -99,6 +99,34 @@ KUBECONFIG=/tmp/homelab-kubeconfig kubectl get ciliumnode
 KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n argocd get applications
 ```
 
+#### Cilium Drift Pre-flight Check
+Before proceeding, detect drift between repo intent and live state:
+
+1. Compare `talos/versions.mk` `CILIUM_VERSION` vs live daemonset image tag:
+```bash
+# Repo intent
+grep CILIUM_VERSION talos/versions.mk
+# Live state
+KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system get ds cilium -o jsonpath=’{.spec.template.spec.containers[0].image}’
+```
+
+2. Check extraManifests cache-buster `?v=` matches current version:
+```bash
+# Extract ?v= from controlplane patch
+grep -o ‘?v=[^ "]*’ talos/patches/controlplane.yaml | sed ‘s/?v=//’
+# Compare with CILIUM_VERSION
+```
+
+3. Compare bootstrap manifest key values vs live ConfigMap:
+```bash
+# Key values from bootstrap
+grep -E ‘(tag:|version:)’ kubernetes/bootstrap/cilium/cilium.yaml | head -5
+# Live ConfigMap
+KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system get cm cilium-config -o yaml | grep -E ‘(agent-not-ready-taint-key|tunnel-protocol|enable-)’  | head -10
+```
+
+If any drift is detected, STOP and report the drift. Do not proceed with the upgrade on a drifted baseline.
+
 If the live cluster version does not match the plan’s `from_version`, stop and report drift.
 
 If the worktree already contains unrelated changes in files required for the upgrade, stop and resolve that first. Do not mix this rollout with other pending work.
