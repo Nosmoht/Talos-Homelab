@@ -1,0 +1,41 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: pi-reserved-daemonset-toleration
+  labels:
+    app.kubernetes.io/name: kyverno
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: cluster-policy
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  admission: true
+  background: true
+  rules:
+    - name: add-pi-taint-toleration-to-node-agents
+      preconditions:
+        all:
+          - key: "{{ request.object.spec.template.spec.priorityClassName || '' }}"
+            operator: AnyIn
+            value:
+              - system-node-critical
+              - system-cluster-critical
+      match:
+        any:
+          - resources:
+              kinds:
+                - DaemonSet
+              namespaces:
+                - kube-system
+                - monitoring
+                - node-feature-discovery
+      mutate:
+        patchStrategicMerge:
+          spec:
+            template:
+              spec:
+                tolerations:
+                  - key: homelab.io/pi-reserved
+                    operator: Equal
+                    value: "true"
+                    effect: NoSchedule

@@ -1,6 +1,8 @@
 master:
   replicaCount: 1
 
+priorityClassName: system-node-critical
+
 worker:
   tolerations:
     - key: nvidia.com/gpu

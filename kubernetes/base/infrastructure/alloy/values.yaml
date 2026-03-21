@@ -1,5 +1,6 @@
 controller:
   type: daemonset
+  priorityClassName: system-node-critical
   initContainers:
     - name: geoip-db
       image: curlimages/curl:8.12.1

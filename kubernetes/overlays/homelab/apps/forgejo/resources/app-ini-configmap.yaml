@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: forgejo-config-template
+  namespace: apps-forgejo
+  labels:
+    app.kubernetes.io/name: forgejo
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: config
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+data:
+  app.ini.tmpl: |
+    APP_NAME = Forgejo
+    RUN_MODE = prod
+
+    [server]
+    APP_DATA_PATH = /var/lib/gitea/data
+    DOMAIN = git.homelab.local
+    ROOT_URL = https://git.homelab.local/
+    HTTP_PORT = 3000
+    SSH_PORT = 22
+    START_SSH_SERVER = false
+    OFFLINE_MODE = true
+
+    [database]
+    DB_TYPE = sqlite3
+    PATH = /var/lib/gitea/data/forgejo.db
+
+    [security]
+    INSTALL_LOCK = true
+    SECRET_KEY = __SECRET_KEY__
+    INTERNAL_TOKEN = __INTERNAL_TOKEN__
+
+    [service]
+    DISABLE_REGISTRATION = true
+    REQUIRE_SIGNIN_VIEW = true
+
+    [picture]
+    DISABLE_GRAVATAR = true
+    ENABLE_FEDERATED_AVATAR = false
+
+    [openid]
+    ENABLE_OPENID_SIGNIN = false
+    ENABLE_OPENID_SIGNUP = false

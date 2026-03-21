@@ -57,6 +57,9 @@ alertmanager:
     enabled: true
     minAvailable: 2
 
+prometheus-node-exporter:
+  priorityClassName: system-node-critical
+
 kube-state-metrics:
   replicas: 2
   podDisruptionBudget:

@@ -1,0 +1,133 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: pi-reserved-toleration-guard
+  labels:
+    app.kubernetes.io/name: kyverno
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: cluster-policy
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  validationFailureAction: Enforce
+  background: true
+  admission: true
+  emitWarning: false
+  rules:
+    - name: deny-pi-toleration-on-pods
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - apps-forgejo
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: forgejo
+          - resources:
+              namespaces:
+                - kube-system
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: local-path-provisioner
+      validate:
+        allowExistingViolations: true
+        message: "Pi toleration is reserved for Forgejo, the Pi local-path helper, and approved critical DaemonSets."
+        deny:
+          conditions:
+            all:
+              - key: homelab.io/pi-reserved
+                operator: AnyIn
+                value: "{{ request.object.spec.tolerations[].key || `[]` }}"
+              - key: "{{ request.object.metadata.ownerReferences[].kind || `[]` }}"
+                operator: AnyNotIn
+                value:
+                  - DaemonSet
+    - name: deny-pi-toleration-on-non-daemonset-controllers
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds:
+                - Deployment
+                - StatefulSet
+                - Job
+                - CronJob
+      exclude:
+        any:
+          - resources:
+              kinds:
+                - StatefulSet
+              namespaces:
+                - apps-forgejo
+              names:
+                - forgejo
+          - resources:
+              kinds:
+                - Deployment
+              namespaces:
+                - kube-system
+              selector:
+                matchLabels:
+                  app.kubernetes.io/name: local-path-provisioner
+      validate:
+        allowExistingViolations: true
+        message: "Pi toleration is reserved for Forgejo, the Pi local-path provisioner, and approved critical DaemonSets."
+        deny:
+          conditions:
+            all:
+              - key: homelab.io/pi-reserved
+                operator: AnyIn
+                value: "{{ request.object.spec.template.spec.tolerations[].key || `[]` }}"
+    - name: deny-pi-toleration-on-daemonsets-outside-approved-namespaces
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds:
+                - DaemonSet
+      validate:
+        allowExistingViolations: true
+        message: "Only critical DaemonSets in kube-system, monitoring, and node-feature-discovery may use the Pi toleration."
+        deny:
+          conditions:
+            all:
+              - key: homelab.io/pi-reserved
+                operator: AnyIn
+                value: "{{ request.object.spec.template.spec.tolerations[].key || `[]` }}"
+              - key: "{{ request.object.metadata.namespace }}"
+                operator: AnyNotIn
+                value:
+                  - kube-system
+                  - monitoring
+                  - node-feature-discovery
+    - name: deny-pi-toleration-on-daemonsets-without-critical-priority
+      skipBackgroundRequests: true
+      match:
+        any:
+          - resources:
+              kinds:
+                - DaemonSet
+              namespaces:
+                - kube-system
+                - monitoring
+                - node-feature-discovery
+      validate:
+        allowExistingViolations: true
+        message: "Only system-critical DaemonSets may use the Pi toleration."
+        deny:
+          conditions:
+            all:
+              - key: homelab.io/pi-reserved
+                operator: AnyIn
+                value: "{{ request.object.spec.template.spec.tolerations[].key || `[]` }}"
+              - key: "{{ request.object.spec.template.spec.priorityClassName || '' }}"
+                operator: AnyNotIn
+                value:
+                  - system-node-critical
+                  - system-cluster-critical

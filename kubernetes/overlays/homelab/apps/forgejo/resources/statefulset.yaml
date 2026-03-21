@@ -1,0 +1,195 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: forgejo
+  namespace: apps-forgejo
+  labels:
+    app.kubernetes.io/name: forgejo
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: statefulset
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  serviceName: forgejo
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: forgejo
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: forgejo
+        app.kubernetes.io/instance: homelab
+        app.kubernetes.io/component: server
+        app.kubernetes.io/part-of: homelab
+        app.kubernetes.io/managed-by: argocd
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: node-pi-01
+      tolerations:
+        - key: homelab.io/pi-reserved
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      volumes:
+        - name: forgejo-config
+          emptyDir: {}
+        - name: forgejo-config-template
+          configMap:
+            name: forgejo-config-template
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+      initContainers:
+        - name: render-config
+          image: codeberg.org/forgejo/forgejo:14.0.3-rootless
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GITEA_APP_INI
+              value: /etc/gitea/app.ini
+            - name: FORGEJO_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-bootstrap
+                  key: secret-key
+            - name: FORGEJO_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-bootstrap
+                  key: internal-token
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              set -euo pipefail
+              cat /config-template/app.ini.tmpl \
+                | sed "s|__SECRET_KEY__|${FORGEJO_SECRET_KEY}|g" \
+                | sed "s|__INTERNAL_TOKEN__|${FORGEJO_INTERNAL_TOKEN}|g" \
+                > /etc/gitea/app.ini
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: forgejo-config
+              mountPath: /etc/gitea
+            - name: forgejo-config-template
+              mountPath: /config-template
+              readOnly: true
+        - name: bootstrap-forgejo
+          image: codeberg.org/forgejo/forgejo:14.0.3-rootless
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GITEA_APP_INI
+              value: /etc/gitea/app.ini
+            - name: FORGEJO_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-bootstrap
+                  key: admin-username
+            - name: FORGEJO_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-bootstrap
+                  key: admin-password
+            - name: FORGEJO_ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: forgejo-bootstrap
+                  key: admin-email
+          command:
+            - /bin/sh
+            - -ec
+          args:
+            - |
+              set -euo pipefail
+              forgejo migrate --config /etc/gitea/app.ini
+              if forgejo admin user list --config /etc/gitea/app.ini | awk 'NR > 1 {print $2}' | grep -Fxq "${FORGEJO_ADMIN_USERNAME}"; then
+                forgejo admin user change-password \
+                  --config /etc/gitea/app.ini \
+                  --username "${FORGEJO_ADMIN_USERNAME}" \
+                  --password "${FORGEJO_ADMIN_PASSWORD}"
+              else
+                forgejo admin user create \
+                  --config /etc/gitea/app.ini \
+                  --username "${FORGEJO_ADMIN_USERNAME}" \
+                  --password "${FORGEJO_ADMIN_PASSWORD}" \
+                  --email "${FORGEJO_ADMIN_EMAIL}" \
+                  --admin \
+                  --must-change-password=false
+              fi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: forgejo-config
+              mountPath: /etc/gitea
+            - name: forgejo-data
+              mountPath: /var/lib/gitea
+      containers:
+        - name: forgejo
+          image: codeberg.org/forgejo/forgejo:14.0.3-rootless
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: GITEA_APP_INI
+              value: /etc/gitea/app.ini
+          args:
+            - web
+            - --config
+            - /etc/gitea/app.ini
+          ports:
+            - name: http
+              containerPort: 3000
+          readinessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: forgejo-config
+              mountPath: /etc/gitea
+            - name: forgejo-data
+              mountPath: /var/lib/gitea
+  volumeClaimTemplates:
+    - metadata:
+        name: forgejo-data
+        labels:
+          app.kubernetes.io/name: forgejo
+          app.kubernetes.io/instance: homelab
+          app.kubernetes.io/component: pvc
+          app.kubernetes.io/part-of: homelab
+          app.kubernetes.io/managed-by: argocd
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: node-pi-01-local
+        resources:
+          requests:
+            storage: 20Gi
