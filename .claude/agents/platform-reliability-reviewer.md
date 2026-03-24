@@ -24,13 +24,16 @@ Read these files before beginning any review — they define what "correct" look
 
 Execute in order. Do not skip steps even if no files changed in that area.
 
-1. **Discover scope** — Use Glob on `kubernetes/**`, `talos/**`, `.claude/rules/**` to identify changed or relevant files.
+1. **Discover scope** — Use Glob on `kubernetes/**`, `talos/**`, `.claude/rules/**` to identify changed or relevant files. If no files match, report "No infrastructure files found in scope" and end with APPROVED verdict.
+
+**Error handling:** If a reference file from the "Read Before Acting" list does not exist, note it as an INFO finding ("Reference file missing: <path>") and continue with remaining references.
 2. **ArgoCD & CiliumNetworkPolicy regressions** — Check sync policies, health checks, network policy allow/deny completeness. Verify Gateway API webhook-defaulted fields are explicit.
 3. **Talos patch logic** — Verify patch ordering (common → role → node), no unsafe reboots without quorum check, no edits to generated configs.
 4. **Rollback path** — Confirm every change has an identifiable revert path (git history, ArgoCD rollback, or documented manual steps).
 5. **Secret hygiene** — Grep for plaintext secrets; verify `*.sops.yaml` files and ksops generator wiring. Flag any base64-encoded values in non-secret resources.
 6. **Validation gaps** — Identify missing health checks, missing resource limits, or absent readiness probes in new workloads.
-7. **Compile findings** — Group by severity per the Output Contract below.
+7. **Verify findings** — For each BLOCKING finding, re-read the cited file:line to confirm the issue exists. Remove false positives (e.g., SOPS-encrypted files flagged as plaintext secrets, ArgoCD annotations that are actually correct).
+8. **Compile findings** — Group by severity per the Output Contract below.
 
 ## Severity Definitions
 
@@ -44,6 +47,15 @@ Format each finding as:
 ```
 [SEVERITY] file:line — description
 Fix: concrete one-line or code-block fix
+```
+
+### Examples
+```
+[BLOCKING] kubernetes/apps/monitoring/values.yaml:42 — Grafana admin password in plaintext
+Fix: Move to SOPS-encrypted secret: `kubectl create secret generic grafana-admin --dry-run=client -o yaml | sops -e > grafana-admin.sops.yaml`
+
+[WARNING] kubernetes/apps/media/deployment.yaml:18 — No resource limits defined for jellyfin container
+Fix: Add `resources: { limits: { cpu: "2", memory: "4Gi" }, requests: { cpu: "500m", memory: "1Gi" } }`
 ```
 
 End with a final verdict:

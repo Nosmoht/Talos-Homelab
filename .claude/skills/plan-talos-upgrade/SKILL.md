@@ -25,6 +25,14 @@ plan-talos-upgrade 1.13.0   # interpreted as to-version
 plan-talos-upgrade
 ```
 
+## Bash Usage Constraints
+Bash is permitted ONLY for read-only operations during planning:
+- `talosctl get` / `talosctl version` / `talosctl disks` / `talosctl health` / `talosctl etcd members` (cluster queries)
+- `curl` / `wget` (fetching upstream release metadata)
+- `git log` / `git diff` / `git status` (repo history)
+- `make -C talos dry-run-*` / `make -C talos validate-generated` (validation only)
+Do NOT run any mutating commands (`talosctl upgrade`, `talosctl apply-config`, `kubectl drain`, `kubectl delete`, `make apply-*`, `make upgrade-*`) during planning.
+
 ## Repository Facts You Must Respect
 - Talos version intent is pinned in `talos/versions.mk` as `TALOS_VERSION := ...`.
 - Node install images are derived from `talos/.schematic-ids.mk` and `TALOS_VERSION` in `talos/Makefile`.

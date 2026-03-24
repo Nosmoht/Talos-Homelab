@@ -45,7 +45,7 @@ Based on the hardware analysis, identify optimization opportunities in these cat
 ### CPU-Specific
 - Governor: `performance` vs `schedutil` vs `powersave`
 - C-States: `intel_idle.max_cstate` / `processor.max_cstate` settings
-- Mitigations: `mitigations=auto` vs specific overrides based on vulnerability matrix
+- Mitigations: `mitigations=auto` vs specific overrides based on vulnerability matrix. **WARNING:** Never recommend `mitigations=off` unless the user explicitly requests it and acknowledges the security risk (5-20% performance gain but significant vulnerability exposure). Prefer selective overrides for specific CVEs over blanket disabling.
 - Hyper-Threading: `nosmt` consideration (only if security requires it)
 - Turbo Boost: BIOS recommendation if disabled
 
@@ -122,6 +122,11 @@ Before making any changes, present a structured summary to the user:
 | Sysctl | Current | Proposed | Rationale |
 |--------|---------|----------|-----------|
 | ... | ... | ... | ... |
+
+#### Example (do not copy verbatim — derive values from hardware analysis):
+| Sysctl | Current | Proposed | Rationale |
+|--------|---------|----------|-----------|
+| net.core.somaxconn | 128 | 65535 | 10GbE NIC supports high connection rate; default 128 causes SYN drops under load |
 
 ### Changes to `talos/patches/<role>.yaml`
 | Parameter | Current | Proposed | Rationale |

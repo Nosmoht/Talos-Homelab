@@ -54,11 +54,31 @@ Note: `talosctl upgrade` does not support `--dry-run`; the dry-run above validat
 
 ### 3. Decide operation
 
+Present the planned operation to the user and wait for explicit approval before executing:
+
+```
+## Maintenance Plan: <node>
+- **Node:** <node> (<role>, <ip>)
+- **Operation:** apply | upgrade
+- **Reason:** <what changed>
+- **Risk:** <reboot expected? etcd impact?>
+- **Rollback:** talosctl rollback -n <ip> -e <ip>
+
+Proceed? (yes/no)
+```
+
+After user confirms:
+
 - Config-only/sysctl changes: `make -C talos apply-<node>`
   - For CP nodes when the cluster is under active load, prefer staged mode: `talosctl apply-config --mode=staged -n <ip> -e <ip> -f talos/generated/<node>.yaml`
   - If uncertain whether a reboot is required, first attempt `--mode=no-reboot`; if it fails, escalate to `--mode=auto`.
 - Boot args/extensions/version changes:
-  1. Drain the node first:
+  1. Check DRBD/LINSTOR replica placement before draining:
+     ```bash
+     KUBECONFIG=/tmp/homelab-kubeconfig kubectl linstor volume list --nodes <node>
+     ```
+     Verify all volumes on this node have at least one healthy replica on another node. If any volume has only one replica and it is on this node, stop and report.
+  2. Drain the node:
      ```bash
      KUBECONFIG=/tmp/homelab-kubeconfig kubectl drain <node> --ignore-daemonsets --delete-emptydir-data
      ```
@@ -97,11 +117,28 @@ If the upgrade boots into a broken state, recover with: `talosctl rollback -n <i
 
 ## Output
 
-Write `docs/talos-maintenance-<node>-<yyyy-mm-dd>.md` with:
-1. Change type (`apply` vs `upgrade`) and rationale
-2. Commands executed
-3. Verification results
-4. Any rollback/recovery notes
+Present the completed report to the user for review. After user confirmation, write `docs/talos-maintenance-<node>-<yyyy-mm-dd>.md` using this template:
+
+```markdown
+# Talos Maintenance: <node> (<yyyy-mm-dd>)
+
+## Change Summary
+- **Node:** <node> (<role>, <ip>)
+- **Operation:** apply | upgrade
+- **Rationale:** <what changed and why>
+
+## Commands Executed
+1. `<command>` — <result>
+
+## Verification Results
+- talosctl version: <version confirmed>
+- talosctl health: <healthy|issues>
+- etcd status: <quorum intact|N/A for workers>
+- kubectl get node: <Ready|NotReady>
+
+## Recovery Notes
+<any rollback actions taken, or "None — operation completed successfully">
+```
 
 ## Hard Rules
 

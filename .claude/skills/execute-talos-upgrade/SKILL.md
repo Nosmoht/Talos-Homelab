@@ -112,7 +112,15 @@ If the worktree already contains unrelated changes in files required for the upg
 If nodes are NotReady, etcd is unhealthy, DRBD state is risky, or Cilium is already degraded, stop unless the approved plan explicitly covers that degraded starting state.
 
 ### 3. Create a pre-change evidence record
-Before mutating the repo or cluster, capture baseline evidence for comparison.
+Before mutating the repo or cluster, capture baseline evidence and a recovery snapshot.
+
+Take an etcd backup:
+```bash
+talosctl -n 192.168.2.61 -e 192.168.2.61 etcd snapshot /tmp/etcd-backup-pre-upgrade-$(date +%Y%m%d).db
+```
+Store the backup path in the run record. Verify the snapshot file size is non-zero before proceeding.
+
+Capture baseline evidence for comparison.
 
 Record:
 - current git branch and status
@@ -134,6 +142,21 @@ The run record must contain:
 5. results by stage and by node
 6. final verification
 7. incidents, pauses, or recovery actions
+
+Example structure:
+```markdown
+---
+plan_path: docs/talos-upgrade-plan-v1.8.0-to-v1.9.0-2026-03-20.md
+executed_at: 2026-03-21T14:00:00Z
+---
+## Baseline Health
+[pre-change evidence output]
+## Rollout Log
+### node-01
+- dry-run: OK
+- upgrade: started 14:05, rebooted 14:07, healthy 14:09
+- gates: etcd 3/3, cilium OK, linstor OK
+```
 
 ### 4. Apply repo changes from the approved plan
 Make only the changes required by the approved plan.

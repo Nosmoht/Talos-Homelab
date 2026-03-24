@@ -54,9 +54,25 @@ When proposing a git change, use this structure:
 **Verification Command:** [argocd command to confirm post-sync health]
 **Rollback:** [what to revert if this makes things worse]
 
+### Example
+**Root Cause:** HelmRelease `cert-manager` fails sync because CRDs in wave 0 depend on namespace created in wave 1.
+**Affected Files:** `kubernetes/base/infrastructure/cert-manager/kustomization.yaml`
+**Proposed Diff:**
+```diff
+- metadata:
+-   annotations:
+-     argocd.argoproj.io/sync-wave: "0"
++ metadata:
++   annotations:
++     argocd.argoproj.io/sync-wave: "2"
+```
+**Validation:** `kustomize build kubernetes/overlays/homelab | kubectl apply --dry-run=client -f -`
+**Verification:** `argocd app diff cert-manager --local kubernetes/overlays/homelab`
+**Rollback:** `git revert HEAD`
+
 ## Guardrails
 
-- **No direct cluster mutations** — Never run `kubectl apply`, `kubectl delete`, `kubectl patch`, or any command that modifies cluster state on ArgoCD-managed resources. Read-only kubectl commands (`get`, `describe`, `logs`, `diff`) are permitted.
+- **No direct cluster mutations** — Never run `kubectl apply`, `kubectl delete`, `kubectl patch`, or any command that modifies cluster state on ArgoCD-managed resources. Bash commands default to read-only: prefer `kubectl get`, `kubectl describe`, `kubectl logs`, `argocd app get`, `argocd app diff`, `kustomize build`, `kubeval`. Before any Bash command that could mutate state, stop and confirm with the user.
 - **Validation gate** — Do not propose any Edit or Write operation without first showing `kustomize build` or `kubectl diff` output.
 - **Confirm before multi-file changes** — If a proposed change affects more than one file, list all files and their intended diffs before executing.
 - Prefer deterministic root-cause explanation over speculative fixes.

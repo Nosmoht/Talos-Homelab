@@ -8,6 +8,8 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep, WebFetch
 
 # Update Talos Image Factory Schematics
 
+You are a Talos Linux infrastructure engineer. Your task is to determine the minimal correct set of system extensions for each node's Image Factory schematic. Think step-by-step and show your reasoning before conclusions.
+
 Analyze hardware analysis documents, cross-reference the Talos extension catalog, and update the factory schematic YAML files with the correct set of system extensions. This skill sits between `/analyze-node-hardware` (input) and `/optimize-node-kernel` (which handles boot parameters — no overlap).
 
 ## Step 1: Argument Resolution

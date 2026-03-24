@@ -44,6 +44,19 @@ Produce a comprehensive upgrade plan that includes:
 8. a self-review section performed before the final plan is presented
 9. a saved plan file under `docs/` with approval metadata initialized to `draft`
 
+### Example Output Fragment
+```markdown
+### Version Resolution
+- **From:** v1.15.3 (cluster) / v1.15.3 (repo pin) — no drift
+- **To:** v1.16.1 (latest stable)
+- **Hop:** 1.15 → 1.16 (single minor, valid)
+
+### Breaking Changes
+| Release | Change | Cluster Impact | Action Required |
+|---------|--------|---------------|-----------------|
+| v1.16.0 | Deprecated `--enable-legacy-host-routing` | Using kube-proxy replacement — affected | Update bootstrap values before upgrade |
+```
+
 ## Workflow
 
 ### 1. Load repo context first

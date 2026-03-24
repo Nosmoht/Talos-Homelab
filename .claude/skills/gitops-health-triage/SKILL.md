@@ -56,6 +56,10 @@ Read `references/argocd-remediation-patterns.md` and classify into one of:
 - stale operation state / exhausted retries
 - admission webhook rejection (distinct from defaulted-field drift — the resource is actively rejected, not just drifting)
 - pre/post-sync hook failure (Job pods fail; check hook pod logs: `kubectl -n <namespace> logs -l app.kubernetes.io/managed-by=argocd --tail=50`)
+- RBAC / permission denied (service account lacks required verbs on target resources)
+- resource quota exceeded (namespace quota blocks resource creation)
+- sync loop (external controller drift — HPA, VPA, cert-manager modifying ArgoCD-managed fields; fix with `ignoreDifferences`)
+- resource suspended (awaiting external input or manual intervention)
 
 ### 3. Map to repository paths
 
@@ -71,7 +75,7 @@ Consult the remediation lookup table in `references/argocd-remediation-patterns.
 
 ## Output
 
-Write `docs/argocd-triage-<app-or-all>-<yyyy-mm-dd>.md` with:
+Present the completed report to the user for review. After user confirmation, write `docs/argocd-triage-<app-or-all>-<yyyy-mm-dd>.md` with:
 1. Current state summary
 2. Root cause hypothesis + confidence (use calibration from `references/argocd-remediation-patterns.md`):
    - **High**: failure message directly names the resource/field; one class clearly matches
@@ -80,6 +84,23 @@ Write `docs/argocd-triage-<app-or-all>-<yyyy-mm-dd>.md` with:
 3. Exact files to modify
 4. Verification commands
 5. Emergency-only live actions (if any)
+
+### Example (single app)
+```markdown
+# ArgoCD Triage: dex (2026-03-24)
+## State: OutOfSync / Degraded
+Sync failed at 14:02 UTC. Last successful sync: 12:30 UTC.
+## Root Cause: Immutable field rejection (High confidence)
+Deployment `dex-server` selector changed; Kubernetes rejects in-place update.
+## Files to Modify
+- `kubernetes/overlays/homelab/infrastructure/dex/application.yaml` — add `Replace: true` sync option
+## Verification
+```bash
+KUBECONFIG=/tmp/homelab-kubeconfig argocd app sync dex --dry-run
+```
+## Emergency Live Action
+None required.
+```
 
 ## Hard Rules
 

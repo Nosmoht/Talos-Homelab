@@ -187,6 +187,8 @@ Default sequence:
 1. ensure repo changes are pushed
 2. reconcile Talos `extraManifests` using the supported workflow
 3. monitor Cilium agent and operator rollout to completion
+   - poll rollout status every 30 seconds
+   - if no progress after 10 minutes, treat as a stop condition (rollout stall)
 4. verify dependent platform capabilities
 
 Supported reconciliation command when the plan depends on re-applying control-plane `extraManifests`:

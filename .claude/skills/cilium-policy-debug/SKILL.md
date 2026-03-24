@@ -46,6 +46,12 @@ KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system exec -it <cilium-pod> 
 
 Do not proceed to Step 2 without at least one confirmed drop event showing source identity, destination, and port.
 
+If no drops are observed:
+1. Widen the namespace scope or remove the namespace filter.
+2. Reproduce the failing request while hubble observe is running.
+3. Check `cilium-dbg policy get` on the relevant endpoint to verify policy is loaded.
+4. If still no drops, report: "No drop evidence found. The issue may be DNS resolution, service misconfiguration, or an intermittent network problem rather than a policy denial."
+
 ### 2. Classify failure
 
 Read `references/failure-classes.md` and match observed drop evidence against the documented failure classes. For each potential match, verify with the diagnosis command listed in the reference.
@@ -64,7 +70,7 @@ Recommend narrow selectors and ports only. Avoid broad allow-all policies.
 
 ## Output
 
-Write `docs/cilium-debug-<scope>-<yyyy-mm-dd>.md` using this template:
+Present the completed report to the user for review. After user confirmation, write `docs/cilium-debug-<scope>-<yyyy-mm-dd>.md` using this template:
 
 ```markdown
 # Cilium Debug: <scope> — <yyyy-mm-dd>
@@ -83,6 +89,17 @@ Write `docs/cilium-debug-<scope>-<yyyy-mm-dd>.md` using this template:
 - Proposed change: <snippet>
 
 ## Validation Commands
+
+### Pre-enforcement audit (recommended)
+```bash
+# Apply the patch with audit mode to verify no unintended side effects
+# Add annotation to the CNP: policy.cilium.io/audit-mode: "enabled"
+kubectl annotate cnp <policy-name> -n <namespace> policy.cilium.io/audit-mode=enabled
+# Monitor for AUDIT verdicts instead of DROP
+hubble observe --verdict AUDIT --namespace <namespace> --last 50
+```
+
+### Post-enforcement validation
 ```bash
 <exact commands to confirm the fix>
 ```

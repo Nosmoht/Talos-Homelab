@@ -26,11 +26,13 @@ Store both `NODE_NAME` and `NODE_IP` for use throughout.
 
 ### Step 1: Hardware Data via talosctl
 
-First, verify connectivity. If this fails, stop and report the error — do not proceed to generate a hardware profile with empty data:
+First, verify connectivity with a 10-second timeout. If this fails, stop and report the error — do not proceed to generate a hardware profile with empty data:
 
 ```bash
-talosctl -n $NODE_IP -e $NODE_IP version --short
+timeout 10 talosctl -n $NODE_IP -e $NODE_IP version --short
 ```
+
+For all subsequent talosctl commands, if more than 3 consecutive commands fail, abort and report partial results with a connectivity warning.
 
 Run the following commands (parallelize where possible). All talosctl commands MUST use explicit endpoint: `talosctl -n $NODE_IP -e $NODE_IP`.
 
@@ -59,8 +61,10 @@ done
 talosctl -n $NODE_IP -e $NODE_IP read /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor 2>/dev/null
 talosctl -n $NODE_IP -e $NODE_IP read /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors 2>/dev/null
 
-# Turbo boost status
+# Turbo boost status (Intel)
 talosctl -n $NODE_IP -e $NODE_IP read /sys/devices/system/cpu/intel_pstate/no_turbo 2>/dev/null
+# Turbo boost status (AMD — boost is inverse: 1=enabled, 0=disabled)
+talosctl -n $NODE_IP -e $NODE_IP read /sys/devices/system/cpu/cpufreq/boost 2>/dev/null
 
 # THP status
 talosctl -n $NODE_IP -e $NODE_IP read /sys/kernel/mm/transparent_hugepage/enabled 2>/dev/null
