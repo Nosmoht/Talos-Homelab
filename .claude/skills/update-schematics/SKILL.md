@@ -46,7 +46,9 @@ Read ALL of the following files:
 Fetch the official extension catalog from the Talos Image Factory API:
 
 ```bash
-curl -sS "https://factory.talos.dev/version/$TALOS_VERSION/extensions/official" | jq '.'
+# Strip leading 'v' if present — the API accepts both but be explicit
+TALOS_VERSION_CLEAN="${TALOS_VERSION#v}"
+curl -sS "https://factory.talos.dev/version/${TALOS_VERSION_CLEAN}/extensions/official" | jq '.'
 ```
 
 This returns ~78 extensions, each with `name`, `ref`, `digest`, and `description`.
@@ -55,7 +57,14 @@ This returns ~78 extensions, each with `name`, `ref`, `digest`, and `description
 
 ## Step 4: Extract Hardware Signals
 
-From each target node's hardware analysis document, extract:
+For each target node, reason through the hardware data explicitly before populating the mapping table in Step 5:
+1. State the CPU vendor found and which ucode extension this implies.
+2. List every PCI device at class 0300/0302, note its vendor ID, and state the GPU extension conclusion.
+3. Note whether any PCI device has class 0108 and your NVMe conclusion.
+4. State the NIC driver found and whether it matches the Intel E800/ice-driver condition.
+5. List any extensions already noted as missing/unnecessary in Section 11 of the analysis doc.
+
+Only after this explicit reasoning, extract from each target node's hardware analysis document:
 
 1. **CPU vendor** — from Section 1 "System Overview", CPU field. Look for "Intel" or "AMD".
 2. **GPU devices** — from Section 2 "PCI Device Inventory", look for:
@@ -82,6 +91,8 @@ Apply this curated mapping table. An extension is recommended if ANY target node
 | `siderolabs/nvidia-container-toolkit-lts` | Any node has NVIDIA GPU (vendor 10de) | GPU |
 | `siderolabs/nvme-cli` | Any node has NVMe device (class 0108) | Standard and/or GPU |
 | `siderolabs/intel-ice-firmware` | Any node has Intel E800 series NIC (Ice driver) | Standard and/or GPU |
+
+**LTS vs. non-LTS:** Use the `-lts` extension variants when `TALOS_VERSION` tracks an LTS Talos release (e.g., v1.8.x, v1.10.x). Use the non-LTS variants (without `-lts`) for stable/latest releases. When in doubt, cross-reference the catalog output from Step 3 — only one variant will be present for the given version.
 
 **Union rule:** For shared schematics (standard schematic covers CP + worker nodes), take the **union** of all nodes' extension needs. If even one standard node needs an extension, it goes into the standard schematic. Unused extensions on other nodes are harmless.
 

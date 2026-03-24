@@ -235,10 +235,13 @@ Do not continue “to see if it settles” once a stop condition is met.
 
 ### 10. Recovery actions
 If a stop condition is met:
-1. halt further rollout actions
-2. collect diagnostics
-3. compare the failure with the approved rollback and recovery guidance
-4. choose the least-risk recovery path supported by the plan
+1. Halt further rollout actions immediately.
+2. Collect diagnostics (commands below).
+3. Classify the failure scope before choosing a recovery path:
+   - **Agent restart only** (pods crashloop but DaemonSet not yet rolled forward): restart the Cilium DaemonSet pods on the affected node and re-run stage gates. Do not revert the repo yet.
+   - **Partial rollout stall** (some nodes on new version, some on old): do not roll back nodes that already succeeded. Follow the plan's node-specific guidance.
+   - **Full rollback required** (gateway down, broad policy drops, operator unavailable): revert the repo change, regenerate bootstrap artifacts, commit and push, and reconcile via the plan-approved path.
+4. Do not improvise outside these three categories without explicit plan guidance.
 
 Useful diagnostics:
 ```bash

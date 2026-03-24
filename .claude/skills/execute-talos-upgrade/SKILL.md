@@ -97,6 +97,7 @@ talosctl -n 192.168.2.62 -e 192.168.2.62 version
 talosctl -n 192.168.2.63 -e 192.168.2.63 version
 talosctl -n 192.168.2.61 -e 192.168.2.61 health --control-plane-nodes 192.168.2.61,192.168.2.62,192.168.2.63
 talosctl -n 192.168.2.61 -e 192.168.2.61 etcd members
+talosctl -n 192.168.2.61 -e 192.168.2.61 etcd status
 kubectl get nodes -o wide
 kubectl get pods -A | grep -v Running
 kubectl -n kube-system get pods -l k8s-app=cilium -o wide
@@ -179,6 +180,8 @@ git push
 Stage only the files actually changed by the approved plan. Do not batch this change with unrelated work.
 
 ### 7. Execute the supported rollout path
+Before beginning, check etcd leadership: `talosctl -n 192.168.2.61 -e 192.168.2.61 etcd status`. Upgrade non-leader control-plane nodes first to minimize quorum disruption risk. If the first planned CP node is the current etcd leader, begin with a follower node instead.
+
 Use the approved plan’s sequencing. Default order for this repo:
 1. `node-01`
 2. `node-02`

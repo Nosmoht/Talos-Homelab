@@ -105,9 +105,9 @@ Record the exact release URL used for the decision.
 Before reading release notes, check:
 - `from-version` exists and is not newer than `to-version`
 - no downgrade is being planned
-- whether the hop crosses one or more minor versions
+- whether the hop crosses one or more minor versions — **if the hop spans more than one minor version**, flag this explicitly. Cilium only supports consecutive minor releases for upgrade and rollback. Recommend a staged path (e.g., 1.16 → 1.17 → 1.18). See `references/cilium-upgrade-constraints.md`.
 - whether the hop crosses a major version
-- whether the repo’s Talos and Kubernetes versions are compatible with the target Cilium release
+- whether the repo’s Talos and Kubernetes versions are compatible with the target Cilium release (see compatibility matrix in `references/cilium-upgrade-constraints.md`)
 
 At minimum, inspect Cilium’s documented compatibility notes for:
 - supported Kubernetes versions
@@ -167,8 +167,8 @@ Include these sections:
 - `Self-Review`
 
 The execution plan must cover:
-1. preflight checks
-2. repo changes required before rollout
+1. preflight checks (including `cilium preflight check` — see `references/cilium-upgrade-constraints.md`)
+2. repo changes required before rollout — **never use `--reuse-values` when upgrading Cilium Helm charts** (silently drops new required values; see constraints reference)
 3. validation of rendered manifests
 4. commit/push expectations
 5. node or cluster upgrade sequencing through the Talos workflow when required
@@ -256,11 +256,15 @@ Do not treat chat approval as sufficient. The approval lives in the plan file.
 ## Output Format
 Write the reviewed plan file first, then present a concise summary in chat.
 
-The saved plan file must contain these sections:
-- `Resolved Versions`
-- `Reviewed Releases`
-- `Migration Plan`
-- `Risks`
+The saved plan file must contain these sections (matching the required plan structure):
+- `Version Resolution`
+- `Intermediate Releases Reviewed`
+- `Cluster-Specific Findings`
+- `Breaking Changes and Required Migrations`
+- `Execution Plan`
+- `Validation Plan`
+- `Rollback and Recovery`
+- `Risks and Open Questions`
 - `Self-Review`
 
 For `Reviewed Releases`, list each version with source links.

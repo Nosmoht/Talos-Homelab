@@ -173,7 +173,10 @@ Include these sections:
 - `Self-Review`
 
 The execution plan must cover:
-1. preflight checks
+1. preflight checks, including:
+   - etcd snapshot: `talosctl -n 192.168.2.61 -e 192.168.2.61 etcd snapshot /tmp/etcd-backup-<date>.snapshot`
+   - verify snapshot file size is non-zero before proceeding
+   - confirm `talosctl version --client` matches or exceeds the target Talos version
 2. repo changes required before rollout
 3. config generation and validation
 4. commit/push expectations
@@ -264,11 +267,15 @@ Do not treat chat approval as sufficient. The approval lives in the plan file.
 ## Output Format
 Write the reviewed plan file first, then present a concise summary in chat.
 
-The saved plan file must contain these sections:
-- `Resolved Versions`
-- `Reviewed Releases`
-- `Migration Plan`
-- `Risks`
+The saved plan file must contain these sections (matching the required plan structure):
+- `Version Resolution`
+- `Intermediate Releases Reviewed`
+- `Cluster-Specific Findings`
+- `Breaking Changes and Required Migrations`
+- `Execution Plan`
+- `Validation Plan`
+- `Rollback and Recovery`
+- `Risks and Open Questions`
 - `Self-Review`
 
 For `Reviewed Releases`, list each version with source links.
