@@ -8,6 +8,8 @@ allowed-tools: Bash, Read, Glob, Grep, Write
 
 # Analyze Node Hardware
 
+You are a Talos Linux infrastructure engineer performing read-only hardware inventory and kernel-tuning analysis. Your output must be factual, structured, and based solely on data retrieved from the node — do not infer or assume hardware capabilities not confirmed by the gathered data.
+
 Comprehensive hardware analysis of a Talos Kubernetes node. Gathers data via `talosctl` and `kubectl` NFD (Node Feature Discovery), reads current config state, and produces a structured hardware profile document.
 
 ## Argument Resolution
@@ -23,6 +25,12 @@ Store both `NODE_NAME` and `NODE_IP` for use throughout.
 ## Data Gathering
 
 ### Step 1: Hardware Data via talosctl
+
+First, verify connectivity. If this fails, stop and report the error — do not proceed to generate a hardware profile with empty data:
+
+```bash
+talosctl -n $NODE_IP -e $NODE_IP version --short
+```
 
 Run the following commands (parallelize where possible). All talosctl commands MUST use explicit endpoint: `talosctl -n $NODE_IP -e $NODE_IP`.
 
@@ -60,11 +68,13 @@ talosctl -n $NODE_IP -e $NODE_IP read /sys/kernel/mm/transparent_hugepage/enable
 # NUMA status
 talosctl -n $NODE_IP -e $NODE_IP ls /sys/devices/system/node/ 2>/dev/null
 
-# Block devices — list /sys/block/ then for each real device read scheduler and rotational
-talosctl -n $NODE_IP -e $NODE_IP ls /sys/block/
-# For each device (sda, sdb, nvme0n1, etc.):
-talosctl -n $NODE_IP -e $NODE_IP read /sys/block/$DEV/queue/scheduler
-talosctl -n $NODE_IP -e $NODE_IP read /sys/block/$DEV/queue/rotational
+# Block devices — enumerate and read scheduler/rotational for each
+BLOCK_DEVS=$(talosctl -n $NODE_IP -e $NODE_IP ls /sys/block/ 2>/dev/null | tail -n +2 | awk '{print $NF}' | grep -vE '^(loop|ram)')
+for DEV in $BLOCK_DEVS; do
+  echo "=== $DEV ==="
+  talosctl -n $NODE_IP -e $NODE_IP read /sys/block/$DEV/queue/scheduler 2>/dev/null || echo "not present"
+  talosctl -n $NODE_IP -e $NODE_IP read /sys/block/$DEV/queue/rotational 2>/dev/null || echo "not present"
+done
 
 # IOMMU status
 talosctl -n $NODE_IP -e $NODE_IP dmesg | grep -iE "(iommu|dmar|vt-d)"
@@ -78,12 +88,14 @@ talosctl -n $NODE_IP -e $NODE_IP read /proc/net/dev
 # Loaded modules (via dmesg or /proc/modules if accessible)
 talosctl -n $NODE_IP -e $NODE_IP dmesg | grep -iE "module.*loaded|driver.*registered"
 
-# PCI devices — list all and identify by reading vendor/device/class
-talosctl -n $NODE_IP -e $NODE_IP ls /sys/bus/pci/devices/
-# For key devices, read:
-talosctl -n $NODE_IP -e $NODE_IP read /sys/bus/pci/devices/$BDF/vendor
-talosctl -n $NODE_IP -e $NODE_IP read /sys/bus/pci/devices/$BDF/device
-talosctl -n $NODE_IP -e $NODE_IP read /sys/bus/pci/devices/$BDF/class
+# PCI devices — enumerate and read vendor/device/class for each
+PCI_DEVS=$(talosctl -n $NODE_IP -e $NODE_IP ls /sys/bus/pci/devices/ 2>/dev/null | tail -n +2 | awk '{print $NF}')
+for BDF in $PCI_DEVS; do
+  VENDOR=$(talosctl -n $NODE_IP -e $NODE_IP read /sys/bus/pci/devices/$BDF/vendor 2>/dev/null || echo "unknown")
+  DEVICE=$(talosctl -n $NODE_IP -e $NODE_IP read /sys/bus/pci/devices/$BDF/device 2>/dev/null || echo "unknown")
+  CLASS=$(talosctl -n $NODE_IP -e $NODE_IP read /sys/bus/pci/devices/$BDF/class 2>/dev/null || echo "unknown")
+  echo "$BDF vendor=$VENDOR device=$DEVICE class=$CLASS"
+done
 
 # Installed Talos extensions
 talosctl -n $NODE_IP -e $NODE_IP get extensions
@@ -153,7 +165,9 @@ talosctl -n $NODE_IP -e $NODE_IP read /proc/sys/fs/inotify/max_user_watches
 
 ## Output Document
 
-Write the analysis to `docs/hardware-analysis-$NODE_NAME.md` with the following structure:
+Write the analysis to `docs/hardware-analysis-$NODE_NAME-YYYYMMDD.md` (use today's date). If a file already exists for today, append a suffix: `-2`, `-3`, etc. Do not overwrite existing analyses.
+
+Use the following structure:
 
 ```markdown
 # Hardware Analysis: $NODE_NAME

@@ -3,10 +3,12 @@ name: optimize-node-kernel
 description: Research and apply optimized kernel parameters for a Talos node based on its hardware analysis. Reads hardware profile, researches best settings, patches config files.
 argument-hint: [node-name]
 disable-model-invocation: true
-allowed-tools: Bash, Read, Write, Edit, Glob, Grep, WebSearch, WebFetch, Agent
+allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
 ---
 
 # Optimize Node Kernel Parameters
+
+You are a Linux kernel and Talos infrastructure specialist optimizing node performance and security.
 
 Research and apply optimized kernel parameters for a Talos Kubernetes node. Uses the hardware analysis document as input, researches best settings for the specific hardware, and modifies the appropriate config files.
 
@@ -157,6 +159,7 @@ For each approved change:
    # For Talos config patches, validate if possible:
    python3 -c "import yaml; yaml.safe_load(open('talos/patches/common.yaml'))" 2>&1 || echo "YAML INVALID"
    ```
+   If YAML validation fails for any file, halt all further edits and report the specific parse error to the user. Do not proceed to the next file or to `make gen-configs`.
 3. **Regenerate configs** (suggest but don't run without approval):
    ```bash
    make gen-configs
