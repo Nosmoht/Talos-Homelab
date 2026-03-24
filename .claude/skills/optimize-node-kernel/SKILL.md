@@ -20,22 +20,22 @@ This skill requires a hardware analysis document at `docs/hardware-analysis-<nod
 
 ## Step 1: Read Context
 
-Read ALL of the following files before making any recommendations:
+Read these files in order. Skip files marked conditional if they don't apply to this node.
 
-1. **Hardware analysis:** `docs/hardware-analysis-<node-name>.md` — the primary input
+1. **Hardware analysis:** `docs/hardware-analysis-<node-name>.md` — the primary input. Read first to determine node role and hardware.
 2. **Existing kernel tuning docs:**
    - `docs/kernel-tuning.md` — standard node tuning (understand what's already decided)
-   - `docs/kernel-tuning-gpu.md` — GPU node tuning (if exists)
+   - `docs/kernel-tuning-gpu.md` — **only if hardware analysis contains a GPU section**
 3. **Current config files (determine which ones apply to this node):**
    - `talos/patches/common.yaml` — shared sysctls for ALL nodes
    - Role patch (determine from node labels or hardware analysis):
      - `talos/patches/controlplane.yaml` for control plane nodes
-     - `talos/patches/worker-gpu.yaml` for GPU workers
+     - `talos/patches/worker-gpu.yaml` — **only for GPU workers**
      - Standard workers have no role patch (install image injected dynamically via Makefile)
    - `talos/nodes/<node-name>.yaml` — node-specific config
    - Factory schematic:
      - `talos/talos-factory-schematic.yaml` for standard nodes
-     - `talos/talos-factory-schematic-gpu.yaml` for GPU workers
+     - `talos/talos-factory-schematic-gpu.yaml` — **only for GPU workers**
 4. **Talos KSPP defaults** (documented in kernel-tuning.md Section 3) — to avoid duplicating parameters Talos already enforces
 
 ## Step 2: Identify Tuning Opportunities
@@ -78,16 +78,18 @@ Based on the hardware analysis, identify optimization opportunities in these cat
 
 ## Step 3: Research
 
-Use WebSearch and WebFetch to research hardware-specific recommendations:
+Use WebSearch and WebFetch to research hardware-specific recommendations. Construct queries using exact hardware identifiers from the hardware analysis — do not use the example strings verbatim:
 
-- Search for kernel tuning guides specific to the CPU model (e.g., "i7-7700K linux kernel tuning")
-- Search for hardware-specific issues (e.g., "BTC B250C linux ASPM issues")
-- Search for workload-specific tuning (e.g., "NVIDIA CUDA linux kernel parameters")
+- Search for kernel tuning guides specific to the CPU model found in the hardware analysis
+- Search for hardware-specific issues using the exact board vendor/model from the analysis
+- Search for workload-specific tuning relevant to detected GPU/storage hardware
 - Check NVIDIA documentation for recommended module parameters
 - Check LINBIT/DRBD documentation for storage tuning relevant to the disk type
 - Check Talos documentation for any version-specific kernel parameter notes
 
 ## Step 4: Categorize and Place Parameters
+
+Before categorizing any parameter, reason through: (1) what hardware characteristic drives this change, (2) what the Talos KSPP baseline already covers, (3) which patch file owns the change per the decision rules below.
 
 ### Decision Rules for Patch Placement
 
@@ -160,10 +162,12 @@ For each approved change:
    python3 -c "import yaml; yaml.safe_load(open('talos/patches/common.yaml'))" 2>&1 || echo "YAML INVALID"
    ```
    If YAML validation fails for any file, halt all further edits and report the specific parse error to the user. Do not proceed to the next file or to `make gen-configs`.
-3. **Regenerate configs** (suggest but don't run without approval):
+3. **Semantic validation** — after `make gen-configs`, diff the rendered config against a pre-edit snapshot to confirm expected keys are present and no unexpected overrides occurred. If a previously-present sysctl key was silently dropped or duplicated, halt and report.
+4. **Regenerate configs** (suggest but don't run without approval):
    ```bash
    make gen-configs
    ```
+5. **Rollback** — if `make apply-<node>` returns a non-zero exit code, instruct the user to run `git diff talos/` to identify changes, and `git restore` the affected files before retrying.
 
 ## Step 7: Update Documentation
 

@@ -36,6 +36,12 @@ talosctl etcd snapshot /tmp/etcd-backup-$(date +%Y%m%d).snapshot -n <ip> -e <ip>
 talosctl get machineconfig -n <ip> -e <ip> -o yaml > /tmp/machineconfig-<node>-$(date +%Y%m%d).yaml
 ```
 
+If node is control-plane, verify etcd quorum before proceeding:
+```bash
+talosctl etcd status -n <ip> -e <ip>
+```
+If quorum is degraded (fewer than (n/2)+1 members healthy), stop and report. Do not operate on a CP node with pre-existing quorum issues.
+
 Then run config generation and dry-run:
 ```bash
 make -C talos gen-configs
@@ -49,7 +55,8 @@ Note: `talosctl upgrade` does not support `--dry-run`; the dry-run above validat
 ### 3. Decide operation
 
 - Config-only/sysctl changes: `make -C talos apply-<node>`
-  - For CP nodes during business hours, prefer staged mode: `talosctl apply-config --mode=staged -n <ip> -e <ip> -f talos/generated/<node>.yaml`
+  - For CP nodes when the cluster is under active load, prefer staged mode: `talosctl apply-config --mode=staged -n <ip> -e <ip> -f talos/generated/<node>.yaml`
+  - If uncertain whether a reboot is required, first attempt `--mode=no-reboot`; if it fails, escalate to `--mode=auto`.
 - Boot args/extensions/version changes:
   1. Drain the node first:
      ```bash
@@ -100,4 +107,5 @@ Write `docs/talos-maintenance-<node>-<yyyy-mm-dd>.md` with:
 
 - Never edit `talos/generated/**` directly.
 - Never run operations through VIP when direct endpoint is required.
+- Never operate on more than one control-plane node at a time. Confirm all CP nodes are Ready and etcd quorum is intact before beginning any CP maintenance.
 - Ensure the Makefile `upgrade-<node>` target passes `--preserve` (prevents EPHEMERAL partition wipe).

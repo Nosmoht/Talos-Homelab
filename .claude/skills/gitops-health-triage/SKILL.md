@@ -26,10 +26,11 @@ Read before proceeding:
 
 ### 1. Gather status quickly
 
-Run:
+First verify cluster connectivity:
 ```bash
 KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n argocd get applications
 ```
+If kubectl exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify `/tmp/homelab-kubeconfig` exists and cluster is reachable."
 
 If a specific app is provided, also run:
 ```bash
@@ -53,6 +54,8 @@ Read `references/argocd-remediation-patterns.md` and classify into one of:
 - missing CRD/order dependency
 - Cilium network policy blocking hooks or control-plane traffic
 - stale operation state / exhausted retries
+- admission webhook rejection (distinct from defaulted-field drift — the resource is actively rejected, not just drifting)
+- pre/post-sync hook failure (Job pods fail; check hook pod logs: `kubectl -n <namespace> logs -l app.kubernetes.io/managed-by=argocd --tail=50`)
 
 ### 3. Map to repository paths
 

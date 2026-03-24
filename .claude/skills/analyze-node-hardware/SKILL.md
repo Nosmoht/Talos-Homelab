@@ -89,6 +89,8 @@ talosctl -n $NODE_IP -e $NODE_IP read /proc/net/dev
 talosctl -n $NODE_IP -e $NODE_IP dmesg | grep -iE "module.*loaded|driver.*registered"
 
 # PCI devices — enumerate and read vendor/device/class for each
+# If PCI device count exceeds 40, summarize by class rather than listing each BDF.
+# Prioritize Network (0200), Storage (0100/0104/0108), GPU (0300/0302), and IOMMU classes.
 PCI_DEVS=$(talosctl -n $NODE_IP -e $NODE_IP ls /sys/bus/pci/devices/ 2>/dev/null | tail -n +2 | awk '{print $NF}')
 for BDF in $PCI_DEVS; do
   VENDOR=$(talosctl -n $NODE_IP -e $NODE_IP read /sys/bus/pci/devices/$BDF/vendor 2>/dev/null || echo "unknown")
@@ -109,7 +111,12 @@ kubectl get node $NODE_NAME -o yaml
 
 # Full NFD feature discovery (if NFD is deployed)
 kubectl get nodefeature -n node-feature-discovery $NODE_NAME -o yaml 2>/dev/null
+
+# USB device labels for inventory (Section 3)
+kubectl get node $NODE_NAME -o json | jq '.metadata.labels | to_entries[] | select(.key | startswith("feature.node.kubernetes.io/usb"))'
 ```
+
+If `kubectl get nodefeature` returns no output or an error, note "NFD not deployed" in Section 4 and write "N/A — NFD not deployed" in Section 3 (USB Device Inventory). Do not emit empty table placeholders.
 
 ### Step 3: Current Config State
 
@@ -165,6 +172,8 @@ talosctl -n $NODE_IP -e $NODE_IP read /proc/sys/fs/inotify/max_user_watches
 
 ## Output Document
 
+The only Write operation permitted is creating the output file below. Do not write to any other path.
+
 Write the analysis to `docs/hardware-analysis-$NODE_NAME-YYYYMMDD.md` (use today's date). If a file already exists for today, append a suffix: `-2`, `-3`, etc. Do not overwrite existing analyses.
 
 Use the following structure:
@@ -217,6 +226,8 @@ Parsed list of current boot parameters
 What the factory schematic specifies in extraKernelArgs
 
 ### 6.3 Gap Analysis
+Before writing this table, reason through: (1) list every parameter in the schematic's `extraKernelArgs`, (2) check each against `/proc/cmdline`, (3) classify as `Present-Match`, `Present-Mismatch`, or `Missing`. Only then write the table.
+
 Table showing: Parameter | In Schematic | In /proc/cmdline | Status
 
 ### 6.4 Sysctl Verification

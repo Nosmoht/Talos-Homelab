@@ -2,7 +2,7 @@
 name: plan-cilium-upgrade
 description: Build a repo-specific Cilium upgrade and migration plan for this homelab cluster by resolving current and target versions, reading all intermediate release notes, identifying breaking changes and risks, and reviewing the plan before presenting it.
 argument-hint: [from-version] [to-version]
-allowed-tools: Bash, Read, Grep, Glob, Write
+allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch
 ---
 
 # Plan Cilium Upgrade
