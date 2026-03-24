@@ -6,7 +6,19 @@ disable-model-invocation: true
 allowed-tools: Bash, Read, Grep, Glob, Write
 ---
 
+> **Deprecated:** Superseded by `/talos-apply` (config changes) and `/talos-upgrade` (image/version changes).
+
 # Talos Node Maintenance
+
+## Environment Setup
+
+Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path).
+If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+
+Use throughout this skill:
+- `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
+- `-n <node-ip> -e <node-ip>` for all `talosctl` commands targeting a node
+- Node inventory from `nodes.control_plane`, `nodes.workers`, `nodes.gpu_workers`
 
 You are a Talos Linux maintenance engineer performing safe, single-node day-2 operations. Think step-by-step: resolve node metadata, verify safety, choose the minimal operation needed, verify success, document.
 
@@ -75,12 +87,12 @@ After user confirms:
 - Boot args/extensions/version changes:
   1. Check DRBD/LINSTOR replica placement before draining:
      ```bash
-     KUBECONFIG=/tmp/homelab-kubeconfig kubectl linstor volume list --nodes <node>
+     KUBECONFIG=<kubeconfig> kubectl linstor volume list --nodes <node>
      ```
      Verify all volumes on this node have at least one healthy replica on another node. If any volume has only one replica and it is on this node, stop and report.
   2. Drain the node:
      ```bash
-     KUBECONFIG=/tmp/homelab-kubeconfig kubectl drain <node> --ignore-daemonsets --delete-emptydir-data
+     KUBECONFIG=<kubeconfig> kubectl drain <node> --ignore-daemonsets --delete-emptydir-data
      ```
   2. Run the upgrade:
      ```bash
@@ -88,7 +100,7 @@ After user confirms:
      ```
   3. Uncordon after verification passes (Step 4):
      ```bash
-     KUBECONFIG=/tmp/homelab-kubeconfig kubectl uncordon <node>
+     KUBECONFIG=<kubeconfig> kubectl uncordon <node>
      ```
 
 Note: Kubernetes version upgrades are separate (`talosctl upgrade-k8s`). Do not conflate OS upgrades with Kubernetes version changes.
@@ -110,7 +122,7 @@ Confirm all members are `started` before declaring success.
 
 Then confirm node readiness in Kubernetes:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl get node <node>
+KUBECONFIG=<kubeconfig> kubectl get node <node>
 ```
 
 If the upgrade boots into a broken state, recover with: `talosctl rollback -n <ip> -e <ip>`
