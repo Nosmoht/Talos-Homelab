@@ -8,44 +8,90 @@ allowed-tools: Bash, Read, Grep, Glob, Write
 
 # Cilium Policy Debug
 
+You are a Cilium CNI specialist. Your method is evidence-first: never propose a policy patch without observed drop evidence. Reason step-by-step through identity, policy gap, manifest, fix.
+
 Use this skill when traffic fails between Gateway/API, monitoring components, or intra-cluster services.
 
+## Reference Files
+
+Read before proceeding:
+- `references/failure-classes.md` — 6 classified failure patterns with diagnosis commands
+- `.claude/rules/cilium-gateway-api.md` — Gateway API architecture, webhook defaults, entity routing
+
 ## Inputs
+
 - Optional scope argument (`monitoring/prometheus`, `dex/postgresql`, `gateway-api`).
 
 ## Workflow
 
 ### 1. Gather live signals
-Run (as available):
+
+Run baseline checks:
 ```bash
 KUBECONFIG=/tmp/homelab-kubeconfig kubectl get cnp -A
 KUBECONFIG=/tmp/homelab-kubeconfig kubectl get pods -A -o wide
 KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system get pods -l k8s-app=cilium
 ```
-If hubble is available, use it for drop evidence (`hubble observe`).
 
-### 2. Determine policy mismatch
-Check common failure classes:
-- wrong entity (`world` vs `ingress` for Gateway API)
-- wrong API-server egress port (`443` vs post-DNAT `6443`)
-- hook/job labels not covered by endpointSelector
-- conflicting K8s NetworkPolicy + CiliumNetworkPolicy AND semantics
+If kubectl exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify kubeconfig exists and cluster is reachable."
+
+Capture drop evidence (required before proceeding to Step 2):
+```bash
+# Preferred: Hubble flow filter
+hubble observe --verdict DROPPED --namespace <scope-namespace> --last 50
+
+# Fallback: cilium-dbg monitor
+KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system exec -it <cilium-pod> -- cilium-dbg monitor --type drop
+```
+
+Do not proceed to Step 2 without at least one confirmed drop event showing source identity, destination, and port.
+
+### 2. Classify failure
+
+Read `references/failure-classes.md` and match observed drop evidence against the documented failure classes. For each potential match, verify with the diagnosis command listed in the reference.
+
+Identify the primary failure class before moving to Step 3.
 
 ### 3. Map to Git manifests
+
 Primary locations:
 - `kubernetes/overlays/homelab/infrastructure/**/resources/cnp-*.yaml`
 - `kubernetes/bootstrap/cilium/cilium.yaml`
 
 ### 4. Produce least-privilege patch proposal
+
 Recommend narrow selectors and ports only. Avoid broad allow-all policies.
 
 ## Output
-Write `docs/cilium-debug-<scope>-<yyyy-mm-dd>.md` including:
-1. evidence (drops, denied flows, affected identities)
-2. root cause
-3. manifest file(s) to patch
-4. exact validation commands
+
+Write `docs/cilium-debug-<scope>-<yyyy-mm-dd>.md` using this template:
+
+```markdown
+# Cilium Debug: <scope> — <yyyy-mm-dd>
+
+## Evidence
+- Drop verdict: <hubble/monitor output snippet>
+- Affected identity: <source> → <destination> (<port/proto>)
+- Denied by: <policy name or "no matching allow rule">
+
+## Root Cause
+<Failure class from references/failure-classes.md. One paragraph explaining the specific mismatch.>
+
+## Manifest to Patch
+- File: <path>
+- Current selector/rule: <snippet>
+- Proposed change: <snippet>
+
+## Validation Commands
+```bash
+<exact commands to confirm the fix>
+```
+
+## Hardening Follow-up
+<Required if any temporary broadening was applied. Otherwise: "N/A">
+```
 
 ## Hard Rules
+
 - Do not propose wildcard policies unless justified as temporary incident mitigation.
 - Include a follow-up hardening step when temporary broadening is used.
