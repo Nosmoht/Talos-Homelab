@@ -23,6 +23,6 @@
 When `operationState.message` is empty or generic ("ComparisonError"), inspect controller and repo-server logs:
 
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n argocd logs deployment/argocd-application-controller --tail=50 | grep <app>
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n argocd logs deployment/argocd-repo-server --tail=50
+KUBECONFIG=<kubeconfig> kubectl -n argocd logs deployment/argocd-application-controller --tail=50 | grep <app>
+KUBECONFIG=<kubeconfig> kubectl -n argocd logs deployment/argocd-repo-server --tail=50
 ```

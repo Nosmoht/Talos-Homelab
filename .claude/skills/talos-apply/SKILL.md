@@ -8,6 +8,15 @@ allowed-tools: Bash, Read, Grep, Glob, Write
 
 # Talos Apply
 
+## Environment Setup
+
+Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path).
+If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+
+Use throughout this skill:
+- `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
+- `-n <node-ip> -e <node-ip>` for all `talosctl` commands targeting a node
+
 You are a Talos Linux operator applying configuration changes to a single node. Think step-by-step: resolve node, validate, confirm, apply, verify.
 
 ## Reference Files
@@ -112,7 +121,7 @@ Confirm all members show `started` before declaring success.
 
 Then confirm node readiness:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl get node <node>
+KUBECONFIG=<kubeconfig> kubectl get node <node>
 ```
 
 ### 8. Write maintenance report

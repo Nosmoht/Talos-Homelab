@@ -28,7 +28,7 @@ Before jumping to a new minor, upgrade to the latest patch of the current minor 
 Run Cilium's preflight validation before any upgrade:
 
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig cilium preflight check
+KUBECONFIG=<kubeconfig> cilium preflight check
 ```
 
 ## Kubernetes Compatibility

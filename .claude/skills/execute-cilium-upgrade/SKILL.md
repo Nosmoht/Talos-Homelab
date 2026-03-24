@@ -8,6 +8,16 @@ allowed-tools: Bash, Read, Grep, Glob, Write
 
 # Execute Cilium Upgrade
 
+## Environment Setup
+
+Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path, overlay name).
+If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+
+Use throughout this skill:
+- `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
+- Node inventory from `nodes.control_plane`, `nodes.workers`, `nodes.gpu_workers`
+- Overlay path: `kubernetes/overlays/<cluster.overlay>/`
+
 Use this skill only after `plan-cilium-upgrade` has produced a reviewed migration plan and that plan has been explicitly approved for execution.
 
 This skill changes live cluster state. Treat every step as safety-critical.
@@ -90,13 +100,13 @@ Check:
 
 Run at minimum:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl get nodes -o wide
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system get ds cilium -o json
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system get deploy cilium-operator -o json
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system get pods -l k8s-app=cilium -o wide
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system get pods -l app.kubernetes.io/name=cilium-operator -o wide
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl get ciliumnode
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n argocd get applications
+KUBECONFIG=<kubeconfig> kubectl get nodes -o wide
+KUBECONFIG=<kubeconfig> kubectl -n kube-system get ds cilium -o json
+KUBECONFIG=<kubeconfig> kubectl -n kube-system get deploy cilium-operator -o json
+KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l app.kubernetes.io/name=cilium-operator -o wide
+KUBECONFIG=<kubeconfig> kubectl get ciliumnode
+KUBECONFIG=<kubeconfig> kubectl -n argocd get applications
 ```
 
 If the live cluster version does not match the plan’s `from_version`, stop and report drift.
@@ -147,8 +157,8 @@ Also run repo validation required by the changed files. At minimum:
 ```bash
 make -C talos gen-configs
 make -C talos dry-run-all
-kubectl kustomize kubernetes/overlays/homelab
-kubectl apply -k kubernetes/overlays/homelab --dry-run=client
+kubectl kustomize kubernetes/overlays/<overlay>
+kubectl apply -k kubernetes/overlays/<overlay> --dry-run=client
 ```
 
 If the bootstrap manifest or supporting manifests need additional migration edits, make them before continuing. Do not continue with a partially updated repo.
@@ -177,7 +187,7 @@ Do not batch this change with unrelated work.
 
 After pushing, if Argo CD applications that depend on the new repo state need a refresh signal, use the repo’s documented hard refresh pattern:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl annotate application <app> -n argocd argocd.argoproj.io/refresh=hard --overwrite
+KUBECONFIG=<kubeconfig> kubectl annotate application <app> -n argocd argocd.argoproj.io/refresh=hard --overwrite
 ```
 
 ### 7. Execute the supported rollout path
@@ -205,12 +215,12 @@ After each stage, verify health before proceeding.
 
 Minimum health gates:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl get nodes
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system rollout status ds/cilium --timeout=10m
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system rollout status deploy/cilium-operator --timeout=10m
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system get pods -l k8s-app=cilium -o wide
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl get ciliumnode
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n argocd get applications
+KUBECONFIG=<kubeconfig> kubectl get nodes
+KUBECONFIG=<kubeconfig> kubectl -n kube-system rollout status ds/cilium --timeout=10m
+KUBECONFIG=<kubeconfig> kubectl -n kube-system rollout status deploy/cilium-operator --timeout=10m
+KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+KUBECONFIG=<kubeconfig> kubectl get ciliumnode
+KUBECONFIG=<kubeconfig> kubectl -n argocd get applications
 ```
 
 Also run plan-specific verification for:
@@ -247,10 +257,10 @@ If a stop condition is met:
 
 Useful diagnostics:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system describe ds cilium
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system logs ds/cilium --tail=200
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system logs deploy/cilium-operator --tail=200
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl get ciliumnode -o yaml
+KUBECONFIG=<kubeconfig> kubectl -n kube-system describe ds cilium
+KUBECONFIG=<kubeconfig> kubectl -n kube-system logs ds/cilium --tail=200
+KUBECONFIG=<kubeconfig> kubectl -n kube-system logs deploy/cilium-operator --tail=200
+KUBECONFIG=<kubeconfig> kubectl get ciliumnode -o yaml
 ```
 
 If rollback requires repo reversion:

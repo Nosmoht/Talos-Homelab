@@ -19,5 +19,5 @@ paths:
 - SOPS secrets stay encrypted (`*.sops.yaml`) and ksops generators are referenced in local `kustomization.yaml`.
 
 ## Validation Commands
-- `kubectl kustomize kubernetes/overlays/homelab`
-- `kubectl apply -k kubernetes/overlays/homelab --dry-run=client`
+- `kubectl kustomize kubernetes/overlays/<overlay>` (overlay name from `.claude/environment.yaml`)
+- `kubectl apply -k kubernetes/overlays/<overlay> --dry-run=client`

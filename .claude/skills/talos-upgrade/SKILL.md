@@ -8,6 +8,15 @@ allowed-tools: Bash, Read, Grep, Glob, Write
 
 # Talos Upgrade
 
+## Environment Setup
+
+Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path).
+If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+
+Use throughout this skill:
+- `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
+- `-n <node-ip> -e <node-ip>` for all `talosctl` commands targeting a node
+
 You are a Talos Linux operator upgrading a single node's OS image. Think step-by-step: resolve node, validate, check storage safety, confirm, drain, upgrade, verify, uncordon.
 
 ## Reference Files
@@ -65,7 +74,7 @@ Note: `talosctl upgrade` does not support `--dry-run` ([siderolabs/talos#10804](
 
 Check storage replica placement before draining:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl linstor volume list --nodes <node>
+KUBECONFIG=<kubeconfig> kubectl linstor volume list --nodes <node>
 ```
 
 Verify all volumes on this node have at least one healthy replica on another node. If any volume has only one replica and it lives on this node, stop and report:
@@ -90,7 +99,7 @@ Proceed? (yes/no)
 ### 6. Drain
 
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl drain <node> --ignore-daemonsets --delete-emptydir-data --timeout=120s
+KUBECONFIG=<kubeconfig> kubectl drain <node> --ignore-daemonsets --delete-emptydir-data --timeout=120s
 ```
 
 The 120s timeout is critical — DRBD CSI volumes in D-state during `unmountPodMounts` can deadlock the upgrade with no API recovery if drain is skipped.
@@ -120,26 +129,26 @@ Confirm all members show `started` before declaring success.
 
 Then confirm node readiness:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl get node <node>
+KUBECONFIG=<kubeconfig> kubectl get node <node>
 ```
 
 If the node remains NotReady, check for pending CSR approval:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl get csr
+KUBECONFIG=<kubeconfig> kubectl get csr
 ```
 
 ### 9. Uncordon
 
 Only after health verification passes:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl uncordon <node>
+KUBECONFIG=<kubeconfig> kubectl uncordon <node>
 ```
 
 ### 10. Post-upgrade DRBD verification
 
 Confirm storage reconnection:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl linstor volume list --nodes <node>
+KUBECONFIG=<kubeconfig> kubectl linstor volume list --nodes <node>
 ```
 
 All volumes should show `UpToDate` status.

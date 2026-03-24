@@ -19,7 +19,7 @@ paths:
 - Enabled via `enable-gateway-api: "true"` in Cilium ConfigMap + RBAC in cilium-operator ClusterRole
 - Cilium auto-creates `cilium` GatewayClass
 - For each Gateway: creates `cilium-gateway-<name>` Deployment (Envoy) + LoadBalancer Service
-- `homelab-gateway` Gateway resource in `kubernetes/overlays/homelab/infrastructure/gateway-api/` (ArgoCD-managed)
+- Gateway resource in `kubernetes/overlays/<overlay>/infrastructure/gateway-api/` (ArgoCD-managed, overlay name from `.claude/environment.yaml`)
 
 ## Routing Pattern
 - GatewayClass → Gateway → HTTPRoute

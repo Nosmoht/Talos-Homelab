@@ -40,9 +40,9 @@ For upgrades (which trigger a reboot):
 
 ```bash
 # Before upgrade
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl drain <node> --ignore-daemonsets --delete-emptydir-data
+KUBECONFIG=<kubeconfig> kubectl drain <node> --ignore-daemonsets --delete-emptydir-data
 # After verification passes
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl uncordon <node>
+KUBECONFIG=<kubeconfig> kubectl uncordon <node>
 ```
 
 ## Rollback

@@ -8,6 +8,15 @@ allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
 
 # Optimize Node Kernel Parameters
 
+## Environment Setup
+
+Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path).
+If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+
+Use throughout this skill:
+- `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
+- `-n <node-ip> -e <node-ip>` for all `talosctl` commands targeting a node
+
 You are a Linux kernel and Talos infrastructure specialist optimizing node performance and security.
 
 Research and apply optimized kernel parameters for a Talos Kubernetes node. Uses the hardware analysis document as input, researches best settings for the specific hardware, and modifies the appropriate config files.
@@ -203,7 +212,7 @@ talosctl -n $NODE_IP -e $NODE_IP dmesg | grep -i <module-name>
 ## Important Notes
 
 - Always use explicit endpoint (`-e $NODE_IP`) with talosctl.
-- The kubeconfig is at `/tmp/homelab-kubeconfig`.
+- Use the kubeconfig path from `environment.yaml`.
 - Boot parameter changes require `make upgrade-<node>` (not just `make apply-<node>`).
 - Some changes require a node reboot to take effect.
 - DRBD volumes should be drained before rebooting to avoid stuck shutdown (D-state processes).

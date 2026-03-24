@@ -7,6 +7,15 @@ allowed-tools: Bash, Read, Grep, Glob, Write
 
 # Plan Talos Upgrade
 
+## Environment Setup
+
+Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path, cluster name).
+If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+
+Use throughout this skill:
+- `-n <node-ip> -e <node-ip>` for all `talosctl` commands targeting a node
+- Node inventory from `nodes.control_plane`, `nodes.workers`, `nodes.gpu_workers`, `nodes.pi_nodes`
+
 Use this skill when asked to plan a Talos upgrade for this cluster. This skill produces a migration plan only. It does not upgrade nodes unless the user explicitly asks for execution afterward.
 
 ## Inputs
@@ -90,11 +99,11 @@ If omitted, resolve in this order:
 3. if they differ, treat that as drift and include it as a first-class risk
 4. if the cluster is unreachable, fail closed instead of guessing, unless the user explicitly allows repo-only planning
 
-Preferred live checks:
+Preferred live checks — use control-plane node IPs from `environment.yaml`:
 ```bash
-talosctl -n 192.168.2.61 -e 192.168.2.61 version
-talosctl -n 192.168.2.62 -e 192.168.2.62 version
-talosctl -n 192.168.2.63 -e 192.168.2.63 version
+talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> version
+talosctl -n <cp-node-2-ip> -e <cp-node-2-ip> version
+talosctl -n <cp-node-3-ip> -e <cp-node-3-ip> version
 kubectl get nodes -o wide
 ```
 
@@ -182,7 +191,7 @@ Include these sections:
 
 The execution plan must cover:
 1. preflight checks, including:
-   - etcd snapshot: `talosctl -n 192.168.2.61 -e 192.168.2.61 etcd snapshot /tmp/etcd-backup-<date>.snapshot`
+   - etcd snapshot: `talosctl -n <cp-node-ip> -e <cp-node-ip> etcd snapshot /tmp/etcd-backup-<date>.snapshot`
    - verify snapshot file size is non-zero before proceeding
    - confirm `talosctl version --client` matches or exceeds the target Talos version
 2. repo changes required before rollout
@@ -197,9 +206,9 @@ Use repo-accurate commands where relevant, for example:
 make -C talos schematics
 make -C talos gen-configs
 make -C talos validate-generated
-make -C talos dry-run-node-01
-make -C talos upgrade-node-01
-talosctl -n 192.168.2.61 -e 192.168.2.61 health --control-plane-nodes 192.168.2.61,192.168.2.62,192.168.2.63
+make -C talos dry-run-<node-name>
+make -C talos upgrade-<node-name>
+talosctl -n <cp-node-ip> -e <cp-node-ip> health --control-plane-nodes <cp-node-1-ip>,<cp-node-2-ip>,<cp-node-3-ip>
 kubectl get nodes -o wide
 kubectl -n kube-system get pods -l k8s-app=cilium
 kubectl linstor node list
@@ -209,8 +218,8 @@ Require the plan to address:
 - whether `TALOS_VERSION` alone changes, or whether Kubernetes/Cilium/schematics also change
 - whether `make -C talos schematics` is required before config generation
 - whether coupled Cilium work requires updating `talos/patches/controlplane.yaml` `?v=` and re-rendering bootstrap Cilium manifests
-- control-plane order `node-01 -> node-02 -> node-03`
-- worker order `node-04 -> node-05 -> node-06 -> node-gpu-01 -> node-pi-01`
+- control-plane node upgrade order (from `nodes.control_plane` in environment.yaml)
+- worker node upgrade order: standard workers first, then GPU workers, then Pi nodes (from environment.yaml)
 - health gates before proceeding to the next node
 
 ### 8. Include rollback and safety constraints

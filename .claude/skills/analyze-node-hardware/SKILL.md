@@ -8,13 +8,23 @@ allowed-tools: Bash, Read, Glob, Grep, Write
 
 # Analyze Node Hardware
 
+## Environment Setup
+
+Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path).
+If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+
+Use throughout this skill:
+- `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
+- `-n <node-ip> -e <node-ip>` for all `talosctl` commands targeting a node
+- Resolve node name → IP from `nodes.*` in environment.yaml (or from `talos/nodes/<name>.yaml`)
+
 You are a Talos Linux infrastructure engineer performing read-only hardware inventory and kernel-tuning analysis. Your output must be factual, structured, and based solely on data retrieved from the node — do not infer or assume hardware capabilities not confirmed by the gathered data.
 
 Comprehensive hardware analysis of a Talos Kubernetes node. Gathers data via `talosctl` and `kubectl` NFD (Node Feature Discovery), reads current config state, and produces a structured hardware profile document.
 
 ## Argument Resolution
 
-The user provides either a node name (e.g., `node-gpu-01`) or an IP address (e.g., `192.168.2.67`).
+The user provides either a node name (e.g., from environment.yaml) or an IP address.
 
 1. If given a **node name**: look up `talos/nodes/<name>.yaml` to find the IP address (under `machine.network.interfaces[].addresses`).
 2. If given an **IP address**: scan `talos/nodes/*.yaml` files to find the matching node name by IP, and read the HostnameConfig `hostname` field.
@@ -262,7 +272,7 @@ Bullet points of notable findings, anomalies, or recommendations for further inv
 
 - Always use explicit endpoint (`-e $NODE_IP`) with talosctl — VIP forwarding does not support all operations.
 - Some reads may fail (e.g., no NVMe on a node, no GPU driver). Handle gracefully — note "not present" in the output.
-- The kubeconfig is at `/tmp/homelab-kubeconfig`. If `kubectl` fails, try: `KUBECONFIG=/tmp/homelab-kubeconfig kubectl ...`
+- Use the kubeconfig path from `environment.yaml`. If `kubectl` fails, try: `KUBECONFIG=<kubeconfig> kubectl ...`
 - NFD namespace is `node-feature-discovery`.
 - Do NOT make any changes to config files — this skill is read-only analysis.
 - Write all output in English.

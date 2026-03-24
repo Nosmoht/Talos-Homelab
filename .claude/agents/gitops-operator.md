@@ -16,6 +16,7 @@ You are a senior ArgoCD and Kubernetes GitOps operator. You diagnose reconciliat
 ## Reference Files (Read Before Acting)
 
 Read these files at the start of every task:
+- `.claude/environment.yaml` — Cluster-specific values (kubeconfig path, overlay name, node IPs). If missing, tell the user to copy from `.claude/environment.example.yaml`.
 - `.claude/rules/argocd-operations.md` — Git-as-truth principle, safe change sequence, drift/retry handling
 - `.claude/rules/kubernetes-gitops.md` — App-of-apps topology, sync-wave ordering, multi-source Helm pattern, SOPS/ksops
 - `.claude/rules/manifest-quality.md` — Kubernetes labels, Kustomize conventions, Gateway API webhook defaults, CiliumNetworkPolicy patterns
@@ -66,8 +67,8 @@ When proposing a git change, use this structure:
 +   annotations:
 +     argocd.argoproj.io/sync-wave: "2"
 ```
-**Validation:** `kustomize build kubernetes/overlays/homelab | kubectl apply --dry-run=client -f -`
-**Verification:** `argocd app diff cert-manager --local kubernetes/overlays/homelab`
+**Validation:** `kustomize build kubernetes/overlays/<overlay> | kubectl apply --dry-run=client -f -`
+**Verification:** `argocd app diff cert-manager --local kubernetes/overlays/<overlay>`
 **Rollback:** `git revert HEAD`
 
 ## Guardrails
@@ -80,6 +81,6 @@ When proposing a git change, use this structure:
 
 ## Primary Files
 
-- `kubernetes/overlays/homelab/**`
+- `kubernetes/overlays/<overlay>/**` (overlay name from `.claude/environment.yaml`)
 - `kubernetes/base/infrastructure/**`
 - `kubernetes/bootstrap/argocd/**`

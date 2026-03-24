@@ -8,7 +8,7 @@ paths:
 # Kubernetes GitOps (ArgoCD)
 
 ## App-of-Apps Pattern
-- **Root Application** (`root`) in `default` project points to `kubernetes/overlays/homelab/`
+- **Root Application** (`root`) in `default` project points to `kubernetes/overlays/<overlay>/` (overlay name from `.claude/environment.yaml`)
 - Root app manages: AppProjects, all child Application CRs, namespaces, gateway-api resources
 - **ArgoCD self-management**: `argocd` Application CR manages its own Helm chart + HTTPRoute
 - Bootstrap is minimal: `make argocd-install` (Helm) + `make argocd-bootstrap` (applies root app only)
@@ -25,7 +25,7 @@ kubernetes/
 ├── base/infrastructure/<component>/
 │   ├── kustomization.yaml          # optional (only if has namespace.yaml)
 │   └── values.yaml                 # shared Helm values
-├── overlays/homelab/
+├── overlays/<overlay>/
 │   ├── kustomization.yaml          # resources: [projects, infrastructure, apps]
 │   ├── projects/
 │   │   ├── kustomization.yaml      # commonAnnotations sync-wave: "-1"
@@ -63,13 +63,13 @@ spec:
       helm:
         valueFiles:
           - $values/kubernetes/base/infrastructure/<component>/values.yaml
-          - $values/kubernetes/overlays/homelab/infrastructure/<component>/values.yaml  # optional overlay
-    - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
+          - $values/kubernetes/overlays/<overlay>/infrastructure/<component>/values.yaml  # optional overlay
+    - repoURL: <repo-url-from-environment.yaml>
       targetRevision: HEAD
       ref: values
-    - repoURL: https://github.com/Nosmoht/Talos-Homelab.git    # optional: extra resources
+    - repoURL: <repo-url-from-environment.yaml>    # optional: extra resources
       targetRevision: HEAD
-      path: kubernetes/overlays/homelab/infrastructure/<component>/resources
+      path: kubernetes/overlays/<overlay>/infrastructure/<component>/resources
   destination:
     server: https://kubernetes.default.svc
     namespace: <target-namespace>
@@ -110,5 +110,5 @@ Components with base namespace.yaml (referenced by overlay kustomization): cert-
 - `make argocd-oidc` — patch argocd-secret with OIDC client secret from encrypted dex secret
 
 ## Validation
-- Full overlay: `kubectl apply -k kubernetes/overlays/homelab/ --dry-run=client`
-- Per-component: `kubectl kustomize kubernetes/overlays/homelab/infrastructure/<component>/`
+- Full overlay: `kubectl apply -k kubernetes/overlays/<overlay>/ --dry-run=client`
+- Per-component: `kubectl kustomize kubernetes/overlays/<overlay>/infrastructure/<component>/`

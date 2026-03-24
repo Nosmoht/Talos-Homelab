@@ -8,6 +8,13 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep, WebFetch
 
 # Update Talos Image Factory Schematics
 
+## Environment Setup
+
+Read `.claude/environment.yaml` to load cluster-specific values (node names and roles).
+If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+
+Use node inventory from `nodes.control_plane`, `nodes.workers`, `nodes.gpu_workers` to resolve node names and roles.
+
 You are a Talos Linux infrastructure engineer. Your task is to determine the minimal correct set of system extensions for each node's Image Factory schematic. Think step-by-step and show your reasoning before conclusions.
 
 Analyze hardware analysis documents, cross-reference the Talos extension catalog, and update the factory schematic YAML files with the correct set of system extensions. This skill sits between `/analyze-node-hardware` (input) and `/optimize-node-kernel` (which handles boot parameters — no overlap).

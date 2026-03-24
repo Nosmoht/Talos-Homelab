@@ -8,6 +8,17 @@ allowed-tools: Bash, Read, Grep, Glob, Write
 
 # Execute Talos Upgrade
 
+## Environment Setup
+
+Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path, cluster name).
+If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+
+Use throughout this skill:
+- `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
+- `-n <node-ip> -e <node-ip>` for all `talosctl` commands targeting a node
+- Node inventory from `nodes.control_plane`, `nodes.workers`, `nodes.gpu_workers`, `nodes.pi_nodes`
+- Upgrade order: control-plane nodes first, then workers, then GPU workers, then Pi nodes
+
 Use this skill only after `plan-talos-upgrade` has produced a reviewed migration plan and that plan has been explicitly approved for execution.
 
 This skill changes live cluster state and reboots nodes. Treat every step as safety-critical.
@@ -90,19 +101,20 @@ Check:
 - Cilium and Kubernetes baseline health before node reboots begin
 
 Run at minimum:
+Use control-plane node IPs from `environment.yaml`:
 ```bash
 git status --short
-talosctl -n 192.168.2.61 -e 192.168.2.61 version
-talosctl -n 192.168.2.62 -e 192.168.2.62 version
-talosctl -n 192.168.2.63 -e 192.168.2.63 version
-talosctl -n 192.168.2.61 -e 192.168.2.61 health --control-plane-nodes 192.168.2.61,192.168.2.62,192.168.2.63
-talosctl -n 192.168.2.61 -e 192.168.2.61 etcd members
-talosctl -n 192.168.2.61 -e 192.168.2.61 etcd status
-kubectl get nodes -o wide
-kubectl get pods -A | grep -v Running
-kubectl -n kube-system get pods -l k8s-app=cilium -o wide
-kubectl linstor node list
-kubectl linstor resource list
+talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> version
+talosctl -n <cp-node-2-ip> -e <cp-node-2-ip> version
+talosctl -n <cp-node-3-ip> -e <cp-node-3-ip> version
+talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> health --control-plane-nodes <cp-node-1-ip>,<cp-node-2-ip>,<cp-node-3-ip>
+talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> etcd members
+talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> etcd status
+KUBECONFIG=<kubeconfig> kubectl get nodes -o wide
+KUBECONFIG=<kubeconfig> kubectl get pods -A | grep -v Running
+KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+KUBECONFIG=<kubeconfig> kubectl linstor node list
+KUBECONFIG=<kubeconfig> kubectl linstor resource list
 ```
 
 If the live cluster version does not match the plan’s `from_version`, stop and report drift.
@@ -116,7 +128,7 @@ Before mutating the repo or cluster, capture baseline evidence and a recovery sn
 
 Take an etcd backup:
 ```bash
-talosctl -n 192.168.2.61 -e 192.168.2.61 etcd snapshot /tmp/etcd-backup-pre-upgrade-$(date +%Y%m%d).db
+talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> etcd snapshot /tmp/etcd-backup-pre-upgrade-$(date +%Y%m%d).db
 ```
 Store the backup path in the run record. Verify the snapshot file size is non-zero before proceeding.
 
@@ -203,17 +215,9 @@ git push
 Stage only the files actually changed by the approved plan. Do not batch this change with unrelated work.
 
 ### 7. Execute the supported rollout path
-Before beginning, check etcd leadership: `talosctl -n 192.168.2.61 -e 192.168.2.61 etcd status`. Upgrade non-leader control-plane nodes first to minimize quorum disruption risk. If the first planned CP node is the current etcd leader, begin with a follower node instead.
+Before beginning, check etcd leadership: `talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> etcd status`. Upgrade non-leader control-plane nodes first to minimize quorum disruption risk. If the first planned CP node is the current etcd leader, begin with a follower node instead.
 
-Use the approved plan’s sequencing. Default order for this repo:
-1. `node-01`
-2. `node-02`
-3. `node-03`
-4. `node-04`
-5. `node-05`
-6. `node-06`
-7. `node-gpu-01`
-8. `node-pi-01`
+Use the approved plan’s sequencing. Default order: control-plane nodes first (from `nodes.control_plane`), then standard workers (from `nodes.workers`), then GPU workers (from `nodes.gpu_workers`), then Pi nodes (from `nodes.pi_nodes`). Resolve the exact node names and IPs from `environment.yaml`.
 
 For each node:
 ```bash
@@ -232,13 +236,13 @@ After each node upgrade, verify health before proceeding.
 
 Minimum per-node health gates:
 ```bash
-kubectl get node <node>
+KUBECONFIG=<kubeconfig> kubectl get node <node>
 talosctl -n <node-ip> -e <node-ip> version
-talosctl -n 192.168.2.61 -e 192.168.2.61 health --control-plane-nodes 192.168.2.61,192.168.2.62,192.168.2.63
-talosctl -n 192.168.2.61 -e 192.168.2.61 etcd members
-kubectl get nodes -o wide
-kubectl -n kube-system get pods -l k8s-app=cilium -o wide
-kubectl linstor node list
+talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> health --control-plane-nodes <cp-node-1-ip>,<cp-node-2-ip>,<cp-node-3-ip>
+talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> etcd members
+KUBECONFIG=<kubeconfig> kubectl get nodes -o wide
+KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+KUBECONFIG=<kubeconfig> kubectl linstor node list
 ```
 
 Also run plan-specific verification for:
@@ -274,11 +278,11 @@ Useful diagnostics:
 talosctl -n <node-ip> -e <node-ip> version
 talosctl -n <node-ip> -e <node-ip> services
 talosctl -n <node-ip> -e <node-ip> dmesg | tail -n 200
-talosctl -n 192.168.2.61 -e 192.168.2.61 etcd members
-kubectl get csr
-kubectl get nodes -o wide
-kubectl -n kube-system get pods -l k8s-app=cilium -o wide
-kubectl linstor resource list
+talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> etcd members
+KUBECONFIG=<kubeconfig> kubectl get csr
+KUBECONFIG=<kubeconfig> kubectl get nodes -o wide
+KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+KUBECONFIG=<kubeconfig> kubectl linstor resource list
 ```
 
 If recovery requires repo reversion:

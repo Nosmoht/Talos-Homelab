@@ -7,6 +7,15 @@ allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch
 
 # Plan Cilium Upgrade
 
+## Environment Setup
+
+Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path, overlay name).
+If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+
+Use throughout this skill:
+- `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
+- Node inventory from `nodes.control_plane`, `nodes.workers`, `nodes.gpu_workers`
+
 Use this skill when asked to plan a Cilium upgrade for this cluster. This skill produces a migration plan only. It does not roll out the upgrade unless the user explicitly asks for execution afterward.
 
 ## Inputs
@@ -95,10 +104,10 @@ If omitted, resolve in this order:
 
 Preferred live checks:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system get ds cilium -o json
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system get deploy cilium-operator -o json
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system get cm cilium-config -o yaml
-KUBECONFIG=/tmp/homelab-kubeconfig cilium version
+KUBECONFIG=<kubeconfig> kubectl -n kube-system get ds cilium -o json
+KUBECONFIG=<kubeconfig> kubectl -n kube-system get deploy cilium-operator -o json
+KUBECONFIG=<kubeconfig> kubectl -n kube-system get cm cilium-config -o yaml
+KUBECONFIG=<kubeconfig> cilium version
 ```
 
 Use the daemonset image tag or `cilium version` output as the primary source. Do not rely only on labels.
@@ -195,7 +204,7 @@ make -C talos cilium-bootstrap-check
 make -C talos gen-configs
 make -C talos dry-run-all
 make -C talos upgrade-k8s
-make -C talos upgrade-node-01
+make -C talos upgrade-<node-name>
 kubectl -n kube-system get pods -l k8s-app=cilium
 kubectl get ciliumnode
 ```

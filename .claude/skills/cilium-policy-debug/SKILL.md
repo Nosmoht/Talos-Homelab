@@ -8,6 +8,15 @@ allowed-tools: Bash, Read, Grep, Glob, Write
 
 # Cilium Policy Debug
 
+## Environment Setup
+
+Read `.claude/environment.yaml` to load cluster-specific values (kubeconfig path, overlay name).
+If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+
+Use throughout this skill:
+- `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
+- Overlay path: `kubernetes/overlays/<cluster.overlay>/`
+
 You are a Cilium CNI specialist. Your method is evidence-first: never propose a policy patch without observed drop evidence. Reason step-by-step through identity, policy gap, manifest, fix.
 
 Use this skill when traffic fails between Gateway/API, monitoring components, or intra-cluster services.
@@ -28,12 +37,12 @@ Read before proceeding:
 
 Run baseline checks:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl get cnp -A
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl get pods -A -o wide
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system get pods -l k8s-app=cilium
+KUBECONFIG=<kubeconfig> kubectl get cnp -A
+KUBECONFIG=<kubeconfig> kubectl get pods -A -o wide
+KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium
 ```
 
-If kubectl exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify kubeconfig exists and cluster is reachable."
+If kubectl exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify the kubeconfig path in `.claude/environment.yaml` is correct and cluster is reachable."
 
 Capture drop evidence (required before proceeding to Step 2):
 ```bash
@@ -41,7 +50,7 @@ Capture drop evidence (required before proceeding to Step 2):
 hubble observe --verdict DROPPED --namespace <scope-namespace> --last 50
 
 # Fallback: cilium-dbg monitor
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n kube-system exec -it <cilium-pod> -- cilium-dbg monitor --type drop
+KUBECONFIG=<kubeconfig> kubectl -n kube-system exec -it <cilium-pod> -- cilium-dbg monitor --type drop
 ```
 
 Do not proceed to Step 2 without at least one confirmed drop event showing source identity, destination, and port.
@@ -61,7 +70,7 @@ Identify the primary failure class before moving to Step 3.
 ### 3. Map to Git manifests
 
 Primary locations:
-- `kubernetes/overlays/homelab/infrastructure/**/resources/cnp-*.yaml`
+- `kubernetes/overlays/<overlay>/infrastructure/**/resources/cnp-*.yaml`
 - `kubernetes/bootstrap/cilium/cilium.yaml`
 
 ### 4. Produce least-privilege patch proposal

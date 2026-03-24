@@ -8,6 +8,15 @@ allowed-tools: Bash, Read, Grep, Glob, Write
 
 # GitOps Health Triage
 
+## Environment Setup
+
+Read `.claude/environment.yaml` to load cluster-specific values (kubeconfig path, overlay name).
+If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+
+Use throughout this skill:
+- `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
+- Overlay path: `kubernetes/overlays/<cluster.overlay>/`
+
 You are an ArgoCD triage specialist. You classify failures precisely and propose GitOps-safe remediations with calibrated confidence. Reason step-by-step: gather evidence, classify, map to manifests, propose fix.
 
 ## Reference Files
@@ -20,7 +29,7 @@ Read before proceeding:
 
 - Argument: one application name (`dex`, `kube-prometheus-stack`) or `all`.
   - When `all` is specified: triage every application, then sort the output report by severity (Degraded > OutOfSync > Progressing) before listing remediations.
-- Kubeconfig default: `/tmp/homelab-kubeconfig`.
+- Kubeconfig: from `environment.yaml` (`kubeconfig` field).
 
 ## Workflow
 
@@ -28,19 +37,19 @@ Read before proceeding:
 
 First verify cluster connectivity:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n argocd get applications
+KUBECONFIG=<kubeconfig> kubectl -n argocd get applications
 ```
-If kubectl exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify `/tmp/homelab-kubeconfig` exists and cluster is reachable."
+If kubectl exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify the kubeconfig path in `.claude/environment.yaml` is correct and cluster is reachable."
 
 If a specific app is provided, also run:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n argocd get application <app> -o yaml
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n argocd describe application <app>
+KUBECONFIG=<kubeconfig> kubectl -n argocd get application <app> -o yaml
+KUBECONFIG=<kubeconfig> kubectl -n argocd describe application <app>
 ```
 
 Extract the exact failure message:
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl -n argocd get application <app> \
+KUBECONFIG=<kubeconfig> kubectl -n argocd get application <app> \
   -o jsonpath='{.status.operationState.message}'
 ```
 
@@ -64,10 +73,10 @@ Read `references/argocd-remediation-patterns.md` and classify into one of:
 ### 3. Map to repository paths
 
 Identify manifests driving the app:
-- app CR: `kubernetes/overlays/homelab/infrastructure/<component>/application.yaml`
+- app CR: `kubernetes/overlays/<overlay>/infrastructure/<component>/application.yaml`
 - additional resources: `.../resources/`
 - shared values: `kubernetes/base/infrastructure/<component>/values.yaml`
-- overlay values: `kubernetes/overlays/homelab/infrastructure/<component>/values.yaml`
+- overlay values: `kubernetes/overlays/<overlay>/infrastructure/<component>/values.yaml`
 
 ### 4. Propose GitOps-safe remediation
 
@@ -93,10 +102,10 @@ Sync failed at 14:02 UTC. Last successful sync: 12:30 UTC.
 ## Root Cause: Immutable field rejection (High confidence)
 Deployment `dex-server` selector changed; Kubernetes rejects in-place update.
 ## Files to Modify
-- `kubernetes/overlays/homelab/infrastructure/dex/application.yaml` — add `Replace: true` sync option
+- `kubernetes/overlays/<overlay>/infrastructure/dex/application.yaml` — add `Replace: true` sync option
 ## Verification
 ```bash
-KUBECONFIG=/tmp/homelab-kubeconfig argocd app sync dex --dry-run
+KUBECONFIG=<kubeconfig> argocd app sync dex --dry-run
 ```
 ## Emergency Live Action
 None required.

@@ -12,7 +12,7 @@ paths:
 - Use `kubernetes/bootstrap/**` only for bootstrap and emergency recovery.
 
 ## Safe Change Sequence
-1. Render locally before editing (`kubectl kustomize kubernetes/overlays/homelab`).
+1. Render locally before editing (`kubectl kustomize kubernetes/overlays/<overlay>` — overlay name from `.claude/environment.yaml`).
 2. Apply manifest changes in git only.
 3. Verify ArgoCD application health/sync status after push.
 4. Capture verification evidence in PR notes.

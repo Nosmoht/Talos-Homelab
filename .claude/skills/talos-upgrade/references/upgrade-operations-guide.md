@@ -12,9 +12,9 @@ For upgrades (which trigger a reboot):
 
 ```bash
 # Before upgrade — 120s timeout mitigates DRBD CSI D-state deadlock
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl drain <node> --ignore-daemonsets --delete-emptydir-data --timeout=120s
+KUBECONFIG=<kubeconfig> kubectl drain <node> --ignore-daemonsets --delete-emptydir-data --timeout=120s
 # After verification passes
-KUBECONFIG=/tmp/homelab-kubeconfig kubectl uncordon <node>
+KUBECONFIG=<kubeconfig> kubectl uncordon <node>
 ```
 
 ## Rollback
