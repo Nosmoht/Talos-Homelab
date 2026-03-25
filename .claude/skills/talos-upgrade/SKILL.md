@@ -63,8 +63,9 @@ If quorum is degraded (fewer than (n/2)+1 members healthy), stop and report. Do 
 
 ```bash
 make -C talos gen-configs
-make -C talos dry-run-<node>
+talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml --dry-run
 ```
+Where `<role>` is `controlplane` for CP nodes or `worker` for all others.
 
 If dry-run fails, stop and report the error with likely root cause.
 
@@ -106,11 +107,17 @@ The 120s timeout is critical — DRBD CSI volumes in D-state during `unmountPodM
 
 ### 7. Upgrade
 
+Resolve the install image from `talos/.schematic-ids.mk` + `talos/versions.mk`:
+- Standard/CP nodes: `factory.talos.dev/metal-installer/<SCHEMATIC_ID>:<TALOS_VERSION>`
+- GPU nodes: `factory.talos.dev/metal-installer/<GPU_SCHEMATIC_ID>:<TALOS_VERSION>`
+- Pi nodes: `factory.talos.dev/metal-installer/<PI_SCHEMATIC_ID>:<TALOS_VERSION>`
+
 ```bash
-make -C talos upgrade-<node>
+talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml
+talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve --wait --timeout 10m
 ```
 
-This applies config and upgrades the install image with `--preserve` (prevents EPHEMERAL partition wipe).
+The `--preserve` flag prevents EPHEMERAL partition wipe.
 
 ### 8. Verify health
 

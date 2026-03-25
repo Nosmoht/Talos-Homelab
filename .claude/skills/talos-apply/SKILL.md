@@ -63,18 +63,15 @@ If quorum is degraded (fewer than (n/2)+1 members healthy), stop and report. Do 
 
 ```bash
 make -C talos gen-configs
-make -C talos dry-run-<node>
+talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml --dry-run
 ```
+Where `<role>` is `controlplane` for CP nodes or `worker` for all others.
 
 If dry-run fails, stop and report the error with likely root cause.
 
 ### 4. Show config diff
 
-Show what will change by running the dry-run output against the node:
-```bash
-talosctl apply-config --nodes <ip> --endpoints <ip> --file talos/generated/<role>/<node>.yaml --dry-run
-```
-Where `<role>` is `controlplane` for CP nodes or `worker` for all others.
+The dry-run output from step 3 shows the diff.
 
 Present the diff to the user.
 
@@ -98,10 +95,10 @@ Proceed? (yes/no)
 
 After user confirms:
 ```bash
-make -C talos apply-<node>
+talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml
 ```
 
-This uses `--mode=auto` by default. If the user requested a different mode, use `talosctl apply-config` directly:
+This uses `--mode=auto` by default. For other modes:
 - CP under load: `talosctl apply-config --mode=staged -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`
 - Safe probe: `talosctl apply-config --mode=no-reboot -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`
 

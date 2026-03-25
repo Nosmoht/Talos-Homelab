@@ -181,7 +181,7 @@ For each approved change:
    ```bash
    make gen-configs
    ```
-5. **Rollback** — if `make apply-<node>` returns a non-zero exit code, instruct the user to run `git diff talos/` to identify changes, and `git restore` the affected files before retrying.
+5. **Rollback** — if `talosctl apply-config` returns a non-zero exit code, instruct the user to run `git diff talos/` to identify changes, and `git restore` the affected files before retrying.
 
 ## Step 7: Update Documentation
 
@@ -197,7 +197,7 @@ After applying changes, update or create the kernel tuning documentation:
 Provide verification commands for each change:
 
 ```bash
-# After make apply-<node> or make upgrade-<node>:
+# After talosctl apply-config or talosctl upgrade:
 
 # Verify sysctls
 talosctl -n $NODE_IP -e $NODE_IP read /proc/sys/<sysctl-path>
@@ -213,7 +213,7 @@ talosctl -n $NODE_IP -e $NODE_IP dmesg | grep -i <module-name>
 
 - Always use explicit endpoint (`-e $NODE_IP`) with talosctl.
 - Use the kubeconfig path from `environment.yaml`.
-- Boot parameter changes require `make upgrade-<node>` (not just `make apply-<node>`).
+- Boot parameter changes require `talosctl upgrade` (not just `talosctl apply-config`).
 - Some changes require a node reboot to take effect.
 - DRBD volumes should be drained before rebooting to avoid stuck shutdown (D-state processes).
 - Write all output and documentation in English.

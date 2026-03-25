@@ -185,8 +185,10 @@ make -C talos schematics
 make -C talos cilium-bootstrap
 make -C talos cilium-bootstrap-check
 make -C talos gen-configs
-make -C talos validate-generated
-make -C talos dry-run-all
+# Validate all generated configs
+find talos/generated -type f -name '*.yaml' | sort | while read f; do echo "Validating $f"; talosctl validate --config "$f" --mode metal --strict; done
+# Dry-run all nodes (resolve IPs from environment.yaml)
+talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml --dry-run
 ```
 
 If the approved plan includes Kubernetes or Cilium coupling, update and validate those repo changes before continuing. Do not continue with a partially updated repo state.
@@ -219,17 +221,24 @@ Before beginning, check etcd leadership: `talosctl -n <cp-node-1-ip> -e <cp-node
 
 Use the approved plan’s sequencing. Default order: control-plane nodes first (from `nodes.control_plane`), then standard workers (from `nodes.workers`), then GPU workers (from `nodes.gpu_workers`), then Pi nodes (from `nodes.pi_nodes`). Resolve the exact node names and IPs from `environment.yaml`.
 
-For each node:
+For each node (resolve install image from `talos/.schematic-ids.mk` + `talos/versions.mk`):
 ```bash
-make -C talos dry-run-<node>
-make -C talos upgrade-<node>
+talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml --dry-run
+talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml
+talosctl upgrade -n <node-ip> -e <node-ip> --image <install-image> --preserve --wait --timeout 10m
 ```
 
 Wait for health gates to pass before moving to the next node. Do not parallelize node upgrades.
 
 If the approved plan includes a separate Kubernetes or Cilium reconciliation step, follow that exact broader sequencing and do not improvise a shorter path.
 
-If the approved plan includes a coupled Cilium refresh through Talos `extraManifests`, include the repo-supported `make -C talos apply-all && make -C talos upgrade-k8s` sequencing exactly when the approved plan requires it.
+If the approved plan includes a coupled Cilium refresh through Talos `extraManifests`, apply config to all nodes then run `talosctl upgrade-k8s`:
+```bash
+# Apply config to all nodes
+for each node: talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml
+# Then reconcile extraManifests (ensure cilium-bootstrap-check passed first)
+talosctl upgrade-k8s --to <kubernetes-version> -n <cp-node-1-ip> -e <cp-node-1-ip>
+```
 
 ### 8. Enforce stage gates during rollout
 After each node upgrade, verify health before proceeding.

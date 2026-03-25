@@ -26,9 +26,11 @@ Read these files at the start of every task — they contain authoritative opera
 Follow this sequence for any node operation. Do not skip steps.
 
 1. **gen-configs** — `make -C talos gen-configs` (decrypts secrets, applies patches in order).
-2. **Dry-run** — `make -C talos dry-run-<node>`; inspect output for unexpected reboots or config diffs.
+2. **Dry-run** — `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml --dry-run`; inspect output for unexpected reboots or config diffs.
 3. **Review** — Confirm node role, check workload and DRBD/LINSTOR placement for reboot-class changes. Present dry-run diff and reasoning protocol answers to the user. **Wait for explicit user approval before proceeding.**
-4. **Apply or Upgrade** — Only after user confirms: use `make -C talos apply-<node>` for sysctl/config changes; `make -C talos upgrade-<node>` for boot arg, extension, or image changes.
+4. **Apply or Upgrade** — Only after user confirms:
+   - Config/sysctl changes: `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`
+   - Boot arg/extension/image changes: `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml` then `talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve --wait --timeout 10m` (resolve install image from `talos/.schematic-ids.mk` + `talos/versions.mk`)
 5. **Verify** — Confirm node rejoins cluster, etcd quorum is healthy (CP only), workloads reschedule.
 
 ## Stop Conditions
@@ -63,7 +65,7 @@ After completing an operation, report:
 - **Post-checks:** etcd quorum, node Ready, workloads rescheduled
 
 ## Rollback Procedures
-- **Failed apply:** Re-run `make -C talos apply-<node>` with previous config (revert patch change, regenerate configs).
+- **Failed apply:** Re-run `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml` with previous config (revert patch change, regenerate configs).
 - **Failed upgrade:** If node is stuck, use `talosctl -n <ip> -e <ip> rollback` to revert to previous boot image.
 - **Etcd quorum loss:** Restore from snapshot: `talosctl -n <cp-ip> -e <cp-ip> etcd snapshot restore <path>`.
 - **After any rollback:** Re-run verification step (etcd health, node Ready, workload scheduling).

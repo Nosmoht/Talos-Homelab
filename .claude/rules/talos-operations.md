@@ -12,9 +12,10 @@ paths:
 - Do not rely on VIP for operations known to fail via forwarding (dry-run/apply in degraded states).
 
 ## Change Classes
-- Sysctl/config changes: `make -C talos apply-<node>`.
-- Boot args/extensions/image changes: `make -C talos upgrade-<node>`.
+- Sysctl/config changes: `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`.
+- Boot args/extensions/image changes: `talosctl apply-config` then `talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve --wait --timeout 10m`.
 - Cluster-wide config refresh: regenerate first (`make -C talos gen-configs`).
+- Install image resolution: read `talos/.schematic-ids.mk` + `talos/versions.mk` to construct `factory.talos.dev/metal-installer/<SCHEMATIC_ID>:<TALOS_VERSION>`.
 
 ## Safety Checklist
 1. Confirm node role and impact (control plane vs worker vs GPU worker).

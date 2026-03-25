@@ -22,17 +22,26 @@ paths:
 - Strategic merge on interfaces APPENDS arrays — doesn't merge by deviceSelector; keep VIP in per-node patches
 
 ## Makefile Targets (`talos/Makefile`)
+
+Orchestration targets (use `make`):
+- `make gen-configs` — decrypt secrets + generate all node configs with patch layering
+- `make schematics` — create factory schematics via Image Factory API, write IDs to `.schematic-ids.mk`
+- `make cilium-bootstrap` / `make cilium-bootstrap-check` — render and validate Cilium bootstrap manifest
 - `make install-<node>` — initial config apply to fresh node (`--insecure`)
 - `make bootstrap` — bootstrap etcd on node-01
-- `make apply-<node>` — apply config to node
-- `make dry-run-<node>` — dry-run config apply
-- `make upgrade-<node>` — apply config + upgrade install image (auto-selects standard vs GPU)
-- `make schematics` — create factory schematics via Image Factory API, write IDs to `.schematic-ids.mk`
-- `make gen-configs` / `make clean` / `make talosconfig` / `make gen-secrets`
-- All targets auto-trigger: secrets decryption → config generation
+- `make clean` / `make talosconfig` / `make gen-secrets`
+
+Direct talosctl (do NOT use make wrappers):
+- Apply config: `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`
+- Dry-run: `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml --dry-run`
+- Upgrade: `talosctl apply-config ...` then `talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve --wait --timeout 10m`
+- Upgrade K8s: `talosctl upgrade-k8s --to <version> -n <ip> -e <ip>` (run `make -C talos cilium-bootstrap-check` first)
+- Validate: `talosctl validate --config <file> --mode metal --strict`
+
+Install image resolution: `factory.talos.dev/metal-installer/<SCHEMATIC_ID>:<TALOS_VERSION>` (read from `.schematic-ids.mk` + `versions.mk`)
 
 ## Important Behaviors
-- Boot parameter changes require `make upgrade-<node>` — `make apply-<node>` only activates sysctls
+- Boot parameter changes require `talosctl upgrade` — `talosctl apply-config` only activates sysctls
 - `.schematic-ids.mk` tracks IDs; Factory API only called when schematic YAML modified
 - `.versions.stamp` tracks `TALOS_VERSION` + `KUBERNETES_VERSION` — triggers config regeneration
 - Changing `TALOS_VERSION` in Makefile is sufficient to update all install image URLs

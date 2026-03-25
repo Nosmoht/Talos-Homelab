@@ -57,8 +57,9 @@ If quorum is degraded (fewer than (n/2)+1 members healthy), stop and report. Do 
 Then run config generation and dry-run:
 ```bash
 make -C talos gen-configs
-make -C talos dry-run-<node>
+talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml --dry-run
 ```
+Where `<role>` is `controlplane` for CP nodes or `worker` for all others.
 
 If dry-run fails, stop and report error with likely root cause.
 
@@ -81,8 +82,8 @@ Proceed? (yes/no)
 
 After user confirms:
 
-- Config-only/sysctl changes: `make -C talos apply-<node>`
-  - For CP nodes when the cluster is under active load, prefer staged mode: `talosctl apply-config --mode=staged -n <ip> -e <ip> -f talos/generated/<node>.yaml`
+- Config-only/sysctl changes: `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`
+  - For CP nodes when the cluster is under active load, prefer staged mode: `talosctl apply-config --mode=staged -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`
   - If uncertain whether a reboot is required, first attempt `--mode=no-reboot`; if it fails, escalate to `--mode=auto`.
 - Boot args/extensions/version changes:
   1. Check DRBD/LINSTOR replica placement before draining:
@@ -94,9 +95,10 @@ After user confirms:
      ```bash
      KUBECONFIG=<kubeconfig> kubectl drain <node> --ignore-daemonsets --delete-emptydir-data
      ```
-  2. Run the upgrade:
+  2. Run the upgrade (resolve install image from `talos/.schematic-ids.mk` + `talos/versions.mk`):
      ```bash
-     make -C talos upgrade-<node>
+     talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml
+     talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve --wait --timeout 10m
      ```
   3. Uncordon after verification passes (Step 4):
      ```bash

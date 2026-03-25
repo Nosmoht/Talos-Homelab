@@ -1,8 +1,8 @@
 # Kernel-Tuning: GPU Worker (node-gpu-01)
 
 > **Scope:** node-gpu-01 (BTC B250C mining board, 3x NVIDIA GA104)
-> **Created:** 2026-02-28
-> **Talos:** v1.12.4 | **Kubernetes:** v1.35.0 | **Cilium:** v1.19.0 (eBPF kube-proxy replacement)
+> **Created:** 2026-02-28 | **Updated:** 2026-03-24
+> **Talos:** v1.12.6 | **Kubernetes:** v1.35.0 | **Cilium:** v1.19.0 (eBPF kube-proxy replacement)
 > **Companion document:** [kernel-tuning.md](kernel-tuning.md) covers node-01 through node-06
 
 ---
@@ -37,19 +37,18 @@ GA104 GPUs for compute workloads.
 | Vendor | OEM |
 | CPU | Intel Core i7-7700K @ 4.20GHz (Kaby Lake, Family 6, Model 158, Stepping 9) |
 | Cores/Threads | 4C / 8T (Hyper-Threading enabled) |
-| Microcode | 0xf8 (updated at boot via intel-ucode extension, from 0x9a) |
-| RAM | 32 GB DDR4 (non-ECC, single-channel likely) |
+| Microcode | 0xf8 (updated at boot via intel-ucode extension) |
+| RAM | 31.1 GiB DDR4 (non-ECC, single-channel likely) |
 | Swap | None |
 | NUMA | Not present (single socket) |
-| Boot Disk | `/dev/sda` — HDD (rotational=1), mq-deadline scheduler |
-| Data Disk | `/dev/sdb` — SSD (rotational=0), 450 GiB XFS (WWN: naa.5001b444a5673347) |
-| Second SSD | `/dev/sdc` — SSD (rotational=0) |
+| Boot Disk | `/dev/sda` — Intenso 240GB SSD (SATA, rotational=0), mq-deadline scheduler |
+| Data Disk | `/dev/sdb` — SanDisk Ultra 3D 500GB SSD (SATA, rotational=0), XFS UserVolume `local-storage` (WWN: naa.5001b444a5673347) |
 | NVMe | None |
 | Active NIC | enp0s20f0u2 — USB 3.0 Realtek RTL8153 GbE (r8152 driver), MAC 00:e0:3c:68:46:45 |
 | Unused NIC | enp4s0 — PCIe Realtek RTL8136 Fast Ethernet (r8169 driver), operstate=down |
 | GPUs | 3x NVIDIA GA104 (PCIe slots 01:00.0, 02:00.0, 03:00.0) |
 | iGPU | Intel HD Graphics 630 (00:02.0, i915 driver) |
-| Kernel | Linux 6.18.9-talos (gcc 15.2.0) |
+| Kernel | Linux 6.18.18-talos |
 
 ### Key Differences vs Standard Nodes (M710q/M920q)
 
@@ -57,8 +56,8 @@ GA104 GPUs for compute workloads.
 |-----------|------------------------------|--------------------------|--------|
 | Motherboard | Lenovo ThinkCentre (OEM quality) | BTC B250C (mining board) | PCIe ASPM unreliable on mining boards |
 | CPU | Skylake/Coffee Lake (various) | Kaby Lake i7-7700K | Same vulnerability surface as Skylake |
-| Boot Disk | SATA SSD | SATA HDD | Slower boot, different I/O scheduler needs |
-| Data Disk | NVMe (PCIe 3.0 x2/x4) | SATA SSD | Lower throughput, no NVMe optimizations |
+| Boot Disk | SATA SSD | SATA SSD (Intenso 240GB) | Same type, smaller capacity |
+| Data Disk | NVMe (PCIe 3.0 x2/x4) | SATA SSD (SanDisk 500GB) | Lower throughput, no NVMe optimizations |
 | NIC | Intel I219-V/LM (e1000e), PCIe | Realtek RTL8153 (r8152), USB 3.0 | USB NIC = higher CPU overhead, no hardware offloads |
 | GPUs | None (or iGPU only) | 3x NVIDIA GA104 + iGPU | IOMMU groups, PCIe bandwidth, DMA considerations |
 | Factory Schematic | `talos-factory-schematic.yaml` | `talos-factory-schematic-gpu.yaml` | Separate schematic with NVIDIA extensions |
@@ -68,15 +67,12 @@ GA104 GPUs for compute workloads.
 
 | Device | Type | Scheduler | Role | Notes |
 |--------|------|-----------|------|-------|
-| `/dev/sda` | HDD (rotational) | mq-deadline | Boot disk (Talos install) | `elevator=none` not ideal for HDD — mq-deadline is better default |
-| `/dev/sdb` | SSD | — | Data (LINSTOR/DRBD, 450GiB XFS) | WWN: naa.5001b444a5673347 |
-| `/dev/sdc` | SSD | — | Additional storage | — |
+| `/dev/sda` | SSD (Intenso 240GB) | mq-deadline | Boot disk (Talos install) | SATA, `pci-0000:00:17.0-ata-3` |
+| `/dev/sdb` | SSD (SanDisk Ultra 3D 500GB) | mq-deadline | Data (LINSTOR/DRBD, XFS UserVolume) | WWN: naa.5001b444a5673347 |
 
-**Note on I/O scheduler:** The standard nodes use `elevator=none` because they only have
-SSDs and NVMe. node-gpu-01 has a rotational HDD as boot disk — `mq-deadline` is the correct
-scheduler for HDDs (provides seek optimization). The `elevator=none` boot parameter in the
-GPU schematic would force `none` globally, which is suboptimal for the HDD. However, Talos
-installs to the boot disk and rarely does heavy I/O on it after boot, so the impact is minimal.
+**Note on I/O scheduler:** The schematic configures `elevator=none` which targets single-queue
+devices. Both SATA SSDs use multi-queue `mq-deadline` by default, which is appropriate. No
+action needed — the scheduler selection is correct.
 
 ### Network Profile
 
@@ -155,10 +151,9 @@ Key NFD labels and features discovered on node-gpu-01:
 | cpu-model.family | 6 | — |
 | cpu-model.id | 158 | Kaby Lake |
 | cpu-hardware_multithreading | true | HT active (4C/8T) |
-| cpu-pstate.scaling_governor | powersave | **Not performance** — schematic boot params not applied |
+| cpu-pstate.scaling_governor | performance | Schematic boot params applied (governor=performance) |
 | cpu-pstate.status | active | Intel P-State driver active |
-| cpu-pstate.turbo | false | **Turbo Boost disabled in BIOS** |
-| cpu-cstate.enabled | true | C-States active (max_cstate=0 not applied) |
+| cpu-pstate.turbo | false | **Turbo Boost disabled in BIOS** (BIOS change recommended) |
 | cpu-security.sgx.enabled | true | SGX active, EPC=98041856 bytes (~93MB) |
 | cpu-security.sev.* | true | Incorrect — AMD SEV not available on Intel, NFD false positive |
 
@@ -232,15 +227,17 @@ patches/common.yaml → patches/worker-gpu.yaml → nodes/node-gpu-01.yaml
 
 | Sysctl | Value | Talos Default | Purpose |
 |--------|-------|---------------|---------|
-| `net.core.bpf_jit_harden` | `1` | `2` | Lowers BPF JIT hardening — constant blinding only for unprivileged users |
+| `net.core.netdev_budget` | `600` | `300` | USB NIC NAPI budget — process more packets per poll cycle to reduce RX drops on r8152 |
+| `net.core.netdev_budget_usecs` | `8000` | `2000` | USB NIC NAPI time budget — allow 4x more time per poll for USB protocol overhead |
 
+The `bpf_jit_harden` override (previously `1`) was removed — Talos default (`2`) now applies.
 All other sysctls are inherited from `patches/common.yaml` (see kernel-tuning.md Sections 4-5).
 
 ### Kernel Modules (from worker-gpu.yaml)
 
 | Module | Parameters | Purpose |
 |--------|------------|---------|
-| nvidia | — | NVIDIA GPU kernel driver |
+| nvidia | `NVreg_UsePageAttributeTable=1`, `NVreg_DynamicPowerManagement=0` | NVIDIA GPU kernel driver with PAT and no dynamic PM |
 | nvidia_uvm | — | Unified Virtual Memory (CUDA) |
 | nvidia_modeset | — | Mode-setting support |
 | nvidia_drm | — | DRM integration |
@@ -251,23 +248,25 @@ DRBD modules (`drbd`, `drbd_transport_tcp`) are loaded via `patches/common.yaml`
 
 | Extension | Version | Purpose |
 |-----------|---------|---------|
-| drbd | 9.2.16-v1.12.4 | DRBD kernel module for LINSTOR |
-| i915 | 20260110-v1.12.4 | Intel iGPU driver firmware |
-| intel-ice-firmware | 20260110 | Intel network firmware |
-| intel-ucode | 20260210 | Intel CPU microcode updates |
-| nvme-cli | v2.14 | NVMe management tools |
-| nvidia-open-gpu-kernel-modules-lts | 580.126.16-v1.12.4 | NVIDIA open kernel modules |
-| nvidia-container-toolkit-lts | 580.126.16-v1.18.2 | NVIDIA container runtime |
+| drbd | 9.2.16-v1.12.6 | DRBD kernel module for LINSTOR |
+| gvisor | 20260202.0 | gVisor sandbox runtime |
+| i915 | 20260309-v1.12.6 | Intel iGPU driver firmware |
+| intel-ucode | 20260227 | Intel CPU microcode updates |
+| nvidia-open-gpu-kernel-modules-lts | 580.126.20-v1.12.6 | NVIDIA open kernel modules |
+| nvidia-container-toolkit-lts | 580.126.20-v1.18.2 | NVIDIA container runtime |
+| realtek-firmware | 20260309 | Realtek USB NIC firmware (RTL8153) |
 
 ### NVIDIA Driver Status
 
-- Driver version: 580.126.16 (Open Kernel Module)
+- Driver version: 580.126.20 (Open Kernel Module)
 - All 3 GPUs registered as DRM devices (minor 1, 2, 3)
+- nvidia-persistenced running
 - Kubernetes resource: `nvidia.com/gpu: 3` (allocatable and capacity)
+- Node taint: `nvidia.com/gpu=present:NoSchedule`
 
-### Verified Sysctl Values
+### Verified Sysctl Values (2026-03-24)
 
-Key values read from the live node — all match `patches/common.yaml` configuration:
+Key values read from the live node — all match configuration:
 
 | Category | Sysctl | Configured | Live Value | Match |
 |----------|--------|------------|------------|-------|
@@ -279,81 +278,56 @@ Key values read from the live node — all match `patches/common.yaml` configura
 | TCP Buffer | net.core.rmem_max | 16777216 | 16777216 | Yes |
 | TCP Buffer | net.core.wmem_max | 16777216 | 16777216 | Yes |
 | TCP | net.ipv4.tcp_slow_start_after_idle | 0 | 0 | Yes |
-| TCP | net.ipv4.tcp_tw_reuse | 1 | 1 | Yes |
-| TCP | net.ipv4.tcp_fastopen | 3 | 3 | Yes |
-| TCP | net.ipv4.tcp_keepalive_time | 600 | 600 | Yes |
 | Backlog | net.core.somaxconn | 32768 | 32768 | Yes |
 | Backlog | net.core.netdev_max_backlog | 16384 | 16384 | Yes |
 | Conntrack | net.netfilter.nf_conntrack_max | 131072 | 131072 | Yes |
-| Security | net.ipv4.conf.all.rp_filter | 1 | 0 | **Cilium override** |
-| Security | net.ipv4.conf.default.rp_filter | 1 | 1 | Yes |
+| Security | net.ipv4.conf.all.rp_filter | 0 | 0 | Yes |
 | Security | kernel.kexec_load_disabled | 1 | 1 | Yes |
-| Security | kernel.sysrq | 0 | 0 | Yes |
-| BPF | net.core.bpf_jit_harden | 1 | 1 | Yes (GPU override) |
+| BPF | net.core.bpf_jit_harden | — | 2 | Talos default (override removed) |
 | Limits | kernel.pid_max | 4194304 | 4194304 | Yes |
 | Limits | fs.inotify.max_user_watches | 524288 | 524288 | Yes |
-
-**Note:** `net.ipv4.conf.all.rp_filter` shows `0` because Cilium's `cilium-sysctlfix`
-init container overrides it on its managed interfaces. The `default` value of `1` ensures
-new interfaces still get strict reverse-path filtering.
+| NAPI | net.core.netdev_budget | 600 | *pending apply* | GPU-specific override |
+| NAPI | net.core.netdev_budget_usecs | 8000 | *pending apply* | GPU-specific override |
 
 ---
 
 ## 7. Boot Parameter Gap Analysis
 
-The GPU factory schematic (`talos-factory-schematic-gpu.yaml`) defines 14 extraKernelArgs,
-but **none are currently applied**. The node has not been upgraded with the schematic image.
+The GPU factory schematic (`talos-factory-schematic-gpu.yaml`) defines 20 extraKernelArgs.
+As of 2026-03-24, the node has been upgraded with the schematic and **most parameters are
+applied**. Two PCIe riser stability parameters were added after the last upgrade and are
+still missing.
 
-### Configured vs Applied
+### Configured vs Applied (2026-03-24)
 
 | Boot Parameter | In Schematic | In /proc/cmdline | Status |
 |----------------|:------------:|:----------------:|--------|
-| `cpufreq.default_governor=performance` | Yes | **No** | Governor is `powersave` |
-| `intel_idle.max_cstate=0` | Yes | **No** | C-States still active |
-| `processor.max_cstate=0` | Yes | **No** | C-States still active |
-| `transparent_hugepage=madvise` | Yes | **No** | Happens to be `madvise` anyway (kernel 6.18 default) |
-| `elevator=none` | Yes | **No** | Scheduler is `mq-deadline` (better for HDD boot disk) |
-| `mitigations=auto` | Yes | **No** | Mitigations active anyway (kernel default) |
-| `init_on_free=1` | Yes | **No** | Not active — freed memory not zeroed |
-| `page_alloc.shuffle=1` | Yes | **No** | Not active |
-| `randomize_kstack_offset=on` | Yes | **No** | Not active |
-| `vsyscall=none` | Yes | **No** | Not active |
-| `debugfs=off` | Yes | **No** | debugfs accessible |
-| `intel_iommu=on` | Yes | **No** | IOMMU active anyway (DMAR auto-detected) |
-| `iommu=force` | Yes | **No** | Not enforced |
-| `iommu.passthrough=0` | Yes | **No** | Not set (but domain type is Translated) |
-| `iommu.strict=1` | Yes | **No** | **DMA-FQ (lazy) mode active** — strict not enforced |
+| `cpufreq.default_governor=performance` | Yes | Yes | Applied |
+| `intel_idle.max_cstate=0` | Yes | Yes | Applied |
+| `processor.max_cstate=0` | Yes | Yes | Applied |
+| `transparent_hugepage=madvise` | Yes | Yes | Applied |
+| `elevator=none` | Yes | Yes | Applied |
+| `mitigations=auto` | Yes | Yes | Applied |
+| `init_on_free=1` | Yes | Yes | Applied |
+| `page_alloc.shuffle=1` | Yes | Yes | Applied |
+| `randomize_kstack_offset=on` | Yes | Yes | Applied |
+| `vsyscall=none` | Yes | Yes | Applied |
+| `nvme_core.default_ps_max_latency_us=0` | Yes | Yes | Applied |
+| `pcie_aspm=off` | Yes | Yes | Applied |
+| `workqueue.power_efficient=0` | Yes | Yes | Applied |
+| `usbcore.autosuspend=-1` | Yes | Yes | Applied |
+| `intel_iommu=on` | Yes | Yes | Applied |
+| `iommu=force` | Yes | Yes | Applied |
+| `iommu.passthrough=0` | Yes | Yes | Applied |
+| `iommu.strict=0` | Yes | Yes | Applied (lazy/DMA-FQ mode) |
+| **`pci=noaer`** | **Yes** | **No** | **Missing** — added after last upgrade |
+| **`rcutree.rcu_idle_gp_delay=1`** | **Yes** | **No** | **Missing** — added after last upgrade |
 
-### Parameters Only in /proc/cmdline (Talos defaults)
+### Action Required
 
-These are Talos KSPP boot parameters, always present:
-
-| Parameter | Purpose |
-|-----------|---------|
-| `talos.platform=metal` | Platform identifier |
-| `console=tty0` | Console output |
-| `init_on_alloc=1` | Zero memory on allocation |
-| `slab_nomerge` | Prevent slab cache merging |
-| `pti=on` | Page Table Isolation |
-| `consoleblank=0` | Disable console blanking |
-| `nvme_core.io_timeout=4294967295` | NVMe infinite timeout |
-| `printk.devkmsg=on` | Device kmsg output |
-| `selinux=1` | SELinux enabled |
-| `module.sig_enforce=1` | Module signature enforcement |
-
-### Observable Impact
-
-| Aspect | Expected (with schematic) | Actual (without) | Impact |
-|--------|---------------------------|-------------------|--------|
-| CPU Governor | performance (max freq always) | powersave (dynamic scaling) | Higher latency on burst workloads |
-| CPU C-States | Disabled (always C0) | Active (deep sleep available) | Variable wake-up latency |
-| Turbo Boost | Would benefit from performance governor | Disabled in BIOS regardless | **BIOS change needed separately** |
-| IOMMU Mode | Strict (immediate TLB invalidation) | Lazy/DMA-FQ | Slightly less secure but better DMA performance |
-| Memory Zeroing | init_on_free=1 (freed memory zeroed) | Not active | Freed memory may contain stale data |
-| I/O Scheduler | none (noop) | mq-deadline | mq-deadline is actually better for the HDD |
-
-**Action required:** Run `make -C talos upgrade-node-gpu-01` to burn the schematic's extraKernelArgs
-into the UKI image. This requires a node reboot.
+Run `talosctl apply-config` + `talosctl upgrade` on node-gpu-01 to apply the 2 missing PCIe riser stability parameters.
+This rebuilds the UKI image with the current schematic and requires a node reboot. Drain DRBD
+volumes first: `kubectl drain node-gpu-01 --delete-emptydir-data --ignore-daemonsets --timeout=120s`
 
 ---
 
@@ -361,24 +335,15 @@ into the UKI image. This requires a node reboot.
 
 ### 8.1 IOMMU: Strict vs Lazy Mode
 
-The standard factory schematic uses `iommu.strict=1` (strict TLB invalidation). On the GPU
-node, this deserves reconsideration:
+The standard factory schematic uses `iommu.strict=1` (strict TLB invalidation). The GPU
+schematic uses `iommu.strict=0` (lazy/DMA-FQ mode) — **implemented**.
 
-**Strict mode (`iommu.strict=1`):**
-- Every DMA unmap triggers an immediate IOTLB invalidation
-- Higher security — prevents stale TLB entries from being exploited
-- Measurable overhead with 3 GPUs doing heavy DMA operations (CUDA memory transfers)
-
-**Lazy mode (`iommu.strict=0`, DMA-FQ):**
-- Batches IOTLB invalidations using a flush queue
-- Significantly lower overhead for DMA-heavy workloads
-- The kernel currently defaults to this mode on node-gpu-01
+**Rationale for lazy mode on GPU node:**
+- Strict mode: every DMA unmap triggers immediate IOTLB invalidation — measurable overhead
+  with 3 GPUs doing heavy DMA operations (CUDA memory transfers)
+- Lazy mode: batches IOTLB invalidations using a flush queue — significantly lower overhead
 - Acceptable security trade-off: the GPUs are trusted devices, not hotplugged
-
-**Recommendation:** Use `iommu.strict=0` in the GPU schematic. The 3 NVIDIA GPUs perform
-thousands of DMA operations per second during compute workloads. Strict mode adds measurable
-latency per operation. In a homelab with trusted PCIe devices, lazy mode is the correct
-trade-off.
+- Confirmed active via dmesg: `iommu: DMA domain TLB invalidation policy: lazy mode`
 
 ### 8.2 PCIe ASPM (Active State Power Management)
 
@@ -387,24 +352,20 @@ The BTC B250C is a mining motherboard. Mining boards are known for:
 - Multiple PCIe slots running at x1 via risers (ASPM can cause link instability)
 - Non-standard PCIe power delivery
 
-**Recommendation:** Add `pcie_aspm=off` to the GPU schematic. ASPM saves negligible power
-on a system with 3 GPUs (~5W TDP each GPU in idle) while risking PCIe link instability.
-Standard practice for multi-GPU systems.
+**Status:** `pcie_aspm=off` is in the GPU schematic and applied — **implemented**.
 
 ### 8.3 NVIDIA Kernel Module Parameters
 
-The NVIDIA open kernel module supports several tuning parameters:
+The NVIDIA open kernel module parameters are configured in `worker-gpu.yaml` under
+`machine.kernel.modules` — **implemented**.
 
 | Parameter | Value | Purpose |
 |-----------|-------|---------|
 | `NVreg_UsePageAttributeTable=1` | Enable PAT | Improved GPU memory caching via x86 Page Attribute Table. NVIDIA-recommended for Linux. Better write-combining for framebuffer access. |
+| `NVreg_DynamicPowerManagement=0` | Disable dynamic PM | Keep GPUs at full power. Appropriate for always-on server — avoids wake latency on inference requests. |
 
-This can be set either via:
-- Boot parameter: `nvidia.NVreg_UsePageAttributeTable=1` (in schematic)
-- Module parameter in `worker-gpu.yaml` under `machine.kernel.modules`
-
-The module parameter approach is preferred — it's specific to the GPU role patch and doesn't
-pollute the schematic.
+The module parameter approach (vs boot parameters) is preferred — it's specific to the GPU
+role patch and doesn't pollute the schematic.
 
 ### 8.4 Turbo Boost (BIOS)
 
@@ -412,107 +373,116 @@ NFD reports `cpu-pstate.turbo=false`. The i7-7700K supports Turbo Boost to 4.5 G
 4.2 GHz). Turbo Boost is disabled in the BTC B250C BIOS.
 
 **Recommendation:** Enable Turbo Boost in BIOS. Free 7% single-core performance increase
-with no configuration changes needed. The `performance` governor (once applied via schematic
-upgrade) will keep the CPU at max frequency, and Turbo Boost allows it to reach 4.5 GHz.
+with no configuration changes needed. The `performance` governor (now applied) keeps the CPU
+at max frequency, and Turbo Boost would allow it to reach 4.5 GHz. Requires physical access.
 
-### 8.5 bpf_jit_harden Override
+### 8.5 bpf_jit_harden Override — Removed
 
-`patches/worker-gpu.yaml` sets `net.core.bpf_jit_harden: "1"`, lowering the Talos default
-from `2` to `1`:
+The `bpf_jit_harden` override (previously `1` in `worker-gpu.yaml`) has been **removed**.
+The Talos default (`2`) now applies — constant blinding for ALL users including root.
 
-- **Value 2** (Talos default): Constant blinding for ALL users, including root
-- **Value 1** (GPU override): Constant blinding only for unprivileged users
+This is the correct security posture. The performance impact of value `2` on BPF JIT
+compilation is negligible (nanoseconds per BPF program load). See kernel-tuning.md Section 7.
 
-Cilium runs as privileged DaemonSet (root + all capabilities), so both values are compatible.
-The override was likely set to reduce BPF JIT compilation overhead, but the performance
-impact of value `2` is negligible (nanoseconds per BPF program load).
+### 8.6 USB NIC NAPI Budget Tuning
 
-**Recommendation:** Remove the override and restore the Talos default (`2`). See
-kernel-tuning.md Section 7 for full analysis.
+node-gpu-01 uses a USB Realtek RTL8153 as its primary NIC. USB NICs have fundamentally
+higher per-packet processing overhead than PCIe NICs due to the USB protocol stack:
+- Each packet traverses the USB host controller, URB allocation, and USB completion handlers
+- No hardware interrupt coalescing or checksum offload
+- ~3-5x more CPU cycles per packet than Intel e1000e
+
+The default NAPI budget (`netdev_budget=300`, `netdev_budget_usecs=2000`) can exhaust before
+all queued RX frames are processed, causing kernel-level drops. The hardware analysis
+(2026-03-24) measured **7.9% RX drop rate** (34,819 / 439,221 packets).
+
+**Mitigation:** `worker-gpu.yaml` sets:
+- `net.core.netdev_budget: "600"` — process 2x more packets per NAPI poll cycle
+- `net.core.netdev_budget_usecs: "8000"` — allow 4x more time per poll (8ms vs 2ms)
+
+These are GPU-node-specific because only node-gpu-01 has a USB NIC. Standard nodes use
+Intel e1000e (PCIe) which handles the default budget efficiently.
+
+**Note:** Persistent ethtool tuning (rx-copybreak, ring buffers, flow control) is not
+possible in Talos without udev rules. Sysctls are the only persistent tuning path.
 
 ---
 
 ## 9. Recommendations
 
-### 9.1 Immediate: Schematic Changes (talos-factory-schematic-gpu.yaml)
+### 9.1 Completed
 
-| Change | Current | Recommended | Rationale |
-|--------|---------|-------------|-----------|
-| `iommu.strict` | `1` | `0` | Lazy mode (DMA-FQ) for 3 GPU DMA-heavy workloads. Trusted devices in homelab. |
-| Add `pcie_aspm=off` | not set | `pcie_aspm=off` | Mining board has unreliable ASPM. Standard multi-GPU practice. |
-| Add `nvidia.NVreg_UsePageAttributeTable=1` | not set | add to extraKernelArgs **or** module params | Better GPU memory caching. |
+| Change | Status | Date |
+|--------|--------|------|
+| `iommu.strict=0` in GPU schematic | Implemented | 2026-02 |
+| `pcie_aspm=off` in GPU schematic | Implemented | 2026-02 |
+| `NVreg_UsePageAttributeTable=1` module param | Implemented | 2026-02 |
+| `NVreg_DynamicPowerManagement=0` module param | Implemented | 2026-02 |
+| Remove `bpf_jit_harden` override | Implemented | 2026-03 |
+| Schematic upgrade (boot params applied) | Implemented | 2026-03 |
+| USB NIC NAPI budget tuning (`netdev_budget`, `netdev_budget_usecs`) | Implemented | 2026-03-24 |
 
-### 9.2 Immediate: Config Changes (worker-gpu.yaml)
+### 9.2 Pending: Apply Config + Upgrade
 
-| Change | Current | Recommended | Rationale |
-|--------|---------|-------------|-----------|
-| Remove `bpf_jit_harden: "1"` | `1` | Remove (Talos default `2`) | Security improvement, negligible performance impact |
-| Add NVIDIA module params | none | `NVreg_UsePageAttributeTable=1` | If not added to schematic boot params |
+1. **Apply config** to activate NAPI budget sysctls:
+   ```bash
+   make -C talos gen-configs
+   talosctl apply-config -n 192.168.2.67 -e 192.168.2.67 -f talos/generated/worker/node-gpu-01.yaml
+   ```
+2. **Upgrade** to apply missing boot parameters (`pci=noaer`, `rcutree.rcu_idle_gp_delay=1`):
+   ```bash
+   kubectl drain node-gpu-01 --delete-emptydir-data --ignore-daemonsets --timeout=120s
+   talosctl apply-config -n 192.168.2.67 -e 192.168.2.67 -f talos/generated/worker/node-gpu-01.yaml
+   talosctl upgrade -n 192.168.2.67 -e 192.168.2.67 --image factory.talos.dev/metal-installer/<GPU_SCHEMATIC_ID>:<TALOS_VERSION> --preserve --wait --timeout 10m
+   ```
 
-### 9.3 Immediate: Apply Schematic (upgrade)
-
-Run `make -C talos upgrade-node-gpu-01` to apply the factory schematic boot parameters. The node has
-**never** been upgraded with the GPU schematic — all 14 extraKernelArgs are not applied.
-
-### 9.4 BIOS Changes (manual, requires physical access)
+### 9.3 BIOS Changes (manual, requires physical access)
 
 | Setting | Current | Recommended | Rationale |
 |---------|---------|-------------|-----------|
-| Intel Turbo Boost | Disabled | **Enable** | Free 7% performance (4.2→4.5 GHz) |
+| Intel Turbo Boost | Disabled | **Enable** | Free 7% performance (4.2 -> 4.5 GHz) |
 | PCIe ASPM | Unknown | **Disable** (if option exists) | Belt-and-suspenders with `pcie_aspm=off` boot param |
 | VT-d | Enabled | Keep enabled | IOMMU already active and working |
 
-### 9.5 Not Recommended for GPU Node
+### 9.4 Not Recommended for GPU Node
 
 | Parameter | Why Not |
 |-----------|---------|
-| `nosmt` | 4C→4T on i7-7700K = 50% thread loss. Cross-thread attacks require local privilege. |
+| `nosmt` | 4C -> 4T on i7-7700K = 50% thread loss. Cross-thread attacks require local privilege. |
+| `mitigations=off` | All mitigations active and appropriate. 5-15% gain not worth security exposure. |
 | `iommu.strict=1` | Too much DMA overhead with 3 GPUs. See Section 8.1. |
 | `lockdown=integrity` | Would block NVIDIA out-of-tree modules. |
 | `kernel.modules_disabled=1` | NVIDIA and DRBD modules loaded dynamically. |
+| `NVreg_EnableResizableBar=1` | GPUs on PCIe x1 risers — no effect without adequate lane width. |
+| `NVreg_PreserveVideoMemoryAllocations=1` | Server never suspends. No benefit. |
+| `net.ipv4.tcp_congestion_control=bbr` | LAN-only DRBD replication; cubic is better at <1ms RTT. |
+| r8152 ethtool tuning | Cannot persist ethtool settings in Talos without udev rules. |
 
 ---
 
 ## 10. Verification
 
-After applying schematic upgrade and config changes:
+After applying config changes and upgrade:
 
 ```bash
-# Verify boot parameters are applied
-talosctl -n 192.168.2.67 -e 192.168.2.67 read /proc/cmdline
-# Should contain: cpufreq.default_governor=performance intel_idle.max_cstate=0 etc.
+# Verify NAPI budget sysctls (after talosctl apply-config)
+talosctl -n 192.168.2.67 -e 192.168.2.67 read /proc/sys/net/core/netdev_budget
+# Should be 600
+talosctl -n 192.168.2.67 -e 192.168.2.67 read /proc/sys/net/core/netdev_budget_usecs
+# Should be 8000
 
-# CPU governor (should be "performance")
-talosctl -n 192.168.2.67 -e 192.168.2.67 read /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+# Verify missing boot parameters (after talosctl upgrade)
+talosctl -n 192.168.2.67 -e 192.168.2.67 read /proc/cmdline | tr ' ' '\n' | grep -E 'pci=|rcutree'
+# Should show: pci=noaer and rcutree.rcu_idle_gp_delay=1
 
-# C-States disabled (max_cstate=0)
-talosctl -n 192.168.2.67 -e 192.168.2.67 dmesg | grep -i "intel_idle"
+# Verify USB NIC RX drops improved (check after some uptime)
+talosctl -n 192.168.2.67 -e 192.168.2.67 read /proc/net/dev | grep enp0s20f0u2
+# Compare drop count against packet count — should be < 5%
 
-# IOMMU mode (should show DMA-FQ/lazy after iommu.strict=0)
-talosctl -n 192.168.2.67 -e 192.168.2.67 dmesg | grep -i "iommu.*policy"
-
-# PCIe ASPM disabled
-talosctl -n 192.168.2.67 -e 192.168.2.67 dmesg | grep -i "aspm"
-
-# NVIDIA PAT enabled
-talosctl -n 192.168.2.67 -e 192.168.2.67 dmesg | grep -i "PAT"
-
-# GPU status
-talosctl -n 192.168.2.67 -e 192.168.2.67 dmesg | grep -i "nvidia"
-
-# BPF JIT harden (should be 2 after removing override)
+# BPF JIT harden (should be 2 — Talos default)
 talosctl -n 192.168.2.67 -e 192.168.2.67 read /proc/sys/net/core/bpf_jit_harden
 
-# I/O scheduler on boot disk
-talosctl -n 192.168.2.67 -e 192.168.2.67 read /sys/block/sda/queue/scheduler
-
-# CPU vulnerabilities
-for v in gather_data_sampling l1tf mds meltdown spectre_v1 spectre_v2 srbds; do
-  echo -n "$v: "
-  talosctl -n 192.168.2.67 -e 192.168.2.67 read /sys/devices/system/cpu/vulnerabilities/$v
-done
-
-# Turbo Boost (after BIOS change)
+# Turbo Boost (after BIOS change, if applied)
 talosctl -n 192.168.2.67 -e 192.168.2.67 read /sys/devices/system/cpu/intel_pstate/no_turbo
 # Should be 0 (turbo enabled)
 ```

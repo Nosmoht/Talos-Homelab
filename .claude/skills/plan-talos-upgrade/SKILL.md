@@ -39,13 +39,14 @@ Bash is permitted ONLY for read-only operations during planning:
 - `talosctl get` / `talosctl version` / `talosctl disks` / `talosctl health` / `talosctl etcd members` (cluster queries)
 - `curl` / `wget` (fetching upstream release metadata)
 - `git log` / `git diff` / `git status` (repo history)
-- `make -C talos dry-run-*` / `make -C talos validate-generated` (validation only)
-Do NOT run any mutating commands (`talosctl upgrade`, `talosctl apply-config`, `kubectl drain`, `kubectl delete`, `make apply-*`, `make upgrade-*`) during planning.
+- `talosctl apply-config -n <ip> -e <ip> -f <config> --dry-run` (validation only)
+- `talosctl validate --config <file> --mode metal --strict` (offline validation)
+Do NOT run any mutating commands (`talosctl upgrade`, `talosctl apply-config` without `--dry-run`, `kubectl drain`, `kubectl delete`) during planning.
 
 ## Repository Facts You Must Respect
 - Talos version intent is pinned in `talos/versions.mk` as `TALOS_VERSION := ...`.
 - Node install images are derived from `talos/.schematic-ids.mk` and `TALOS_VERSION` in `talos/Makefile`.
-- Cluster-wide Talos upgrades run one node at a time through `make -C talos upgrade-<node>`.
+- Cluster-wide Talos upgrades run one node at a time through direct `talosctl apply-config` + `talosctl upgrade` commands.
 - Changes to boot args or extensions may require `make -C talos schematics` before node upgrades.
 - `talosctl apply-config --dry-run` and manual operations must use explicit node endpoints, not the VIP, when reliability matters.
 - Do not edit `talos/generated/**` directly.
@@ -205,9 +206,13 @@ Use repo-accurate commands where relevant, for example:
 ```bash
 make -C talos schematics
 make -C talos gen-configs
-make -C talos validate-generated
-make -C talos dry-run-<node-name>
-make -C talos upgrade-<node-name>
+# Validate generated configs
+find talos/generated -type f -name '*.yaml' | sort | while read f; do talosctl validate --config "$f" --mode metal --strict; done
+# Dry-run per node
+talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml --dry-run
+# Upgrade per node (resolve install image from .schematic-ids.mk + versions.mk)
+talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml
+talosctl upgrade -n <node-ip> -e <node-ip> --image <install-image> --preserve --wait --timeout 10m
 talosctl -n <cp-node-ip> -e <cp-node-ip> health --control-plane-nodes <cp-node-1-ip>,<cp-node-2-ip>,<cp-node-3-ip>
 kubectl get nodes -o wide
 kubectl -n kube-system get pods -l k8s-app=cilium

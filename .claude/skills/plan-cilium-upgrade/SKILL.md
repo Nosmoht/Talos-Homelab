@@ -202,9 +202,13 @@ Use repo-accurate commands where relevant, for example:
 make -C talos cilium-bootstrap
 make -C talos cilium-bootstrap-check
 make -C talos gen-configs
-make -C talos dry-run-all
-make -C talos upgrade-k8s
-make -C talos upgrade-<node-name>
+# Dry-run all nodes
+for each node: talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml --dry-run
+# Reconcile extraManifests (ensure cilium-bootstrap-check passed first)
+talosctl upgrade-k8s --to <kubernetes-version> -n <cp-node-1-ip> -e <cp-node-1-ip>
+# Per-node upgrade (resolve install image from .schematic-ids.mk + versions.mk)
+talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml
+talosctl upgrade -n <node-ip> -e <node-ip> --image <install-image> --preserve --wait --timeout 10m
 kubectl -n kube-system get pods -l k8s-app=cilium
 kubectl get ciliumnode
 ```
@@ -212,7 +216,7 @@ kubectl get ciliumnode
 If the version bump changes `CILIUM_VERSION`, require the plan to address:
 - regeneration of `kubernetes/bootstrap/cilium/cilium.yaml` via `make -C talos cilium-bootstrap`
 - validation via `make -C talos cilium-bootstrap-check`
-- reconciliation of Talos `extraManifests` state through the repo’s supported Talos workflow, including `make -C talos upgrade-k8s` when the plan depends on re-applying control-plane `extraManifests`
+- reconciliation of Talos `extraManifests` state through `talosctl upgrade-k8s` (ensure `make -C talos cilium-bootstrap-check` passed first)
 
 Do not imply that editing `kubernetes/bootstrap/cilium/cilium.yaml` alone completes rollout.
 

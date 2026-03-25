@@ -30,6 +30,6 @@ talosctl etcd status -n <ip> -e <ip>
 
 ## Scope
 
-- **Config/sysctl changes:** `make -C talos apply-<node>` (this skill)
-- **OS image/boot-arg/extension changes:** `make -C talos upgrade-<node>` (use `/talos-upgrade`)
+- **Config/sysctl changes:** `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml` (this skill)
+- **OS image/boot-arg/extension changes:** `talosctl apply-config` + `talosctl upgrade --preserve` (use `/talos-upgrade`)
 - **Kubernetes version upgrade:** `talosctl upgrade-k8s` (distinct from both)

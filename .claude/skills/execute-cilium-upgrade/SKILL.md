@@ -156,7 +156,8 @@ make -C talos cilium-bootstrap-check
 Also run repo validation required by the changed files. At minimum:
 ```bash
 make -C talos gen-configs
-make -C talos dry-run-all
+# Dry-run all nodes (resolve IPs from environment.yaml)
+for each node: talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml --dry-run
 kubectl kustomize kubernetes/overlays/<overlay>
 kubectl apply -k kubernetes/overlays/<overlay> --dry-run=client
 ```
@@ -201,10 +202,11 @@ Default sequence:
    - if no progress after 10 minutes, treat as a stop condition (rollout stall)
 4. verify dependent platform capabilities
 
-Supported reconciliation command when the plan depends on re-applying control-plane `extraManifests`:
+Supported reconciliation command when the plan depends on re-applying control-plane `extraManifests` (ensure `make -C talos cilium-bootstrap-check` passed first):
 ```bash
-make -C talos upgrade-k8s
+talosctl upgrade-k8s --to <kubernetes-version> -n <cp-node-1-ip> -e <cp-node-1-ip>
 ```
+Resolve `<kubernetes-version>` from `talos/versions.mk` (`KUBERNETES_VERSION`).
 
 If the approved plan also includes Talos or Kubernetes changes, follow that exact broader sequencing and do not collapse it into a pure Cilium rollout.
 

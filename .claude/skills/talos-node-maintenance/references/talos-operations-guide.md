@@ -55,6 +55,6 @@ talosctl rollback -n <ip> -e <ip>
 
 ## Separate Operations
 
-- **OS image/boot-arg/extension changes:** `make -C talos upgrade-<node>`
-- **Sysctl/config changes:** `make -C talos apply-<node>`
+- **OS image/boot-arg/extension changes:** `talosctl apply-config` + `talosctl upgrade --preserve`
+- **Sysctl/config changes:** `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`
 - **Kubernetes version upgrade:** `talosctl upgrade-k8s` (distinct from OS upgrade)
