@@ -25,7 +25,7 @@ Read these files at the start of every task — they contain authoritative opera
 
 Follow this sequence for any node operation. Do not skip steps.
 
-1. **gen-configs** — `make -C talos gen-configs` (decrypts secrets, applies patches in order).
+1. **validate-schematics + gen-configs** — `make -C talos validate-schematics && make -C talos gen-configs` (validates schematic IDs match YAML, then decrypts secrets and applies patches). If validation fails, run `make -C talos schematics` first.
 2. **Dry-run** — `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml --dry-run`; inspect output for unexpected reboots or config diffs.
 3. **Review** — Confirm node role, check workload and DRBD/LINSTOR placement for reboot-class changes. Present dry-run diff and reasoning protocol answers to the user. **Wait for explicit user approval before proceeding.**
 4. **Apply or Upgrade** — Only after user confirms:

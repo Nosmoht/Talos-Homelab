@@ -59,12 +59,14 @@ talosctl etcd status -n <ip> -e <ip>
 ```
 If quorum is degraded (fewer than (n/2)+1 members healthy), stop and report. Do not operate on a CP node with pre-existing quorum issues.
 
-### 3. Generate and validate
+### 3. Validate schematics, generate, and dry-run
 
 ```bash
+make -C talos validate-schematics
 make -C talos gen-configs
 talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml --dry-run
 ```
+If `validate-schematics` fails with MISMATCH, run `make -C talos schematics` first to regenerate IDs.
 Where `<role>` is `controlplane` for CP nodes or `worker` for all others.
 
 If dry-run fails, stop and report the error with likely root cause.

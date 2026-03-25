@@ -182,6 +182,7 @@ At minimum this usually means:
 Required commands when applicable:
 ```bash
 make -C talos schematics
+make -C talos validate-schematics
 make -C talos cilium-bootstrap
 make -C talos cilium-bootstrap-check
 make -C talos gen-configs
