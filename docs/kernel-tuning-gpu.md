@@ -286,17 +286,16 @@ Key values read from the live node — all match configuration:
 | BPF | net.core.bpf_jit_harden | — | 2 | Talos default (override removed) |
 | Limits | kernel.pid_max | 4194304 | 4194304 | Yes |
 | Limits | fs.inotify.max_user_watches | 524288 | 524288 | Yes |
-| NAPI | net.core.netdev_budget | 600 | *pending apply* | GPU-specific override |
-| NAPI | net.core.netdev_budget_usecs | 8000 | *pending apply* | GPU-specific override |
+| NAPI | net.core.netdev_budget | 600 | 600 | Yes |
+| NAPI | net.core.netdev_budget_usecs | 8000 | 8000 | Yes |
 
 ---
 
 ## 7. Boot Parameter Gap Analysis
 
 The GPU factory schematic (`talos-factory-schematic-gpu.yaml`) defines 20 extraKernelArgs.
-As of 2026-03-24, the node has been upgraded with the schematic and **most parameters are
-applied**. Two PCIe riser stability parameters were added after the last upgrade and are
-still missing.
+As of 2026-03-25, the node has been upgraded with the full schematic and **all parameters
+are applied**.
 
 ### Configured vs Applied (2026-03-24)
 
@@ -320,14 +319,46 @@ still missing.
 | `iommu=force` | Yes | Yes | Applied |
 | `iommu.passthrough=0` | Yes | Yes | Applied |
 | `iommu.strict=0` | Yes | Yes | Applied (lazy/DMA-FQ mode) |
-| **`pci=noaer`** | **Yes** | **No** | **Missing** — added after last upgrade |
-| **`rcutree.rcu_idle_gp_delay=1`** | **Yes** | **No** | **Missing** — added after last upgrade |
+| `pci=noaer` | Yes | Yes | Applied (2026-03-25) |
+| `rcutree.rcu_idle_gp_delay=1` | Yes | Yes | Applied (2026-03-25) |
 
-### Action Required
+All boot parameters are now applied. No action required.
 
-Run `talosctl apply-config` + `talosctl upgrade` on node-gpu-01 to apply the 2 missing PCIe riser stability parameters.
-This rebuilds the UKI image with the current schematic and requires a node reboot. Drain DRBD
-volumes first: `kubectl drain node-gpu-01 --delete-emptydir-data --ignore-daemonsets --timeout=120s`
+### 7.1 USB NIC RX Drop Root Cause Analysis (2026-03-25)
+
+The `rx_dropped` counter on `enp0s20f0u2` shows a steady ~2 drops/sec. Investigation
+confirmed these are **benign L2 broadcast frames with no registered kernel protocol handler**,
+not actual packet loss.
+
+**Evidence:**
+- `softnet_stat`: 0 drops and 0 time_squeeze on all 8 CPUs — NAPI budget is not exhausted
+- `rx_missed_errors`, `rx_fifo_errors`, `rx_over_errors`: all 0 — no hardware-level drops
+- `rx_nohandler`: 0 (these are counted in `rx_dropped` instead)
+- Hubble `--verdict DROPPED`: no BPF policy drops on the GPU node
+- IP-layer `InDiscards`: 0 — no protocol-stack drops
+
+**Root cause — unhandled L2 broadcast protocols from network devices:**
+
+| EtherType | Protocol | Source MAC | Rate | Device |
+|-----------|----------|------------|------|--------|
+| `0x88e1` | HomePlug AV (Powerline) | `48:5d:35:24:5d:a8` | ~1/s | Powerline adapter |
+| `0x8912` | LLDP (Link Layer Discovery) | `48:5d:35:24:5d:a8`, `c2:39:6f:8b:e5:c9` | ~2/s | Switch/adapter |
+| `0x8899` | RRCP (Realtek Remote Control) | `54:07:7d:20:b0:53` | ~0.5/s | Realtek switch |
+
+These are broadcast frames from switches and powerline adapters on the same L2 segment.
+Linux has no protocol handler for these EtherTypes, so the kernel increments `rx_dropped`
+when delivering them to the network stack. This is expected behavior and not indicative of
+NIC or driver performance issues.
+
+**Conclusion:** The NAPI budget tuning (`netdev_budget=600`, `netdev_budget_usecs=8000`) is
+not needed for drop mitigation but is kept as a reasonable default for a USB NIC with higher
+per-packet overhead. The `rx_dropped` counter on this node can be safely ignored — it tracks
+benign L2 broadcast noise, not real packet loss.
+
+**Optional mitigation (not recommended):** The drops could be eliminated by filtering these
+EtherTypes at the switch level (if the switch supports ACLs) or by adding a TC ingress filter
+to silently drop them before they reach the kernel stack. However, since they cause no harm
+and are ~3.5 frames/sec total, filtering adds unnecessary complexity.
 
 ---
 
@@ -421,22 +452,10 @@ possible in Talos without udev rules. Sysctls are the only persistent tuning pat
 | Remove `bpf_jit_harden` override | Implemented | 2026-03 |
 | Schematic upgrade (boot params applied) | Implemented | 2026-03 |
 | USB NIC NAPI budget tuning (`netdev_budget`, `netdev_budget_usecs`) | Implemented | 2026-03-24 |
+| PCIe riser stability boot params (`pci=noaer`, `rcutree.rcu_idle_gp_delay=1`) | Implemented | 2026-03-25 |
+| RX drop root cause analysis — benign L2 broadcasts, not NIC issue | Documented | 2026-03-25 |
 
-### 9.2 Pending: Apply Config + Upgrade
-
-1. **Apply config** to activate NAPI budget sysctls:
-   ```bash
-   make -C talos gen-configs
-   talosctl apply-config -n 192.168.2.67 -e 192.168.2.67 -f talos/generated/worker/node-gpu-01.yaml
-   ```
-2. **Upgrade** to apply missing boot parameters (`pci=noaer`, `rcutree.rcu_idle_gp_delay=1`):
-   ```bash
-   kubectl drain node-gpu-01 --delete-emptydir-data --ignore-daemonsets --timeout=120s
-   talosctl apply-config -n 192.168.2.67 -e 192.168.2.67 -f talos/generated/worker/node-gpu-01.yaml
-   talosctl upgrade -n 192.168.2.67 -e 192.168.2.67 --image factory.talos.dev/metal-installer/<GPU_SCHEMATIC_ID>:<TALOS_VERSION> --preserve --wait --timeout 10m
-   ```
-
-### 9.3 BIOS Changes (manual, requires physical access)
+### 9.2 BIOS Changes (manual, requires physical access)
 
 | Setting | Current | Recommended | Rationale |
 |---------|---------|-------------|-----------|
@@ -475,9 +494,8 @@ talosctl -n 192.168.2.67 -e 192.168.2.67 read /proc/sys/net/core/netdev_budget_u
 talosctl -n 192.168.2.67 -e 192.168.2.67 read /proc/cmdline | tr ' ' '\n' | grep -E 'pci=|rcutree'
 # Should show: pci=noaer and rcutree.rcu_idle_gp_delay=1
 
-# Verify USB NIC RX drops improved (check after some uptime)
+# USB NIC RX drop counter (see Section 7.1 — these are benign L2 broadcast frames)
 talosctl -n 192.168.2.67 -e 192.168.2.67 read /proc/net/dev | grep enp0s20f0u2
-# Compare drop count against packet count — should be < 5%
 
 # BPF JIT harden (should be 2 — Talos default)
 talosctl -n 192.168.2.67 -e 192.168.2.67 read /proc/sys/net/core/bpf_jit_harden
