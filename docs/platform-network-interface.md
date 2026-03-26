@@ -115,7 +115,8 @@ Admission policy (Kyverno) enforces this separation.
 2. Set `platform.io/network-interface-version: v1`.
 3. Opt in only to required capabilities using `platform.io/consume.<capability>: "true"`.
 4. Deploy your workloads or custom resources.
-5. Validate connectivity and policy behavior.
+5. Consumer egress is automatically granted by PNI consumer CCNPs once the capability label is set.
+6. Validate connectivity and policy behavior.
 
 ## Current Policy Coverage (Core Platform)
 
@@ -134,12 +135,24 @@ The following core flows are currently implemented through platform-owned PNI po
 - MinIO operator control-plane baseline: `minio-operator` -> API server + DNS
 - Piraeus operator control-plane baseline: `piraeus-operator` -> API server + DNS
 
+### Consumer Capability Egress
+
+Consumer-side policies grant egress from any namespace that opts in to a capability.
+Selection is by namespace labels (`k8s:io.cilium.k8s.namespace.labels.*`), not by pod or deployment names.
+All pods in the opted-in namespace receive the egress grant.
+
+The consumer CCNP is a coarse egress grant. Per-cluster or per-service ingress CNPs remain the authorization boundary on the provider side.
+
+- S3 object storage: namespaces with `consume.s3-object=true` -> MinIO tenant pods (`9000/TCP`) + DNS
+- CNPG PostgreSQL: namespaces with `consume.cnpg-postgres=true` -> CNPG cluster pods (`5432/TCP`) + DNS
+
 Implementation rules:
 
 - Policies are platform-owned and reusable.
 - Operator control-plane baselines (including `external-secrets`) are implemented as platform-owned `CiliumClusterwideNetworkPolicy` resources under PNI.
 - Selectors should be provider/generic label-based.
 - Do not encode consumer deployment names or tenant-specific namespace names in PNI policies.
+- Consumer capability egress policies use `k8s:io.cilium.k8s.namespace.labels.*` selectors to match all pods in opted-in namespaces -- no hardcoded namespace or pod names on the consumer side.
 
 ## Minimal Example
 

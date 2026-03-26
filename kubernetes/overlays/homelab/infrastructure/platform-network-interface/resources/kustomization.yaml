@@ -15,3 +15,5 @@ resources:
   - ccnp-pni-external-secrets-controlplane-egress.yaml
   - ccnp-pni-piraeus-operator-controlplane-egress.yaml
   - ccnp-pni-minio-operator-controlplane-egress.yaml
+  - ccnp-pni-s3-object-consumer-egress.yaml
+  - ccnp-pni-cnpg-postgres-consumer-egress.yaml
