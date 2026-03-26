@@ -130,7 +130,8 @@ The following core flows are currently implemented through platform-owned PNI po
 - Strimzi operator control-plane baseline: `strimzi-cluster-operator` -> API server + DNS
 - Strimzi operator data-plane access: `strimzi-cluster-operator` -> managed Kafka pods (`9090/TCP`, `9091/TCP`, `9092/TCP`)
 - Vault operator control-plane baseline: `vault-operator` -> API server + DNS
-- External Secrets operator control-plane baseline: `external-secrets` -> API server + DNS + Vault API (`8200/TCP`)
+- External Secrets operator control-plane baseline: `external-secrets` -> API server + DNS
+- CNPG operator control-plane baseline: `cloudnative-pg` -> API server + DNS + managed CNPG pods (`5432/TCP`, `8000/TCP`)
 - Vault CA distribution for consumers: `cert-manager/vault-ca` -> namespaces labeled `platform.io/network-interface-version=v1` and `platform.io/consume.vault-secrets=true`
 - MinIO operator control-plane baseline: `minio-operator` -> API server + DNS
 - Piraeus operator control-plane baseline: `piraeus-operator` -> API server + DNS
@@ -145,6 +146,9 @@ The consumer CCNP is a coarse egress grant. Per-cluster or per-service ingress C
 
 - S3 object storage: namespaces with `consume.s3-object=true` -> MinIO tenant pods (`9000/TCP`) + MinIO Operator STS (`4223/TCP`) + DNS
 - CNPG PostgreSQL: namespaces with `consume.cnpg-postgres=true` -> CNPG cluster pods (`5432/TCP`) + DNS
+- Vault secrets: namespaces with `consume.vault-secrets=true` -> Vault pods (`8200/TCP`) + DNS
+- Redis managed: namespaces with `consume.redis-managed=true` -> Redis pods (`6379/TCP`) + DNS
+- Kafka managed: namespaces with `consume.kafka-managed=true` -> Kafka broker pods (`9092/TCP`) + DNS
 
 Implementation rules:
 
