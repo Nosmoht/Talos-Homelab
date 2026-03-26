@@ -14,14 +14,15 @@ spec:
     matchLabels:
       v1.min.io/tenant: minio
   ingress:
-    # S3 API from cluster-internal clients
-    - fromEntities:
-        - cluster
+    # S3 API from PNI s3-object consumers
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.cilium.k8s.namespace.labels.platform.io/consume.s3-object: "true"
       toPorts:
         - ports:
             - port: "9000"
               protocol: TCP
-    # Console access
+    # Console access from cluster-internal clients
     - fromEntities:
         - cluster
       toPorts:
