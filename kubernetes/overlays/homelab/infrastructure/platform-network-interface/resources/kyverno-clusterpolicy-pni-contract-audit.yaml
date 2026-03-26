@@ -21,6 +21,12 @@ spec:
           - resources:
               kinds:
                 - Namespace
+      exclude:
+        any:
+          - resources:
+              names:
+                - kube-public
+                - kube-node-lease
       validate:
         allowExistingViolations: true
         message: "Namespaces must set platform.io/network-interface-version=v1 for PNI"
@@ -35,6 +41,12 @@ spec:
           - resources:
               kinds:
                 - Namespace
+      exclude:
+        any:
+          - resources:
+              names:
+                - kube-public
+                - kube-node-lease
       validate:
         allowExistingViolations: true
         message: "Namespaces must set platform.io/network-profile for PNI"
