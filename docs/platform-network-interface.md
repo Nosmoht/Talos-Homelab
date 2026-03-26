@@ -143,7 +143,7 @@ All pods in the opted-in namespace receive the egress grant.
 
 The consumer CCNP is a coarse egress grant. Per-cluster or per-service ingress CNPs remain the authorization boundary on the provider side.
 
-- S3 object storage: namespaces with `consume.s3-object=true` -> MinIO tenant pods (`9000/TCP`) + DNS
+- S3 object storage: namespaces with `consume.s3-object=true` -> MinIO tenant pods (`9000/TCP`) + MinIO Operator STS (`4223/TCP`) + DNS
 - CNPG PostgreSQL: namespaces with `consume.cnpg-postgres=true` -> CNPG cluster pods (`5432/TCP`) + DNS
 
 Implementation rules:

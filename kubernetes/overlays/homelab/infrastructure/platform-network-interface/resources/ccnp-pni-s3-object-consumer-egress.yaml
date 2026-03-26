@@ -14,6 +14,7 @@ spec:
       k8s:io.cilium.k8s.namespace.labels.platform.io/consume.s3-object: "true"
       k8s:io.cilium.k8s.namespace.labels.platform.io/network-interface-version: "v1"
   egress:
+    # MinIO S3 API (pod port 9000/TCP, TLS)
     - toEndpoints:
         - matchLabels:
             k8s:io.kubernetes.pod.namespace: minio
@@ -21,6 +22,15 @@ spec:
       toPorts:
         - ports:
             - port: "9000"
+              protocol: TCP
+    # MinIO Operator STS endpoint (AssumeRoleWithWebIdentity, 4223/TCP)
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: minio-operator
+            app.kubernetes.io/name: operator
+      toPorts:
+        - ports:
+            - port: "4223"
               protocol: TCP
     - toEndpoints:
         - matchLabels:

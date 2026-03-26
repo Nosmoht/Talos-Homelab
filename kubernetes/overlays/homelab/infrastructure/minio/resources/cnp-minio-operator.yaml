@@ -29,6 +29,14 @@ spec:
         - ports:
             - port: "4221"
               protocol: TCP
+    # STS endpoint (AssumeRoleWithWebIdentity) from s3-object consumers
+    - fromEndpoints:
+        - matchLabels:
+            k8s:io.cilium.k8s.namespace.labels.platform.io/consume.s3-object: "true"
+      toPorts:
+        - ports:
+            - port: "4223"
+              protocol: TCP
   egress:
     # Tenant pods for lifecycle management
     - toEndpoints:
