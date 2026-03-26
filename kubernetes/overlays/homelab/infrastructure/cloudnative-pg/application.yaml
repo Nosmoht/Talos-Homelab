@@ -23,6 +23,9 @@ spec:
     - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
       targetRevision: main
       ref: values
+    - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
+      targetRevision: main
+      path: kubernetes/overlays/homelab/infrastructure/cloudnative-pg/resources
   destination:
     server: https://kubernetes.default.svc
     namespace: cnpg-system
