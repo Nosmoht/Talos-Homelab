@@ -64,6 +64,7 @@ spec:
                 - minio
                 - minio-operator
                 - cert-manager
+                - external-secrets
       validate:
         allowExistingViolations: true
         message: "Reserved PNI provider labels must not be set by consumer workloads"
