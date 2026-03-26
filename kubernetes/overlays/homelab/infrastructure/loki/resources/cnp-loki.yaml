@@ -87,15 +87,6 @@ spec:
               protocol: TCP
             - port: "11211"
               protocol: TCP
-    # Loki -> MinIO object storage
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: minio
-            v1.min.io/tenant: minio
-      toPorts:
-        - ports:
-            - port: "9000"
-              protocol: TCP
     # Kubernetes API for loki-sc-rules sidecar
     - toCIDRSet:
         - cidr: 10.96.0.1/32

@@ -54,14 +54,6 @@ spec:
             - port: "5556"
               protocol: TCP
   egress:
-    # PostgreSQL storage
-    - toEndpoints:
-        - matchLabels:
-            cnpg.io/cluster: dex-postgresql
-      toPorts:
-        - ports:
-            - port: "5432"
-              protocol: TCP
     # DNS
     - toEndpoints:
         - matchLabels:
