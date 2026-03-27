@@ -270,10 +270,10 @@ spec:
               }
 
               log "Starting event-driven LINSTOR storage-pool reconciler"
-              if ! wait_for_controller; then
-                log "LINSTOR controller not ready after timeout; exiting"
-                exit 1
-              fi
+              while ! wait_for_controller; do
+                log "LINSTOR controller not ready; retrying in 30s"
+                sleep 30
+              done
 
               reconcile_all_nodes
 

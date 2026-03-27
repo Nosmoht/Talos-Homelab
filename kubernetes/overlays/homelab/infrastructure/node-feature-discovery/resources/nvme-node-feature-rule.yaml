@@ -3,7 +3,7 @@ kind: NodeFeatureRule
 metadata:
   name: nvme-storage
   labels:
-    app.kubernetes.io/name: piraeus-datastore
+    app.kubernetes.io/name: node-feature-discovery
     app.kubernetes.io/instance: homelab
     app.kubernetes.io/component: node-feature-rule
     app.kubernetes.io/part-of: homelab
