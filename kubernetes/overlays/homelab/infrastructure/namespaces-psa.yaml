@@ -98,6 +98,7 @@ metadata:
     platform.io/network-profile: managed
     platform.io/consume.storage-csi: "true"
     platform.io/consume.s3-object: "true"
+    platform.io/consume.gateway-backend: "true"
     pod-security.kubernetes.io/enforce: privileged
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/audit: restricted
@@ -173,6 +174,7 @@ metadata:
     platform.io/network-interface-version: v1
     platform.io/network-profile: managed
     platform.io/consume.monitoring-scrape: "true"
+    platform.io/consume.gateway-backend: "true"
     pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/audit: restricted
