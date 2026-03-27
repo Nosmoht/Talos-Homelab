@@ -27,3 +27,4 @@ resources:
   - alloy
   - minio-operator
   - minio
+  - multus-cni
