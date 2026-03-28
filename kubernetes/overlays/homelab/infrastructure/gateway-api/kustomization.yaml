@@ -8,8 +8,4 @@ resources:
   - gateway.yaml
   - gatewayclass-config.yaml
   - certificate.yaml
-  - cilium-ip-pool.yaml
-  - cilium-ui-ip-pool.yaml
-  - cilium-l2-announcement.yaml
-  - cilium-l2-announcement-ui.yaml
   - httproute-redirect.yaml
