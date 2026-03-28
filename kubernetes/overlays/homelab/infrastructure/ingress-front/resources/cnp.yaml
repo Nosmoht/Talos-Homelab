@@ -24,10 +24,13 @@ spec:
               protocol: UDP
             - port: "53"
               protocol: TCP
-    # toServices without toPorts: L3-only allow, no L7 proxy redirect.
-    # Adding toPorts triggers L7 proxy interception which re-labels
-    # traffic as reserved:ingress — denied by the Gateway's cilium.l7policy.
     - toServices:
         - k8sService:
             serviceName: cilium-gateway-homelab-gateway
             namespace: default
+      toPorts:
+        - ports:
+            - port: "80"
+              protocol: TCP
+            - port: "443"
+              protocol: TCP
