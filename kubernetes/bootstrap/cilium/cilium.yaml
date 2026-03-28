@@ -105,7 +105,7 @@ data:
   gateway-api-xff-num-trusted-hops: "0"
   gateway-api-service-externaltrafficpolicy: "Cluster"
   gateway-api-secrets-namespace: "cilium-secrets"
-  gateway-api-hostnetwork-enabled: "false"
+  gateway-api-hostnetwork-enabled: "true"
   gateway-api-hostnetwork-nodelabelselector: ""
   enable-policy-secrets-sync: "true"
   policy-secrets-only-from-secrets-namespace: "true"
@@ -329,7 +329,7 @@ data:
   external-envoy-proxy: "true"
   envoy-base-id: "0"
   envoy-access-log-buffer-size: "4096"
-  envoy-keep-cap-netbindservice: "false"
+  envoy-keep-cap-netbindservice: "true"
   max-connected-clusters: "255"
   clustermesh-cache-ttl: "0s"
   clustermesh-enable-endpoint-sync: "false"
@@ -1870,6 +1870,7 @@ spec:
         command:
         - /usr/bin/cilium-envoy-starter
         args:
+        - '--keep-cap-net-bind-service'
         - '--'
         - '-c /var/run/cilium/envoy/bootstrap-config.json'
         - '--base-id 0'
@@ -1934,6 +1935,7 @@ spec:
             add:
               - NET_ADMIN
               - SYS_ADMIN
+              - NET_BIND_SERVICE
             drop:
               - ALL
         terminationMessagePolicy: FallbackToLogsOnError
