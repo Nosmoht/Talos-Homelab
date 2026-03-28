@@ -9,3 +9,4 @@ resources:
   - gatewayclass-config.yaml
   - certificate.yaml
   - httproute-redirect.yaml
+  - cilium-ip-pool.yaml
