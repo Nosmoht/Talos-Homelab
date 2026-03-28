@@ -22,3 +22,4 @@ resources:
   - ccnp-pni-redis-managed-consumer-egress.yaml
   - ccnp-pni-kafka-managed-consumer-egress.yaml
   - ccnp-pni-gateway-backend-consumer-ingress.yaml
+  - ccnp-pni-monitoring-scrape-consumer-egress.yaml
