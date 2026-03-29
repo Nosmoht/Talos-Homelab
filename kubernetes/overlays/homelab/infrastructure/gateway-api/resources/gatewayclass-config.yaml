@@ -3,8 +3,6 @@ kind: CiliumGatewayClassConfig
 metadata:
   name: homelab-gateway-config
   namespace: default
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=false
   labels:
     app.kubernetes.io/name: cilium
     app.kubernetes.io/instance: homelab

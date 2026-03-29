@@ -2,6 +2,8 @@ apiVersion: cilium.io/v2
 kind: CiliumLoadBalancerIPPool
 metadata:
   name: homelab-pool
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=false
   labels:
     app.kubernetes.io/name: cilium
     app.kubernetes.io/instance: homelab
