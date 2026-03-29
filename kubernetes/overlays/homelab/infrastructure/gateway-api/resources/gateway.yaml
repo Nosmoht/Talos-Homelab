@@ -3,6 +3,8 @@ kind: Gateway
 metadata:
   name: homelab-gateway
   namespace: default
+  annotations:
+    argocd.argoproj.io/sync-options: SkipHealthCheck=true
   labels:
     app.kubernetes.io/name: gateway
     app.kubernetes.io/instance: homelab
