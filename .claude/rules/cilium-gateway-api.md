@@ -20,7 +20,7 @@ paths:
 - Cilium auto-creates `cilium` GatewayClass
 - For each Gateway: creates `cilium-gateway-<name>` CiliumEnvoyConfig + ClusterIP Service + EndpointSlice (**NOT a Deployment** — Cilium 1.19 does not create per-Gateway Deployments)
 - The CiliumEnvoyConfig has `nodeSelector` matching `gatewayAPI.hostNetwork.nodes.matchLabels` — only agents on matching nodes process the listener
-- Gateway resource in `kubernetes/overlays/<overlay>/infrastructure/gateway-api/` (ArgoCD-managed, overlay name from `.claude/environment.yaml`)
+- Gateway resource in `kubernetes/overlays/<overlay>/infrastructure/gateway-api/resources/` (own ArgoCD Application, project: infrastructure, sync-wave: 4, overlay name from `.claude/environment.yaml`)
 
 ## Cilium Envoy Mode
 - **Current mode**: `envoy.enabled: false` (embedded Envoy in cilium-agent), `external-envoy-proxy: "false"`
