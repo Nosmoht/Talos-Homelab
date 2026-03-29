@@ -60,11 +60,11 @@ spec:
             - /bin/sh
             - -c
             - |
-              if [ ! -f /host/opt/cni/bin/macvlan ] || [ ! -f /host/opt/cni/bin/tuning ] || [ ! -f /host/opt/cni/bin/static ]; then
+              if [ ! -f /host/opt/cni/bin/macvlan ] || [ ! -f /host/opt/cni/bin/tuning ] || [ ! -f /host/opt/cni/bin/static ] || [ ! -f /host/opt/cni/bin/bridge ]; then
                 ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
                 wget -qO- "https://github.com/containernetworking/plugins/releases/download/v1.9.1/cni-plugins-linux-${ARCH}-v1.9.1.tgz" \
-                  | tar xzf - -C /host/opt/cni/bin ./macvlan ./ipvlan ./tuning ./static
-                echo "Installed macvlan, ipvlan, tuning, and static to /opt/cni/bin"
+                  | tar xzf - -C /host/opt/cni/bin ./macvlan ./ipvlan ./tuning ./static ./bridge
+                echo "Installed macvlan, ipvlan, tuning, static, and bridge to /opt/cni/bin"
               else
                 echo "All CNI plugins already present, skipping"
               fi

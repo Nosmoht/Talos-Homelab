@@ -281,6 +281,8 @@ data:
   procfs: "/host/proc"
   bpf-root: "/sys/fs/bpf"
   cgroup-root: "/run/cilium/cgroupv2"
+  # A space separated list of explicitly allowed vlan id's
+  vlan-bpf-bypass: "100"
 
   identity-management-mode: "agent"
   enable-sctp: "false"

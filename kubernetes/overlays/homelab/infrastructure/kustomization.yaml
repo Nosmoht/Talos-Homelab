@@ -29,3 +29,5 @@ resources:
   - minio
   - multus-cni
   - ingress-front
+  - kubevirt
+  - kubevirt-cdi
