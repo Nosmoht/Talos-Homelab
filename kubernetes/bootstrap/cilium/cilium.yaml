@@ -323,7 +323,7 @@ data:
   external-envoy-proxy: "false"
   envoy-base-id: "0"
   envoy-access-log-buffer-size: "4096"
-  envoy-keep-cap-netbindservice: "false"
+  envoy-keep-cap-netbindservice: "true"
   max-connected-clusters: "255"
   clustermesh-cache-ttl: "0s"
   clustermesh-enable-endpoint-sync: "false"
@@ -1397,6 +1397,7 @@ spec:
               - KILL
               - NET_ADMIN
               - NET_RAW
+              - NET_BIND_SERVICE
               - IPC_LOCK
               - SYS_ADMIN
               - SYS_RESOURCE
