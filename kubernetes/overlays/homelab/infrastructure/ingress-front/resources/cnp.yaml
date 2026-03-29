@@ -24,10 +24,10 @@ spec:
               protocol: UDP
             - port: "53"
               protocol: TCP
-    - toServices:
-        - k8sService:
-            serviceName: cilium-gateway-homelab-gateway
-            namespace: default
+    # Egress to the local node's hostNetwork Envoy (Gateway API).
+    # Single replica always proxies to status.hostIP, so "host" is sufficient.
+    - toEntities:
+        - host
       toPorts:
         - ports:
             - port: "80"

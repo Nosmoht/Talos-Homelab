@@ -14,16 +14,15 @@ data:
     worker_processes 1;
     events { worker_connections 512; }
     stream {
-      resolver 10.96.0.10 valid=30s;
+      # Gateway Envoy on same node's hostNetwork (bypasses TPROXY/L7 filter)
+      # HOST_IP_PLACEHOLDER is replaced by init container with status.hostIP
       server {
         listen 192.168.2.70:80;
-        set $gw_backend cilium-gateway-homelab-gateway.default.svc.cluster.local;
-        proxy_pass $gw_backend:80;
+        proxy_pass HOST_IP_PLACEHOLDER:80;
       }
       server {
         listen 192.168.2.70:443;
-        set $gw_backend cilium-gateway-homelab-gateway.default.svc.cluster.local;
-        proxy_pass $gw_backend:443;
+        proxy_pass HOST_IP_PLACEHOLDER:443;
       }
     }
 ---
@@ -59,13 +58,42 @@ spec:
       annotations:
         k8s.v1.cni.cncf.io/networks: '[{"name": "homelab-gateway-macvlan", "mac": "02:42:c0:a8:02:46"}]'
     spec:
+      initContainers:
+        - name: render-config
+          image: busybox:1.37
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              cp /config-template/nginx.conf /config/nginx.conf
+              sed -i "s/HOST_IP_PLACEHOLDER/$HOST_IP/g" /config/nginx.conf
+              echo "Rendered nginx.conf with HOST_IP=$HOST_IP"
+              cat /config/nginx.conf
+          volumeMounts:
+            - name: config-template
+              mountPath: /config-template/nginx.conf
+              subPath: nginx.conf
+              readOnly: true
+            - name: config-rendered
+              mountPath: /config
+          resources:
+            requests:
+              cpu: 10m
+              memory: 8Mi
+            limits:
+              memory: 16Mi
       containers:
         - name: nginx
           image: nginx:1.27-alpine
           volumeMounts:
-            - name: config
+            - name: config-rendered
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+              readOnly: true
           resources:
             requests:
               cpu: 10m
@@ -73,6 +101,8 @@ spec:
             limits:
               memory: 64Mi
       volumes:
-        - name: config
+        - name: config-template
           configMap:
             name: ingress-front-config
+        - name: config-rendered
+          emptyDir: {}
