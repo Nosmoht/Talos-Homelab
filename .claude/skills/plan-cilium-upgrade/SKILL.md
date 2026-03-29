@@ -2,7 +2,7 @@
 name: plan-cilium-upgrade
 description: Build a repo-specific Cilium upgrade and migration plan for this homelab cluster by resolving current and target versions, reading all intermediate release notes, identifying breaking changes and risks, and reviewing the plan before presenting it.
 argument-hint: [from-version] [to-version]
-allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch
+allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch, Agent
 ---
 
 # Plan Cilium Upgrade
@@ -92,6 +92,28 @@ Extract and record:
 - any repo-managed `cilium.io/*` resources outside the bootstrap manifest
 
 Search for Cilium dependencies and managed resources with `rg` before writing the plan.
+
+### 1.5. Research prior knowledge and upstream changes
+
+Before starting web research, check for prior experience and external intelligence:
+
+1. **Search existing docs for prior upgrade experience:**
+   - Grep `docs/` for `cilium.*<target-version>` and related terms (postmortems, upgrade reports, debug logs)
+   - Read any matching files to extract lessons learned
+   - Check CLAUDE.md gotchas for Cilium/Gateway API version-specific warnings
+
+2. **Spawn the `researcher` agent for upstream intelligence:**
+   Use the Agent tool to spawn the `researcher` agent with this prompt:
+   ```
+   Research Cilium <from-version> to <to-version>: eBPF datapath changes,
+   Gateway API behavioral changes, NetworkPolicy enforcement changes,
+   embedded Envoy updates, macvlan interaction issues, known regressions
+   on GitHub. Check Kubernetes version compatibility matrix.
+   Return max 2000 tokens: Sources, Findings, Confidence.
+   ```
+   Wait for the researcher to return before proceeding.
+
+3. **Incorporate findings** into Steps 5-6 (release notes and cluster-specific impact analysis). Pay special attention to any findings about L7 filter behavior changes, DRBD port range conflicts (7000-7999), or macvlan eBPF interactions.
 
 ### 2. Resolve `from-version`
 If `from-version` was provided, normalize it to `major.minor.patch` and use it.
@@ -245,6 +267,20 @@ Review checklist:
 - blockers and unknowns are explicit rather than hidden
 
 If the review finds gaps, fix them before presenting the final plan. Do not present the unreviewed draft.
+
+### 9.5. Adversarial risk assessment
+
+Before presenting the plan, stress-test it through an adversarial lens:
+
+1. **Breaking change failure scenarios** — For each breaking change, describe what happens if the migration step is missed. Focus on: Gateway API traffic loss, CiliumNetworkPolicy enforcement regressions, Hubble relay disruption.
+2. **Blast radius estimation** — For each risk, classify:
+   - **Node:** affects connectivity on one node (e.g., agent restart)
+   - **Control plane:** affects kube-proxy replacement or API server reachability
+   - **Full cluster:** affects all east-west or north-south traffic (e.g., eBPF map incompatibility)
+3. **Most dangerous step** — Identify the single most dangerous step. For Cilium upgrades, this is typically the bootstrap manifest reconciliation via `talosctl upgrade-k8s`. Ensure rollback is possible (previous manifest preserved, `extraManifests` URL revertible).
+4. **Mid-rollout interruption** — Can the cluster operate with mixed Cilium versions across nodes? Document the supported version skew window.
+5. **Macvlan + Envoy interaction** — Specifically assess: does this upgrade change eBPF L7 filter behavior, hostNetwork Envoy port binding, or macvlan-to-remote-node routing? These are the highest-risk areas for this cluster.
+6. **Unmitigated risks** — Flag as `BLOCKING — requires operator decision` if no mitigation exists.
 
 ### 10. Save the reviewed plan as a draft artifact
 After the plan passes self-review, write it to:

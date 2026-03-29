@@ -2,7 +2,7 @@
 name: plan-talos-upgrade
 description: Build a repo-specific Talos upgrade and migration plan for this homelab cluster by resolving current and target Talos versions, reading all intermediate release notes and upgrade guidance, identifying cluster-specific risks, and saving a reviewed draft plan for manual approval.
 argument-hint: [from-version] [to-version]
-allowed-tools: Bash, Read, Grep, Glob, Write
+allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch, Agent
 ---
 
 # Plan Talos Upgrade
@@ -90,6 +90,27 @@ Extract and record:
 - whether any schematic files or patch files changed semantics across the target version hop
 - whether `talos/patches/controlplane.yaml` `extraManifests` cache-busting behavior introduces coupled Cilium work
 - operational constraints around DRBD, GPU node handling, Pi node handling, and control-plane health
+
+### 1.5. Research prior knowledge and upstream changes
+
+Before starting web research, check for prior experience and external intelligence:
+
+1. **Search existing docs for prior upgrade experience:**
+   - Grep `docs/` for `talos.*<target-version>` and related terms (postmortems, upgrade reports, maintenance logs)
+   - Read any matching files to extract lessons learned
+   - Check CLAUDE.md gotchas for version-specific warnings
+
+2. **Spawn the `researcher` agent for upstream intelligence:**
+   Use the Agent tool to spawn the `researcher` agent with subagent_type "researcher" (or general-purpose with the researcher persona) and this prompt:
+   ```
+   Research Talos <from-version> to <to-version>: breaking changes, extension
+   compatibility with DRBD/LINSTOR and NVIDIA, known issues on GitHub, CVE
+   advisories. Check Talos and Kubernetes version compatibility matrix.
+   Return max 2000 tokens: Sources, Findings, Confidence.
+   ```
+   Wait for the researcher to return before proceeding.
+
+3. **Incorporate findings** into Steps 5-6 (release notes and cluster-specific impact analysis). Flag any researcher finding that contradicts upstream release notes.
 
 ### 2. Resolve `from-version`
 If `from-version` was provided, normalize it to `major.minor.patch` and use it.
@@ -252,6 +273,19 @@ Review checklist:
 - blockers and unknowns are explicit rather than hidden
 
 If the review finds gaps, fix them before presenting the final plan. Do not present the unreviewed draft.
+
+### 9.5. Adversarial risk assessment
+
+Before presenting the plan, stress-test it through an adversarial lens:
+
+1. **Breaking change failure scenarios** — For each breaking change identified, describe what happens if the migration step is missed or executed incorrectly. Be specific: "If X is not done, then Y breaks because Z."
+2. **Blast radius estimation** — For each cluster-specific risk, classify blast radius:
+   - **Node:** affects one node only (e.g., GPU extension mismatch)
+   - **Control plane:** affects etcd quorum or API server availability
+   - **Full cluster:** affects all workloads (e.g., CNI incompatibility, storage mesh failure)
+3. **Most dangerous step** — Identify the single most dangerous step in the execution plan. Ensure its rollback path is explicit, tested, and does not require the step itself to have succeeded.
+4. **Mid-rollout interruption** — What happens if the upgrade is interrupted after node N of 8? Is the cluster in a valid mixed-version state? Can it serve traffic? Can the upgrade resume?
+5. **Unmitigated risks** — If any risk has no mitigation path, flag it as `BLOCKING — requires operator decision` and do not mark the plan as ready.
 
 ### 10. Save the reviewed plan as a draft artifact
 After the plan passes self-review, write it to:
