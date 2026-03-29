@@ -58,6 +58,8 @@ spec:
       annotations:
         k8s.v1.cni.cncf.io/networks: '[{"name": "homelab-gateway-macvlan", "mac": "02:42:c0:a8:02:46"}]'
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/gateway: ""
       initContainers:
         - name: render-config
           image: busybox:1.37
