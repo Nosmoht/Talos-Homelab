@@ -4,6 +4,7 @@ metadata:
   name: homelab-pool
   annotations:
     argocd.argoproj.io/sync-options: Prune=false
+    argocd.argoproj.io/sync-wave: "8"
   labels:
     app.kubernetes.io/name: cilium
     app.kubernetes.io/instance: homelab
