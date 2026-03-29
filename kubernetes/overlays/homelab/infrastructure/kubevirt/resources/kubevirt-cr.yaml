@@ -16,7 +16,7 @@ spec:
   configuration:
     developerConfiguration:
       useEmulation: false
-    networkConfiguration:
+    network:
       permitBridgeInterfaceOnPodNetwork: false
   workloadUpdateStrategy:
     workloadUpdateMethods:
