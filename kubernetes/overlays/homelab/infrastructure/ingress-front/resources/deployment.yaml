@@ -14,8 +14,10 @@ data:
     worker_processes 1;
     events { worker_connections 512; }
     stream {
-      # Gateway Envoy on same node's hostNetwork (bypasses TPROXY/L7 filter)
-      # HOST_IP_PLACEHOLDER is replaced by init container with status.hostIP
+      # Gateway Envoy on same node's hostNetwork (bypasses TPROXY/L7 filter).
+      # HOST_IP is the node's LAN IP, routed via eth0 (Cilium CNI) using
+      # a /32 host route added at container start to bypass macvlan bridge
+      # isolation on net1's 192.168.2.0/24 route.
       server {
         listen 192.168.2.70:80;
         proxy_pass HOST_IP_PLACEHOLDER:80;
@@ -91,6 +93,22 @@ spec:
       containers:
         - name: nginx
           image: nginx:1.27-alpine
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              # Add host route for node's LAN IP via eth0 (Cilium CNI).
+              # Macvlan bridge mode blocks host<->pod on the same node via net1.
+              ETH0_GW=$(ip route | awk '/^default/ {print $3}')
+              ip route add "$HOST_IP/32" via "$ETH0_GW" dev eth0 2>/dev/null || true
+              exec nginx -g 'daemon off;'
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
           volumeMounts:
             - name: config-rendered
               mountPath: /etc/nginx/nginx.conf
