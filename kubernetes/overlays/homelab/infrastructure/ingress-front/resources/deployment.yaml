@@ -73,9 +73,16 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
+              # Use the eth0 default gateway as proxy target. This is the Cilium
+              # host-side endpoint IP which shares the host network namespace and
+              # can reach the embedded Envoy on ports 80/443.
+              # We can't use HOST_IP (node LAN IP) because macvlan bridge mode
+              # on net1 claims the 192.168.2.0/24 route, and macvlan bridge mode
+              # cannot reach its own host (kernel limitation).
+              CILIUM_HOST_IP=$(ip route | awk '/^default/ {print $3}')
               cp /config-template/nginx.conf /config/nginx.conf
-              sed -i "s/HOST_IP_PLACEHOLDER/$HOST_IP/g" /config/nginx.conf
-              echo "Rendered nginx.conf with HOST_IP=$HOST_IP"
+              sed -i "s/HOST_IP_PLACEHOLDER/$CILIUM_HOST_IP/g" /config/nginx.conf
+              echo "Rendered nginx.conf with CILIUM_HOST_IP=$CILIUM_HOST_IP (via eth0)"
               cat /config/nginx.conf
           volumeMounts:
             - name: config-template
@@ -93,22 +100,6 @@ spec:
       containers:
         - name: nginx
           image: nginx:1.27-alpine
-          env:
-            - name: HOST_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              # Add host route for node's LAN IP via eth0 (Cilium CNI).
-              # Macvlan bridge mode blocks host<->pod on the same node via net1.
-              ETH0_GW=$(ip route | awk '/^default/ {print $3}')
-              ip route add "$HOST_IP/32" via "$ETH0_GW" dev eth0 2>/dev/null || true
-              exec nginx -g 'daemon off;'
-          securityContext:
-            capabilities:
-              add: ["NET_ADMIN"]
           volumeMounts:
             - name: config-rendered
               mountPath: /etc/nginx/nginx.conf
