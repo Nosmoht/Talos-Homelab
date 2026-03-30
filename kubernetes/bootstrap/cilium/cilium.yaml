@@ -362,10 +362,8 @@ data:
         - time
         filePath: /var/run/cilium/hubble/dropped.log
         includeFilters:
-        - fields:
-          - name: verdict
-            values:
-            - DROPPED
+        - verdict:
+          - DROPPED
         name: dropped-flows
       - fieldMask:
         - source
@@ -375,10 +373,8 @@ data:
         - time
         filePath: /var/run/cilium/hubble/dns.log
         includeFilters:
-        - fields:
-          - name: l7.type
-            values:
-            - DNS
+        - protocol:
+          - DNS
         name: dns-flows
 ---
 # Source: cilium/templates/hubble-relay/configmap.yaml
