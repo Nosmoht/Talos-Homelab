@@ -5,6 +5,7 @@ resources:
   - capability-registry-configmap.yaml
   - kyverno-clusterpolicy-pni-contract-audit.yaml
   - kyverno-clusterpolicy-pni-reserved-labels-audit.yaml
+  - kyverno-clusterpolicy-pni-capability-validation-audit.yaml
   - kyverno-clusterpolicy-vault-ca-distribution.yaml
   - ccnp-pni-monitoring-dns-visibility.yaml
   - ccnp-pni-monitoring-vault-config-operator-metrics-egress.yaml
@@ -22,5 +23,5 @@ resources:
   - ccnp-pni-redis-managed-consumer-egress.yaml
   - ccnp-pni-kafka-managed-consumer-egress.yaml
   - ccnp-pni-gateway-backend-consumer-ingress.yaml
-  - ccnp-pni-gateway-ingress-identity.yaml
   - ccnp-pni-monitoring-scrape-consumer-egress.yaml
+  - ccnp-pni-internet-egress-consumer-egress.yaml
