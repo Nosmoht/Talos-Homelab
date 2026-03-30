@@ -201,6 +201,79 @@ metadata:
 apiVersion: v1
 kind: Namespace
 metadata:
+  name: redis-operator
+  labels:
+    app.kubernetes.io/name: redis-operator
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+    platform.io/network-interface-version: v1
+    platform.io/network-profile: managed
+    platform.io/consume.monitoring-scrape: "true"
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nvidia-device-plugin
+  labels:
+    app.kubernetes.io/name: nvidia-device-plugin
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+    platform.io/network-interface-version: v1
+    platform.io/network-profile: privileged
+    pod-security.kubernetes.io/enforce: privileged
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kagent
+  labels:
+    app.kubernetes.io/name: kagent
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+    platform.io/network-interface-version: v1
+    platform.io/network-profile: managed
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cilium-secrets
+  labels:
+    app.kubernetes.io/name: cilium
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+    platform.io/network-interface-version: v1
+    platform.io/network-profile: privileged
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/audit-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest
+---
+apiVersion: v1
+kind: Namespace
+metadata:
   name: vault
   labels:
     app.kubernetes.io/name: vault-operator

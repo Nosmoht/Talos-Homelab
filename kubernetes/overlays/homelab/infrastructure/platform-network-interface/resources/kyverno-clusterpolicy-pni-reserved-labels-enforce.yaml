@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/part-of: homelab
     app.kubernetes.io/managed-by: argocd
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: Enforce
   background: true
   admission: true
   emitWarning: false

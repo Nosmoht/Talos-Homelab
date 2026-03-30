@@ -3,9 +3,9 @@ kind: Kustomization
 
 resources:
   - capability-registry-configmap.yaml
-  - kyverno-clusterpolicy-pni-contract-audit.yaml
-  - kyverno-clusterpolicy-pni-reserved-labels-audit.yaml
-  - kyverno-clusterpolicy-pni-capability-validation-audit.yaml
+  - kyverno-clusterpolicy-pni-contract-enforce.yaml
+  - kyverno-clusterpolicy-pni-reserved-labels-enforce.yaml
+  - kyverno-clusterpolicy-pni-capability-validation-enforce.yaml
   - kyverno-clusterpolicy-vault-ca-distribution.yaml
   - ccnp-pni-monitoring-dns-visibility.yaml
   - ccnp-pni-monitoring-vault-config-operator-metrics-egress.yaml

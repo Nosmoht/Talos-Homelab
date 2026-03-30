@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/part-of: homelab
     app.kubernetes.io/managed-by: argocd
 spec:
-  validationFailureAction: Audit
+  validationFailureAction: Enforce
   background: true
   admission: true
   emitWarning: false
@@ -27,6 +27,8 @@ spec:
               names:
                 - kube-public
                 - kube-node-lease
+                - kube-system
+                - default
       validate:
         allowExistingViolations: true
         message: "Namespaces must set platform.io/network-interface-version=v1 for PNI"
@@ -47,6 +49,8 @@ spec:
               names:
                 - kube-public
                 - kube-node-lease
+                - kube-system
+                - default
       validate:
         allowExistingViolations: true
         message: "Namespaces must set platform.io/network-profile for PNI"
