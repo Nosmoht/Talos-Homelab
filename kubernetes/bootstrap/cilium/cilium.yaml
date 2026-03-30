@@ -260,6 +260,7 @@ data:
     icmp
     httpV2
   hubble-network-policy-correlation-enabled: "true"
+  hubble-flowlogs-config-path: /flowlog-config/flowlogs.yaml
   # An additional address for Hubble server to listen to (e.g. ":4244").
   hubble-listen-address: ":4244"
   hubble-disable-tls: "false"
@@ -341,6 +342,44 @@ data:
 
 # Extra config allows adding arbitrary properties to the cilium config.
 # By putting it at the end of the ConfigMap, it's also possible to override existing properties.
+---
+# Source: cilium/templates/cilium-flowlog-configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cilium-flowlog-config
+  namespace: kube-system
+data:
+  flowlogs.yaml: |
+    flowLogs:
+      - fieldMask:
+        - source
+        - destination
+        - verdict
+        - drop_reason
+        - l4
+        - IP
+        - time
+        filePath: /var/run/cilium/hubble/dropped.log
+        includeFilters:
+        - fields:
+          - name: verdict
+            values:
+            - DROPPED
+        name: dropped-flows
+      - fieldMask:
+        - source
+        - destination
+        - verdict
+        - l7
+        - time
+        filePath: /var/run/cilium/hubble/dns.log
+        includeFilters:
+        - fields:
+          - name: l7.type
+            values:
+            - DNS
+        name: dns-flows
 ---
 # Source: cilium/templates/hubble-relay/configmap.yaml
 apiVersion: v1
@@ -1447,6 +1486,9 @@ spec:
           readOnly: true
         - name: tmp
           mountPath: /tmp
+        - name: hubble-flowlog-config
+          mountPath: /flowlog-config
+          readOnly: true
         
       initContainers:
       - name: config
@@ -1772,6 +1814,10 @@ spec:
                 path: server.key
               - key: ca.crt
                 path: client-ca.crt
+      - name: hubble-flowlog-config
+        configMap:
+          name: cilium-flowlog-config
+          optional: true
 ---
 # Source: cilium/templates/cilium-operator/deployment.yaml
 apiVersion: apps/v1
