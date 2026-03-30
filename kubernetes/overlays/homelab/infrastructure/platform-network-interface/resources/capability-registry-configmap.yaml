@@ -57,3 +57,6 @@ data:
       - id: hpa-metrics
         providers:
           - metrics-server
+      - id: internet-egress
+        providers:
+          - cilium
