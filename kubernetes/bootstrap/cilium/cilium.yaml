@@ -206,7 +206,7 @@ data:
   wireguard-persistent-keepalive: "0s"
   # --- DEPRECATED: Please use encryption.strictMode.egress.enabled instead
   enable-encryption-strict-mode-egress: "true"
-  encryption-strict-egress-cidr: ""
+  encryption-strict-egress-cidr: "10.244.0.0/16"
   encryption-strict-egress-allow-remote-node-identities: "true"
 
   enable-xt-socket-fallback: "true"
