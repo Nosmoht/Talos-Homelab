@@ -108,6 +108,7 @@ Admission policy (Kyverno) enforces this separation.
 | `gateway-backend` | `gateway-api` (Cilium dataplane) | Backend exposure via Gateway API |
 | `gpu-runtime` | `nvidia-device-plugin`, `nvidia-dcgm-exporter`, `node-feature-discovery` | GPU workload scheduling and telemetry |
 | `hpa-metrics` | `metrics-server` | Resource metrics for autoscaling |
+| `internet-egress` | `cilium` | Egress to public internet (all ports) |
 
 ## Onboarding Workflow (Consumer)
 
@@ -151,6 +152,7 @@ Most consumer CCNPs are **egress** grants (consumer -> provider). The `gateway-b
 - Vault secrets: namespaces with `consume.vault-secrets=true` -> Vault pods (`8200/TCP`) + DNS
 - Redis managed: namespaces with `consume.redis-managed=true` -> Redis pods (`6379/TCP`) + DNS
 - Kafka managed: namespaces with `consume.kafka-managed=true` -> Kafka broker pods (`9092/TCP`) + DNS
+- Internet egress: namespaces with `consume.internet-egress=true` -> public internet via `toCIDRSet 0.0.0.0/0` excluding RFC1918 (all ports/protocols) + DNS
 
 #### Ingress (gateway proxy -> consumer)
 
@@ -158,7 +160,24 @@ Most consumer CCNPs are **egress** grants (consumer -> provider). The `gateway-b
 
 Ports in the gateway-backend CCNP are **container/pod ports** (post-DNAT), not Service ports — Cilium `toPorts` evaluates after kube-proxy DNAT. When adding a new gateway-exposed backend, add its container port to the CCNP.
 
-Namespaces without existing CiliumNetworkPolicies (e.g. `argocd` with `privileged` profile) should **not** opt in to `gateway-backend` — the CCNP would be the first policy selecting their pods, activating Cilium's implicit default-deny and breaking intra-namespace communication. Gateway traffic already works in those namespaces since no default-deny is active.
+Namespaces without existing CiliumNetworkPolicies (e.g. `argocd` with `privileged` profile) should **not** opt in to `gateway-backend` or `internet-egress` — the CCNP would be the first policy selecting their pods, activating Cilium's implicit default-deny and breaking intra-namespace communication. Gateway traffic already works in those namespaces since no default-deny is active.
+
+#### API-only capabilities (no CCNP)
+
+The following capabilities are valid opt-in labels but do not require consumer network policies.
+Interaction with the provider happens through the Kubernetes API, CRDs, or node-level mechanisms — not pod-to-pod networking.
+
+| Capability | Interaction Model |
+|---|---|
+| `logging-ship` | Alloy DaemonSet collects container logs from the node filesystem; consumer pods write to stdout/stderr |
+| `storage-csi` | CSI volumes provisioned via Kubernetes API; kubelet handles block device attachment at node level |
+| `tls-issuance` | Certificates managed via `Certificate` CRDs; cert-manager controller watches the API, no direct network path |
+| `gpu-runtime` | NVIDIA device plugin exposes GPUs via kubelet device plugin socket; node-local only |
+| `hpa-metrics` | Metrics Server aggregated into Kubernetes API (`metrics.k8s.io`); HPA controller queries via kube-apiserver |
+
+The `monitoring-scrape` capability has a CCNP but follows a different pattern: it is a **provider-egress** grant (Prometheus scrapes into consumer namespaces), not a consumer-egress grant like the other 7 CCNPs.
+
+These labels still require `platform.io/consume.<capability>` on the namespace for audit visibility, Kyverno validation, and forward compatibility with future policy changes.
 
 Implementation rules:
 
@@ -216,6 +235,9 @@ metadata:
    - check whether workload is using unsupported ports/protocols for that capability
 3. Admission denied:
    - confirm you are not setting provider-reserved labels
+4. Unknown capability warning:
+   - check for typos in `platform.io/consume.*` labels (e.g., `internet-igress` instead of `internet-egress`)
+   - Kyverno audits unknown capability labels and emits warnings
 
 ## FAQ
 
