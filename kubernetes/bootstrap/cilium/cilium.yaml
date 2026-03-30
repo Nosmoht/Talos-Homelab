@@ -204,6 +204,10 @@ data:
   enable-masquerade-to-route-source: "false"
   enable-wireguard: "true"
   wireguard-persistent-keepalive: "0s"
+  # --- DEPRECATED: Please use encryption.strictMode.egress.enabled instead
+  enable-encryption-strict-mode-egress: "true"
+  encryption-strict-egress-cidr: ""
+  encryption-strict-egress-allow-remote-node-identities: "true"
 
   enable-xt-socket-fallback: "true"
   install-no-conntrack-iptables-rules: "false"
