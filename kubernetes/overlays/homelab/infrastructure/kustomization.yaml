@@ -31,3 +31,4 @@ resources:
   - ingress-front
   - kubevirt
   - kubevirt-cdi
+  - tetragon
