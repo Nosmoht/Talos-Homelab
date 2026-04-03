@@ -1,0 +1,31 @@
+apiVersion: cilium.io/v1alpha1
+kind: TracingPolicy
+metadata:
+  name: network-connect-external
+  labels:
+    app.kubernetes.io/name: tetragon
+    app.kubernetes.io/instance: homelab
+    app.kubernetes.io/component: runtime-security
+    app.kubernetes.io/part-of: homelab
+    app.kubernetes.io/managed-by: argocd
+spec:
+  podSelector:
+    matchExpressions:
+      - key: io.kubernetes.pod.namespace
+        operator: In
+        values:
+          - kube-system
+          - argocd
+          - tetragon
+  kprobes:
+    - call: "sys_connect"
+      syscall: true
+      args:
+        - index: 0
+          type: "int"
+        - index: 1
+          type: "sock_addr"
+        - index: 2
+          type: "int"
+      selectors:
+        - matchArgs: []

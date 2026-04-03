@@ -102,6 +102,15 @@ spec:
         - ports:
             - port: "9091"
               protocol: TCP
+    # Tetragon metrics (cross-namespace)
+    - toEndpoints:
+        - matchLabels:
+            k8s:io.kubernetes.pod.namespace: tetragon
+            app.kubernetes.io/name: tetragon
+      toPorts:
+        - ports:
+            - port: "2112"
+              protocol: TCP
     # cilium and hubble metrics (cross-namespace)
     - toEndpoints:
         - matchLabels:
