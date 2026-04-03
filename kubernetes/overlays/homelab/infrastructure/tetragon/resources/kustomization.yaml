@@ -4,3 +4,4 @@ kind: Kustomization
 resources:
   - tracingpolicy-process-exec.yaml
   - tracingpolicy-file-access.yaml
+  - tracingpolicy-network-connect.yaml
