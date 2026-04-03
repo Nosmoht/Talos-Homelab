@@ -39,5 +39,5 @@ spec:
                 - "/etc/sudoers"
                 - "/var/run/secrets/kubernetes.io"
                 - "/root/.ssh"
-                - "/home/*/.ssh"
+                - "/home/"
                 - "/etc/ssh"

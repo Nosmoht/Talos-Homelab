@@ -614,7 +614,7 @@ data:
                 "type": "prometheus",
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "rate(tetragon_process_exec_total[5m])",
+              "expr": "rate(tetragon_events_total{type=\"PROCESS_EXEC\"}[5m])",
               "refId": "A",
               "legendFormat": "{{namespace}}/{{pod}}"
             }
@@ -701,9 +701,9 @@ data:
                 "type": "prometheus",
                 "uid": "${DS_PROMETHEUS}"
               },
-              "expr": "rate(tetragon_network_events_total[5m])",
+              "expr": "rate(tetragon_policy_events_total{policy=\"network-connect-external\"}[5m])",
               "refId": "A",
-              "legendFormat": "{{type}}"
+              "legendFormat": "{{hook}}"
             }
           ],
           "title": "Network Events",

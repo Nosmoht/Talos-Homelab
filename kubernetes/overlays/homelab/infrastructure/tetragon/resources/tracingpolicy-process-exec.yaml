@@ -23,11 +23,5 @@ spec:
       args:
         - index: 0
           type: "string"
-        - index: 1
-          type: "char_buf"
-          sizeArgIndex: 3
-        - index: 2
-          type: "char_buf"
-          sizeArgIndex: 3
       selectors:
         - matchArgs: []

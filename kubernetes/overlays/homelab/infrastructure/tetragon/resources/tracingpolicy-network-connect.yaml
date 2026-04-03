@@ -17,8 +17,6 @@ spec:
           - kube-system
           - argocd
           - tetragon
-          - piraeus-datastore
-          - cert-manager
   kprobes:
     - call: "sys_connect"
       syscall: true
