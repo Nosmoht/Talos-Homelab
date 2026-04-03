@@ -8,7 +8,7 @@ paths:
 # Kubernetes GitOps (ArgoCD)
 
 ## App-of-Apps Pattern
-- **Root Application** (`root`) in `default` project points to `kubernetes/overlays/<overlay>/` (overlay name from `.claude/environment.yaml`)
+- **Root Application** (`root`) uses `root-bootstrap` AppProject (least-privilege); points to `kubernetes/overlays/<overlay>/` (overlay name from `.claude/environment.yaml`)
 - Root app manages: AppProjects, all child Application CRs, namespaces, gateway-api resources
 - **ArgoCD self-management**: `argocd` Application CR manages its own Helm chart + HTTPRoute
 - Bootstrap is minimal: `make argocd-install` (Helm) + `make argocd-bootstrap` (applies root app only)

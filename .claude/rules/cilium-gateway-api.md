@@ -37,3 +37,5 @@ paths:
 ## ArgoCD Sync — Gateway API Gotchas
 - Gateway API webhook auto-defaults fields (e.g., `group: ""` on certificateRefs, `matches: [{path: {type: PathPrefix, value: /}}]` on HTTPRoutes) — always include these explicitly in manifests to prevent perpetual OutOfSync drift
 - HTTP listener uses `from: Same` (redirect HTTPRoute is same namespace as Gateway); HTTPS listener uses `from: Selector` with `edge-public: "true"` label
+- Bootstrap cilium manifest (`kubernetes/bootstrap/cilium/cilium.yaml`) includes GatewayClass — reconcile drift with `make -C talos upgrade-k8s` (re-applies extraManifests), NOT `kubectl apply`
+- `gateway-api` is its own ArgoCD Application (project: `infrastructure`, sync-wave: 4, destination: `default` namespace) — not managed by the main infrastructure Application
