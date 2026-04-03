@@ -3,3 +3,4 @@ kind: Kustomization
 
 resources:
   - tracingpolicy-process-exec.yaml
+  - tracingpolicy-file-access.yaml
