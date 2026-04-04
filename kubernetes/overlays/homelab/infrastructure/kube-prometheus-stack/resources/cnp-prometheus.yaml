@@ -102,15 +102,6 @@ spec:
         - ports:
             - port: "9091"
               protocol: TCP
-    # Tetragon metrics (cross-namespace)
-    - toEndpoints:
-        - matchLabels:
-            k8s:io.kubernetes.pod.namespace: tetragon
-            app.kubernetes.io/name: tetragon
-      toPorts:
-        - ports:
-            - port: "2112"
-              protocol: TCP
     # cilium and hubble metrics (cross-namespace)
     - toEndpoints:
         - matchLabels:
@@ -130,11 +121,15 @@ spec:
         - ports:
             - port: "9963"
               protocol: TCP
+    # Node-IP scrape targets: node-exporter, kubelet, control-plane, tetragon (hostNetwork).
+    # NOTE: remote-node entity requires allowRemoteNodeIdentities=true (set in Cilium WireGuard config).
     - toEntities:
         - host
         - remote-node
       toPorts:
         - ports:
+            - port: "2112"
+              protocol: TCP
             - port: "9100"
               protocol: TCP
             - port: "9962"
