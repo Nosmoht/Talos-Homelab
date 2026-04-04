@@ -82,13 +82,29 @@ Execute in order. Do not skip steps even if no files changed in that area.
 7. **Verify findings** — For each BLOCKING finding, re-read the cited file:line to confirm the issue exists. Remove false positives (e.g., SOPS-encrypted files flagged as plaintext secrets, ArgoCD annotations that are actually correct).
 8. **Compile findings** — Group by severity per the Output Contract below.
 
+## Runtime Invariant Checks
+
+**Run these checks when the PR diff touches the listed file kinds. Scope is diff-only: determine changed files via `git diff <base>...HEAD --name-only` and only fire rows for files in that list.**
+
+**hostNetwork identity mechanism (required reading before Row 1):** A Cilium identity for a hostNetwork pod is `reserved:host`, not a label-derived identity, because the pod shares the node's network namespace and has no CiliumEndpoint resource. Label-based `endpointSelector` rules therefore cannot match it — only `nodeSelector` or `host`/`remote-node` entity rules can. This is a kubelet/CNI fact, not a Cilium convention. Incident precedent: `Plans/radiant-exploring-widget-agent-a03c83e3044af9788.md:228` asserted "Tetragon does NOT typically use hostNetwork" and caused three defects to ship through four consecutive reviews.
+
+| Change kind (in diff) | Invariant | Probe | Pass criterion |
+|---|---|---|---|
+| CNP/CCNP with `endpointSelector`, `fromEndpoints`, or `toEndpoints` | Target pods are NOT hostNetwork AND selector labels exist on target pods | `kubectl get pods -n <ns> -l <selector> -o jsonpath='{range .items[*]}{.metadata.name}{"\t"}{.spec.hostNetwork}{"\n"}{end}'` | No pod reports `hostNetwork=true`; query returns ≥1 row. **Carve-out:** if the rule uses `nodeSelector` or `*Entities: [host, remote-node]` (reference: commit `a6f85f2` — the correct pattern for hostNetwork targets), this row does not apply |
+| Grafana dashboard JSON or PrometheusRule introducing a new metric name | Metric exists on the target version's `/metrics` | `kubectl get --raw "/api/v1/namespaces/<ns>/pods/<pod>:<metrics-port>/proxy/metrics" \| grep -E '^<metric_name>( \|\{)'` | ≥1 matching line returned. For upgrade PRs, probe the **target** version's pod, not the current version. Do not assert metric name stability across versions without running this probe |
+| ServiceMonitor, PodMonitor, or cross-namespace Prometheus scrape policy | Prometheus is actually scraping the target (non-vacuous) | `kubectl port-forward -n monitoring svc/monitoring-kube-prometheus-prometheus 19090:9090 &>/dev/null & PF=$!; sleep 2; curl -s localhost:19090/api/v1/targets \| jq '.data.activeTargets[] \| select(.labels.job=="<job>")'; kill $PF 2>/dev/null` | ≥1 target returned AND all have `health: "up"`. **Zero targets is itself BLOCKING** — it means the job name is wrong or the ServiceMonitor didn't apply (vacuous pass). Note: `kubectl get --raw .../services/<prom>:9090/proxy/...` times out on this cluster's Cilium/WireGuard topology; port-forward is required |
+
+**If no rows fired:** still emit the `## Probes` section (required by Output Contract) with a one-line explanation, e.g., "No CNP/metric/ServiceMonitor changes in diff."
+
 ## Severity Definitions
 
-- **BLOCKING** — Must be resolved before merge. Examples: plaintext secret in git, missing rollback path, unsafe node reboot without quorum check, kubectl apply on ArgoCD-managed resource.
+- **BLOCKING** — Must be resolved before merge. Examples: plaintext secret in git, missing rollback path, unsafe node reboot without quorum check, kubectl apply on ArgoCD-managed resource. Additionally: any finding of the form *"verify X after deploy"* where X is verifiable pre-deploy against the current or target-version cluster is itself a BLOCKING finding.
 - **WARNING** — Should be addressed; merge acceptable with acknowledgment. Examples: missing resource limits, undocumented manual step, broad CiliumNetworkPolicy selector.
 - **INFO** — Residual operational risk or improvement suggestion. No action required for merge.
 
 ## Output Contract
+
+**Every review must begin with a `## Probes` section before any findings or verdict.** This section contains verbatim tool output (up to 20 lines per probe, truncated with `[... N more lines]`). No paraphrasing. If no rows fired, one line of explanation. A `require-probe-evidence.sh` hook validates this structure on write — missing or verdict-before-probes will block the output file.
 
 Format each finding as:
 ```
@@ -98,11 +114,18 @@ Fix: concrete one-line or code-block fix
 
 ### Examples
 ```
+## Probes
+kubectl get pods -n tetragon -l app.kubernetes.io/name=tetragon -o jsonpath=...
+tetragon-abcde   true
+tetragon-fghij   true
+
+[BLOCKING] kubernetes/overlays/homelab/infrastructure/tetragon/resources/cnp-tetragon.yaml:8 — label selector targets hostNetwork pods (reserved:host identity — label selectors never match)
+Fix: Replace endpointSelector with toEntities: [host, remote-node]
+
+---
+
 [BLOCKING] kubernetes/apps/monitoring/values.yaml:42 — Grafana admin password in plaintext
 Fix: Move to SOPS-encrypted secret: `kubectl create secret generic grafana-admin --dry-run=client -o yaml | sops -e > grafana-admin.sops.yaml`
-
-[WARNING] kubernetes/apps/media/deployment.yaml:18 — No resource limits defined for jellyfin container
-Fix: Add `resources: { limits: { cpu: "2", memory: "4Gi" }, requests: { cpu: "500m", memory: "1Gi" } }`
 ```
 
 End with a final verdict:
