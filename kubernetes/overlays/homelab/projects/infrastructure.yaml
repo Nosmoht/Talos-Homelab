@@ -114,6 +114,8 @@ spec:
       kind: LinstorSatelliteConfiguration
     - group: minio.min.io
       kind: Tenant
+    - group: cdi.kubevirt.io
+      kind: CDI
   namespaceResourceWhitelist:
     - group: "*"
       kind: "*"
