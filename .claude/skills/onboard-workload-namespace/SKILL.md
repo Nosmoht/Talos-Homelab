@@ -13,21 +13,29 @@ allowed-tools: Bash, Read, Grep, Glob, Write, Edit
 Read `.claude/environment.yaml` for kubeconfig path and overlay name.
 If the file is missing, stop: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
 
+Extract before running any commands:
+```bash
+KUBECONFIG=$(yq '.kubeconfig' .claude/environment.yaml)
+OVERLAY=$(yq '.cluster.overlay // "homelab"' .claude/environment.yaml)
+```
+
 ## Reference Files
 
 Read before acting:
+- `.claude/environment.yaml` — kubeconfig, overlay name
 - `docs/platform-network-interface.md` — PNI contract v1, capability catalog, namespace label requirements
 - `.claude/rules/kubernetes-gitops.md` — Application CR pattern, directory structure, sync-waves, ArgoCD patterns
 - `.claude/rules/manifest-quality.md` — required labels, validation commands
 - `kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml` — registered capabilities (for validation)
+- `kubernetes/overlays/homelab/projects/infrastructure.yaml` — AppProject destinations and sourceRepos
+
+If `--vault`, also read:
+- `docs/external-secrets-customer-guide.md` — Steps 1-3 (SecretStore + ExternalSecret pattern)
 
 Also read 2-3 existing namespace+application pairs as patterns:
 ```bash
 ls kubernetes/overlays/homelab/infrastructure/*/resources/namespace.yaml
 ```
-
-If `--vault`, also read:
-- `docs/external-secrets-customer-guide.md` — Steps 1-3 (SecretStore + ExternalSecret pattern)
 
 ## Inputs
 
@@ -38,32 +46,43 @@ If `--vault`, also read:
 
 ## Scope Guard
 
+Resolve the component directory name first — it usually matches the namespace name. Confirm with the user if different. Store as `COMPONENT`.
+
+Check if the component already has an overlay:
+```bash
+ls kubernetes/overlays/homelab/infrastructure/$COMPONENT/ 2>/dev/null
+```
+If the directory exists, stop: "Namespace $COMPONENT already has an overlay at `kubernetes/overlays/homelab/infrastructure/$COMPONENT/`. Review existing files instead."
+
 If the user wants to ADD a new PNI capability (not consume an existing one):
-- Stop and suggest: "To add a new capability, use `/pni-capability-add` first."
+- Stop. Suggest `/pni-capability-add` first.
 
-If a requested capability does NOT exist in `capability-registry-configmap.yaml`:
-- Stop and report: "Capability '<name>' is not registered. Run `/pni-capability-add` first, then re-run this skill."
+For each capability in `--capabilities`, verify it exists in `capability-registry-configmap.yaml`:
+```bash
+grep "<capability>" kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml
+```
+If any capability is not found, stop: "Capability '<name>' is not registered. Run `/pni-capability-add` first, then re-run this skill."
 
-If the namespace already exists in the overlay:
-- Stop and report: "Namespace <name> already has an overlay at `kubernetes/overlays/homelab/infrastructure/<component>/`. Review the existing files instead of creating new ones."
+If `--vault` is specified, warn: "The Vault KV paths referenced in ExternalSecrets must exist in Vault before they can sync. Ensure the paths are provisioned before or immediately after this onboarding."
 
-## Workflow
+## Workflow — Phase 1: Plan (do not write any files yet)
 
-### 1. Gather and validate inputs
+Gather all information and draft all file contents in memory. Do not use Write or Edit tools during Phase 1.
+
+### 1. Determine inputs
 
 Resolve:
-- Component directory name (usually matches namespace, confirm with user if different)
+- `COMPONENT` (component directory name, confirmed with user)
+- `NAMESPACE` (namespace name, from argument)
 - Workload type: app, operator, or tenant
 - Network profile: `restricted` (default) or `managed`
-- Capabilities: validate each against `capability-registry-configmap.yaml`
+- Capabilities: confirmed valid list from registry check above
 
-If any capability is not in the registry, stop (see scope guard above).
+### 2. Draft Namespace manifest
 
-### 2. Author Namespace manifest
-
-Create:
+Draft contents for:
 ```
-kubernetes/overlays/homelab/infrastructure/<component>/resources/namespace.yaml
+kubernetes/overlays/homelab/infrastructure/$COMPONENT/resources/namespace.yaml
 ```
 
 Required labels:
@@ -80,109 +99,118 @@ labels:
 
 Never set provider-reserved labels (`platform.io/provider`, `platform.io/managed-by`, `platform.io/capability`).
 
-### 3. Author ArgoCD Application CR
+### 3. Draft ArgoCD Application CR
+
+Draft contents for:
+```
+kubernetes/overlays/homelab/infrastructure/$COMPONENT/application.yaml
+```
 
 Follow the multi-source Helm pattern from `.claude/rules/kubernetes-gitops.md`.
+Required annotations: `argocd.argoproj.io/sync-wave: "0"` (infrastructure wave).
 
-Place at:
-```
-kubernetes/overlays/homelab/infrastructure/<component>/application.yaml
-```
-
-Required annotations:
-- `argocd.argoproj.io/sync-wave: "0"` (infrastructure wave)
-
-Reference `kubernetes/base/infrastructure/<component>/` for base Helm values.
-
-### 4. Verify AppProject permissions
+### 4. Check AppProject permissions
 
 Read `kubernetes/overlays/homelab/projects/infrastructure.yaml`.
 
-Confirm:
-- Target namespace is in the `destinations` list
-- Chart repository is in `sourceRepos`
+Check whether the target namespace is in the `destinations` list and whether the chart repository is in `sourceRepos`. Note any missing entries — these will be added to the draft, not committed silently.
 
-If not, add the missing entries and note this in the commit message.
+### 5. Draft Helm values files (if Helm chart)
 
-### 5. Create Helm values files (if Helm chart)
-
-Create portable defaults:
+Draft contents for:
 ```
-kubernetes/base/infrastructure/<component>/values.yaml
+kubernetes/base/infrastructure/$COMPONENT/values.yaml       (portable defaults)
+kubernetes/overlays/homelab/infrastructure/$COMPONENT/values.yaml  (cluster-specific overrides)
 ```
 
-Create cluster-specific overrides:
+### 6. Draft Vault ExternalSecrets (only if --vault)
+
+Follow `docs/external-secrets-customer-guide.md` Steps 1-3. Draft:
+- `SecretStore` in the namespace
+- `ExternalSecret`(s) referencing the Vault paths the user specified
+
+Note: SOPS-encrypted static secrets must be created as `*.sops.yaml` — the pre-write hook will verify SOPS encryption automatically.
+
+### 7. Draft kustomization.yaml
+
+Draft contents for:
 ```
-kubernetes/overlays/homelab/infrastructure/<component>/values.yaml
-```
-
-### 6. Wire Vault ExternalSecrets (only if --vault)
-
-Follow `docs/external-secrets-customer-guide.md` Steps 1-3:
-1. Create `SecretStore` in the namespace referencing the Vault cluster secret store
-2. Create `ExternalSecret`(s) referencing Vault paths
-3. If any static secrets are needed, create them as `*.sops.yaml` — the pre-write hook will verify SOPS encryption
-
-### 7. Create kustomization.yaml
-
-Create:
-```
-kubernetes/overlays/homelab/infrastructure/<component>/kustomization.yaml
+kubernetes/overlays/homelab/infrastructure/$COMPONENT/kustomization.yaml
 ```
 
-Include all created resources. Follow existing overlay kustomization patterns.
+Include all resources drafted above.
 
-## User Confirmation Gate
+---
 
-Present all files to be created for user review before writing:
-- `resources/namespace.yaml`
-- `application.yaml`
-- `kustomization.yaml`
-- `values.yaml` (base and overlay)
-- ExternalSecret files (if --vault)
-- AppProject changes (if needed)
+## Phase 2: Confirmation Gate
 
-Wait for explicit confirmation before writing.
+Present ALL drafted file contents to the user for review before writing anything:
+- `resources/namespace.yaml` (full content)
+- `application.yaml` (full content)
+- `kustomization.yaml` (full content)
+- `values.yaml` base and overlay (full content)
+- ExternalSecret files if `--vault` (full content)
+- AppProject changes if namespace or repo was missing (full diff)
 
-### 8. Validate
+Ask: "Confirm to write all files and proceed? (yes/no)"
+
+**Do not write any files until the user explicitly confirms.**
+
+---
+
+## Workflow — Phase 3: Execute (only after confirmation)
+
+### 8. Write files
+
+Write all confirmed files using the Write and Edit tools. Create the component directory structure:
+```bash
+mkdir -p kubernetes/overlays/homelab/infrastructure/$COMPONENT/resources
+mkdir -p kubernetes/base/infrastructure/$COMPONENT
+```
+
+If AppProject entries are missing, use Edit to add them to `kubernetes/overlays/homelab/projects/infrastructure.yaml`. If edit fails, stop and report the specific error.
+
+### 9. Validate
 
 Run:
 ```bash
 make validate-kyverno-policies
-kubectl kustomize kubernetes/overlays/homelab > /dev/null
-KUBECONFIG=<kubeconfig> kubectl apply -k kubernetes/overlays/homelab --dry-run=client
+kubectl kustomize kubernetes/overlays/$OVERLAY > /dev/null
+KUBECONFIG=$KUBECONFIG kubectl apply -k kubernetes/overlays/$OVERLAY --dry-run=client
 ```
 
-If any fails, stop and report the specific error. Do not commit until all pass.
+If any fails, stop and report the specific error. Do not commit until all three pass.
 
-### 9. Commit and push
+### 10. Commit and push
 
 ```bash
-git add kubernetes/overlays/homelab/infrastructure/<component>/
-git add kubernetes/base/infrastructure/<component>/
-git add kubernetes/overlays/homelab/projects/infrastructure.yaml  # if modified
-git commit -m "feat(<component>): onboard <namespace> namespace"
+git add kubernetes/overlays/homelab/infrastructure/$COMPONENT/
+git add kubernetes/base/infrastructure/$COMPONENT/
+git add kubernetes/overlays/homelab/projects/infrastructure.yaml  # only if modified
+git commit -m "feat($COMPONENT): onboard $NAMESPACE namespace"
 git push
 ```
 
-### 10. Post-push verification (after ArgoCD sync)
+### 11. Post-push verification (after ArgoCD sync)
 
-Run:
+ArgoCD's default polling interval is up to 3 minutes. After pushing, wait for sync before checking. Run:
 ```bash
-KUBECONFIG=<kubeconfig> kubectl get ns <namespace> --show-labels
-KUBECONFIG=<kubeconfig> kubectl get application -n argocd <component>
-KUBECONFIG=<kubeconfig> kubectl get policyreport -n <namespace>
+KUBECONFIG=$KUBECONFIG kubectl -n argocd get application $COMPONENT -w --timeout=5m
+```
+Wait until Application shows `Synced` and `Healthy`. Then verify:
+```bash
+KUBECONFIG=$KUBECONFIG kubectl get ns $NAMESPACE --show-labels
+KUBECONFIG=$KUBECONFIG kubectl get policyreport -n $NAMESPACE
 ```
 
-Confirm:
-- Namespace exists with correct PNI labels
-- ArgoCD Application is Healthy+Synced
-- No Kyverno policy violations in the PolicyReport
+If Application is not Healthy within 5 minutes, suggest `/gitops-health-triage` for diagnosis.
+Confirm: namespace exists with correct PNI labels, no Kyverno policy violations in PolicyReport.
 
 ## Hard Rules
 
+- Phase 1 is planning only — no Write or Edit tools until after Phase 2 confirmation
 - NEVER set provider-reserved labels on consumer namespaces
 - NEVER `kubectl apply` ArgoCD-managed resources — git commit + push only
 - Do NOT opt `privileged` namespaces into `gateway-backend` (activates default-deny without matching policies)
 - Capabilities MUST exist in the registry before consumer opt-in
-- All files MUST pass Kyverno admission validation before committing
+- AppProject changes must be included in the same commit as the new Application CR — never in a separate commit

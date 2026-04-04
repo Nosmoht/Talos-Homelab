@@ -5,10 +5,11 @@ INPUT=$(cat)
 COMMAND=$(jq -r '.tool_input.command // empty' <<< "$INPUT" 2>/dev/null)
 [ -z "$COMMAND" ] && exit 0
 
-# Only intercept kubectl drain commands
-if [[ "$COMMAND" =~ kubectl[[:space:]].*drain ]]; then
-  # Extract node name — BSD-compatible (no grep -oP on macOS)
-  NODE=$(echo "$COMMAND" | sed -n 's/.*drain[[:space:]]\{1,\}\([^[:space:]-][^[:space:]]*\).*/\1/p' | head -1)
+# Only intercept kubectl drain subcommand (must be followed by a space and argument)
+if [[ "$COMMAND" =~ kubectl[[:space:]]+drain[[:space:]] ]]; then
+  # Extract node name — skip flag tokens (starting with -), take first non-flag token after drain
+  # BSD-compatible: uses tr and grep -v (no grep -oP on macOS)
+  NODE=$(echo "$COMMAND" | sed 's/.*drain//' | tr ' ' '\n' | grep -v '^-' | grep -v '^$' | head -1)
   [ -z "$NODE" ] && exit 0
 
   # Check for degraded DRBD resources cluster-wide

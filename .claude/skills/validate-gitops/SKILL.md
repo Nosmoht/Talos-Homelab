@@ -3,15 +3,21 @@ name: validate-gitops
 description: "Run the full GitOps validation pipeline: kustomize render, conftest OPA, kubeconform schema, Kyverno dry-run, and trivy scan. Interprets failures with file-level detail."
 argument-hint: "[--overlay <overlay>] [--skip-trivy]"
 disable-model-invocation: true
-allowed-tools: Bash, Read, Grep, Write
+allowed-tools: Bash, Read, Grep
 ---
 
 # Validate GitOps
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` for the overlay name (default: `homelab`).
+Read `.claude/environment.yaml` for the overlay name and kubeconfig path.
 If the file is missing, use `homelab` as the overlay name.
+
+Extract before running any commands:
+```bash
+OVERLAY=$(yq '.cluster.overlay // "homelab"' .claude/environment.yaml)
+KUBECONFIG=$(yq '.kubeconfig' .claude/environment.yaml)
+```
 
 ## Reference Files
 
@@ -68,7 +74,7 @@ If non-zero exit, stop and report:
 
 Run:
 ```bash
-KUBECONFIG=<kubeconfig> kubectl apply -k kubernetes/overlays/<overlay> --dry-run=client
+KUBECONFIG=$KUBECONFIG kubectl apply -k kubernetes/overlays/$OVERLAY --dry-run=client
 ```
 
 This catches resource kind/version mismatches that kustomize render passes through. If non-zero, report the specific resource and API version conflict.

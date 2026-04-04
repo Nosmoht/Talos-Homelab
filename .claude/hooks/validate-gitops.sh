@@ -16,15 +16,20 @@ if [[ "$COMMAND" =~ git[[:space:]]commit ]]; then
     exit 0
   fi
 
-  # Run kustomize render (the most common failure)
-  if ! kubectl kustomize kubernetes/overlays/homelab > /dev/null 2>&1; then
-    echo "validate-gitops FAILED: kustomize render error. Run 'kubectl kustomize kubernetes/overlays/homelab' to see details." >&2
+  # Render once to a temp file (avoid double render, capture stderr for diagnosis)
+  RENDERED=$(mktemp)
+  RENDER_ERR=$(mktemp)
+  trap 'rm -f "$RENDERED" "$RENDER_ERR"' EXIT
+
+  if ! kubectl kustomize kubernetes/overlays/homelab > "$RENDERED" 2>"$RENDER_ERR"; then
+    echo "validate-gitops FAILED: kustomize render error:" >&2
+    tail -20 "$RENDER_ERR" >&2
     exit 2
   fi
 
   # Run kubeconform on rendered output (quick schema check)
   if command -v kubeconform &> /dev/null; then
-    if ! kubectl kustomize kubernetes/overlays/homelab 2>/dev/null | kubeconform -strict -ignore-missing-schemas > /dev/null 2>&1; then
+    if ! kubeconform -strict -ignore-missing-schemas < "$RENDERED" > /dev/null 2>&1; then
       echo "validate-gitops FAILED: kubeconform schema error. Run 'kubectl kustomize kubernetes/overlays/homelab | kubeconform -strict -ignore-missing-schemas' for details." >&2
       exit 2
     fi

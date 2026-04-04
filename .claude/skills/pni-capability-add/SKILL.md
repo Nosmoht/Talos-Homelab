@@ -13,6 +13,11 @@ allowed-tools: Bash, Read, Grep, Glob, Write, Edit
 Read `.claude/environment.yaml` for kubeconfig path.
 If the file is missing, stop: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
 
+Extract before running any commands:
+```bash
+KUBECONFIG=$(yq '.kubeconfig' .claude/environment.yaml)
+```
+
 ## Reference Files
 
 Read before acting:
@@ -35,14 +40,17 @@ Read each one to understand the selector and port patterns.
 
 ## Scope Guard
 
+Before proceeding, run this check:
+```bash
+grep "<capability-name>" kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml
+```
+If the capability name is found, stop: "Capability '<name>' already registered. To modify it, edit the existing CCNP and update docs/platform-network-interface.md."
+
 If the user wants to onboard a CONSUMER namespace (not add a new capability):
-- Suggest `/onboard-workload-namespace` instead.
+- Stop. Suggest `/onboard-workload-namespace` instead.
 
 If the user wants to debug a CNP traffic drop:
-- Suggest `/cilium-policy-debug` instead.
-
-If the capability already exists in `capability-registry-configmap.yaml`:
-- Stop and report: "Capability '<name>' already registered. To modify it, edit the existing CCNP and update docs/platform-network-interface.md."
+- Stop. Suggest `/cilium-policy-debug` instead.
 
 ## Workflow
 
@@ -53,9 +61,23 @@ Determine from `--type`:
 - `ingress`: Platform service initiates traffic TO consumer namespaces. CCNP required.
 - `api-only`: Contract-only (e.g., tls-issuance, storage-csi, logging-ship) — no CCNP needed; only registry + Kyverno + docs entries.
 
-### 2. Author the CCNP (skip for api-only)
+### 2. Look up provider port (skip for api-only)
 
-File path:
+Determine the container port (post-DNAT) for the provider component. Service ports are NOT the same as container ports — do not use Service `port:` values.
+
+Run:
+```bash
+KUBECONFIG=$KUBECONFIG kubectl get service -n <provider-ns> -o jsonpath='{.items[*].spec.ports[*]}'
+KUBECONFIG=$KUBECONFIG kubectl get endpoints -n <provider-ns> -o wide
+```
+
+Identify the target container port from the endpoints output (`ENDPOINTS` column shows `<ip>:<port>`). Use that port in the CCNP `toPorts` field.
+
+If the provider is not yet deployed, check `docs/platform-network-interface.md` for a documented port, or ask the user.
+
+### 3. Draft CCNP (skip for api-only)
+
+Draft file path:
 ```
 kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/ccnp-pni-<capability>-consumer-<egress|ingress>.yaml
 ```
@@ -63,43 +85,39 @@ kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/
 Rules:
 - Use namespace-label selectors: `k8s:io.cilium.k8s.namespace.labels.platform.io/consume.<capability>: "true"`
 - Never encode namespace names or Deployment names in consumer-side selectors
-- Include explicit `toPorts` with container ports (post-DNAT, not service ports)
+- Include explicit `toPorts` with the container port from Step 2 (post-DNAT, not service port)
 - Apply `app.kubernetes.io/*` recommended labels
 - Follow naming from `.claude/rules/cilium-network-policy.md`
 
-### 3. Register in capability registry
+### 4. Draft registry entry
 
-Add capability name to `capability-registry-configmap.yaml` under the appropriate section (egress, ingress, or api-only).
+Prepare the new capability name entry for `capability-registry-configmap.yaml` under the appropriate section (egress, ingress, or api-only).
 
-### 4. Update Kyverno allowlist
+### 5. Draft Kyverno allowlist entry
 
-Add capability name to the allowlist array in:
+Prepare the new capability name addition to the allowlist array in:
 ```
 kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/kyverno-clusterpolicy-pni-capability-validation-enforce.yaml
 ```
 
-Verify the JMESPath expression is syntactically valid (check for balanced brackets and correct array syntax).
+### 6. Draft documentation row
 
-### 5. Update documentation
-
-Add a row to the capability table in `docs/platform-network-interface.md`:
+Prepare a new row for the capability table in `docs/platform-network-interface.md`:
 - Capability name, type, provider, description, CCNP file (or "N/A" for api-only)
 
-Update the "Current Policy Coverage" section if present.
+### 7. User Confirmation Gate
 
-## User Confirmation Gate
+Present all drafted changes for user review before writing anything:
+- CCNP (if applicable): show the full YAML
+- Registry: `capability-registry-configmap.yaml` — show the new entry in context
+- Kyverno: show the new allowlist entry in context
+- Docs: show the new table row
 
-Present all changed files and their diffs for user review before writing:
-- CCNP (if applicable): `ccnp-pni-<capability>-consumer-<direction>.yaml`
-- Registry: `capability-registry-configmap.yaml` (new entry)
-- Kyverno: `kyverno-clusterpolicy-pni-capability-validation-enforce.yaml` (new entry)
-- Docs: `docs/platform-network-interface.md` (new table row)
+Wait for explicit confirmation before writing any file.
 
-Wait for explicit confirmation before writing.
+### 8. Write files and validate
 
-### 6. Validate
-
-Run:
+Write all approved files, then run:
 ```bash
 make validate-kyverno-policies
 kubectl kustomize kubernetes/overlays/homelab > /dev/null
@@ -107,7 +125,7 @@ kubectl kustomize kubernetes/overlays/homelab > /dev/null
 
 If either fails, stop: "Validation failed. See the error above and fix before committing."
 
-### 7. Atomic commit
+### 9. Atomic commit
 
 All changed files MUST be in a single commit:
 ```bash
@@ -122,6 +140,7 @@ git commit -m "feat(pni): add <capability-name> capability"
 
 - CCNP naming MUST follow: `ccnp-pni-<capability>-consumer-egress.yaml` or `-ingress.yaml`
 - Never set provider-reserved labels on consumer selectors (`platform.io/provider`, `platform.io/managed-by`, `platform.io/capability`)
-- Do NOT opt `privileged` namespaces into `gateway-backend` or `internet-egress`
+- Do NOT opt `privileged` namespaces (`network-profile: privileged`) into `gateway-backend` or `internet-egress`
 - All 4 changes (CCNP, registry, Kyverno, docs) MUST land in a single commit — no partial states
 - Never `kubectl apply` directly — these are ArgoCD-managed; git commit + push only
+- The duplicate-capability check (Scope Guard) MUST run before any authoring begins
