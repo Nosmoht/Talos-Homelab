@@ -307,16 +307,19 @@ Do not improvise a downgrade or reset flow unless the approved plan explicitly c
 ### 11. Final verification
 Do not declare success until the target state is verified.
 
-Confirm:
+Run `/cluster-health-snapshot` for a structured 5-layer health check (Talos, K8s, Cilium, LINSTOR, PKI):
+```
+/cluster-health-snapshot
+```
+
+Confirm in addition to the snapshot output:
 - live Talos version equals approved `to_version` on every node
 - repo pin equals approved `to_version`
-- etcd is healthy
+- etcd is healthy with 3 voters and 0 learners
 - all nodes are Ready
-- Cilium and core cluster services are healthy
-- storage health is normal
 - any coupled Kubernetes or Cilium steps from the plan are complete
 
-Capture final evidence in the run record.
+Capture both the cluster-health-snapshot output and the final verification in the run record.
 
 ## Output
 Return a concise execution summary with:

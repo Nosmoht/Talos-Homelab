@@ -97,6 +97,14 @@ Search for Cilium dependencies and managed resources with `rg` before writing th
 
 Before starting web research, check for prior experience and external intelligence:
 
+0. **Check KB for existing research first:**
+   Before any web research or doc scanning, run:
+   ```
+   kb.search("<from-version> <to-version> cilium upgrade")
+   kb.search("cilium <to-version> breaking changes gateway api")
+   ```
+   If the KB returns recent (<30 days), grounded results covering the target version's breaking changes, eBPF datapath changes, and Gateway API behavior, use those findings directly and skip or reduce web research scope. After completing research, persist novel findings via `kb.create_source` and `kb.create_memo` so future upgrade plans can reuse them.
+
 1. **Search existing docs for prior upgrade experience:**
    - Grep `docs/` for `cilium.*<target-version>` and related terms (postmortems, upgrade reports, debug logs)
    - Read any matching files to extract lessons learned

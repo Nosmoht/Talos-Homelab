@@ -277,15 +277,19 @@ Do not improvise a direct-apply rollback unless the incident response explicitly
 ### 11. Final verification
 Do not declare success until the target state is verified.
 
-Confirm:
+Run `/cluster-health-snapshot` for a structured 5-layer health check (Talos, K8s, Cilium, LINSTOR, PKI):
+```
+/cluster-health-snapshot
+```
+
+Confirm in addition to the snapshot output:
 - live Cilium version equals approved `to_version`
 - repo pin equals approved `to_version`
-- cilium and cilium-operator are healthy
 - all nodes have healthy `ciliumnode` objects
 - Gateway API, Hubble, and L2/VIP behavior are normal
 - Argo CD applications are healthy or only show expected transient reconciliation
 
-Capture final evidence in the run record.
+Capture both the cluster-health-snapshot output and the final verification in the run record.
 
 ## Output
 Return a concise execution summary with:
