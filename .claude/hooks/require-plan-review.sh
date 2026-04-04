@@ -14,7 +14,8 @@ PLAN_DIR="$CLAUDE_PROJECT_DIR/Plans"
 
 # Find the most recently modified plan file
 PLAN_FILE=$(ls -t "$PLAN_DIR"/*.md 2>/dev/null | head -1)
-[ -z "$PLAN_FILE" ] || [ ! -f "$PLAN_FILE" ] && exit 0
+[ -z "$PLAN_FILE" ] && exit 0
+[ ! -f "$PLAN_FILE" ] && exit 0
 
 # Check if plan references infrastructure paths
 if ! grep -qE 'kubernetes/|talos/|bootstrap/|\.claude/hooks/' "$PLAN_FILE"; then

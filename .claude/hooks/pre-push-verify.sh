@@ -24,7 +24,7 @@ if [[ "$COMMAND" =~ git[[:space:]]push ]]; then
   echo "Infrastructure push: $FILE_COUNT file(s) changed. Post-push verification checklist:" >&2
   echo "$PREVIEW" | sed 's/^/  /' >&2
   [ "$FILE_COUNT" -gt 10 ] && echo "  ... and $((FILE_COUNT - 10)) more" >&2
-  echo "  [ ] ArgoCD sync: kubectl get applications -A -o wide | grep -v Synced" >&2
+  echo "  [ ] ArgoCD sync+health: kubectl get applications -A -o wide | grep -vE 'Synced.*Healthy'" >&2
   echo "  [ ] Pod health:  kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded" >&2
   echo "  [ ] Events:      kubectl get events -A --sort-by=.lastTimestamp | tail -20" >&2
 fi
