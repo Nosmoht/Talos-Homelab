@@ -25,6 +25,11 @@ paths:
 - **Hook Job completed but operationState stuck**: If a hook Job is deleted (DeletePolicy) before ArgoCD observes completion, sync hangs. Clear `/status/operationState` via patch then refresh
 - **Force refresh after push**: `kubectl annotate application <app> -n argocd argocd.argoproj.io/refresh=hard --overwrite`
 
+## Helm Chart Upgrade Gotchas
+- **Validate values.yaml keys against target chart version**: Run `helm show values <repo>/<chart> --version <target>` and confirm all key paths. Helm silently ignores unknown keys — top-level keys that worked in one version may become no-ops after chart restructuring (e.g., `serviceMonitor.enabled` vs `component.prometheus.serviceMonitor.enabled`). Validate with `helm template` before committing.
+- **CRD schema defaulting causes perpetual OutOfSync**: When a chart upgrade adds or changes CRD schema defaults (e.g., new fields with default values), the API server injects those defaults into existing CRs. ArgoCD sees the extra fields as drift. Fix: add the defaulted fields explicitly to CR manifests in git. Do not use `ignoreDifferences` — it masks real drift. Identify diffs with `kubectl get <cr> -o json` vs git source.
+- **CRDs without managedFields block SSA normalization**: Some CRDs (e.g., TracingPolicy) use `x-kubernetes-preserve-unknown-fields` which prevents SSA from tracking field ownership. Re-applying with `--server-side --force-conflicts` won't help — you must align git manifests with server-defaulted state.
+
 ## Resource Management Gotchas
 - **SharedResourceWarning (Namespace)**: When upstream sources include a Namespace resource, don't redefine it in root app — use `spec.source.kustomize.patches` on the child Application to add labels instead
 - **OCI Helm repos**: Use `repoURL: ghcr.io/<org>/<repo>` (no `oci://` prefix), `chart: <name>`. AppProject `sourceRepos` needs glob: `ghcr.io/<org>/<repo>*`
