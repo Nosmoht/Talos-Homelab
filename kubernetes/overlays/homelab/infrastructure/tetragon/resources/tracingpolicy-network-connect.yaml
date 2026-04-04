@@ -23,5 +23,5 @@ spec:
       args:
         - index: 0
           type: "sock"
-      selectors:
-        - matchArgs: []
+      # No selectors: trace all TCP connections from matched pods (kube-system, argocd, tetragon).
+      # Note: gVisor-sandboxed pods bypass tcp_connect in the host kernel and are not visible here.
