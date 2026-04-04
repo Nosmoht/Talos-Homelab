@@ -42,9 +42,7 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
+              "color": { "mode": "palette-classic" },
               "custom": {
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
@@ -54,70 +52,34 @@ data:
                 "drawStyle": "line",
                 "fillOpacity": 10,
                 "gradientMode": "none",
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
+                "hideFrom": { "tooltip": false, "viz": false, "legend": false },
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
+                "scaleDistribution": { "type": "linear" },
                 "showPoints": "never",
                 "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
+                "steps": [{ "color": "green", "value": null }]
               },
               "unit": "short"
             },
             "overrides": []
           },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 0
-          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
           "id": 1,
           "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
               "expr": "rate(tetragon_events_total[5m])",
               "refId": "A",
               "legendFormat": "{{type}}"
@@ -133,49 +95,28 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "thresholds"
-              },
+              "color": { "mode": "thresholds" },
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  }
-                ]
+                "steps": [{ "color": "green", "value": null }]
               },
               "unit": "short"
             },
             "overrides": []
           },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 0
-          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
           "id": 2,
           "options": {
             "orientation": "auto",
-            "reduceOptions": {
-              "values": false,
-              "calcs": [
-                "lastNotNull"
-              ],
-              "fields": ""
-            },
+            "reduceOptions": { "values": false, "calcs": ["lastNotNull"], "fields": "" },
             "showThresholdLabels": false,
             "showThresholdMarkers": true
           },
           "pluginVersion": "10.0.0",
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
               "expr": "sum(tetragon_events_total)",
               "refId": "A"
             }
@@ -190,259 +131,170 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
               "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
+                "align": "auto",
+                "displayMode": "auto",
+                "filterable": false
               },
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  }
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 1 }
                 ]
               },
               "unit": "short"
             },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 8
-          },
-          "id": 3,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "expr": "rate(tetragon_policy_events_total[5m])",
-              "refId": "A",
-              "legendFormat": "{{policy}}"
-            }
-          ],
-          "title": "Policy Events Rate",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "state" },
+                "properties": [
                   {
-                    "color": "green",
-                    "value": null
-                  }
-                ]
-              },
-              "unit": "short"
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 8
-          },
-          "id": 4,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "expr": "rate(tetragon_syscalls_total[5m])",
-              "refId": "A",
-              "legendFormat": "{{syscall}}"
-            }
-          ],
-          "title": "System Calls Rate",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${DS_PROMETHEUS}"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisCenteredZero": false,
-                "axisColorMode": "text",
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 10,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "never",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
+                    "id": "custom.displayMode",
+                    "value": "color-background"
                   },
                   {
-                    "color": "red",
-                    "value": 80
+                    "id": "mappings",
+                    "value": [
+                      { "options": { "enabled": { "color": "green", "index": 0, "text": "enabled" } }, "type": "value" },
+                      { "options": { "disabled": { "color": "orange", "index": 1, "text": "disabled" } }, "type": "value" },
+                      { "options": { "error": { "color": "red", "index": 2, "text": "error" } }, "type": "value" },
+                      { "options": { "load_error": { "color": "red", "index": 3, "text": "load_error" } }, "type": "value" }
+                    ]
                   }
+                ]
+              }
+            ]
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+          "id": 3,
+          "options": {
+            "footer": { "show": false },
+            "showHeader": true
+          },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "tetragon_tracingpolicy_loaded",
+              "refId": "A",
+              "legendFormat": "",
+              "instant": true
+            }
+          ],
+          "title": "TracingPolicy State (per node / policy)",
+          "transformations": [
+            {
+              "id": "labelsToFields",
+              "options": { "mode": "columns" }
+            }
+          ],
+          "type": "table"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": { "tooltip": false, "viz": false, "legend": false },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": { "type": "linear" },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [{ "color": "green", "value": null }]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+          "id": 4,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "rate(tetragon_msg_op_total[5m])",
+              "refId": "A",
+              "legendFormat": "op={{msg_op}} node={{node}}"
+            }
+          ],
+          "title": "Event Processing Rate by Operation",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": { "tooltip": false, "viz": false, "legend": false },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": { "type": "linear" },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  { "color": "green", "value": null },
+                  { "color": "red", "value": 80 }
                 ]
               },
               "unit": "bytes"
             },
             "overrides": []
           },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 16
-          },
+          "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
           "id": 5,
           "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
               "expr": "process_resident_memory_bytes{job=\"tetragon\"}",
               "refId": "A",
-              "legendFormat": "{{pod}}"
+              "legendFormat": "{{node}}"
             }
           ],
           "title": "Tetragon Memory Usage",
@@ -455,9 +307,7 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
+              "color": { "mode": "palette-classic" },
               "custom": {
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
@@ -467,69 +317,37 @@ data:
                 "drawStyle": "line",
                 "fillOpacity": 10,
                 "gradientMode": "none",
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
+                "hideFrom": { "tooltip": false, "viz": false, "legend": false },
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
+                "scaleDistribution": { "type": "linear" },
                 "showPoints": "never",
                 "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  }
-                ]
+                "steps": [{ "color": "green", "value": null }]
               },
               "unit": "percent"
             },
             "overrides": []
           },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 16
-          },
+          "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
           "id": 6,
           "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
               "expr": "rate(process_cpu_seconds_total{job=\"tetragon\"}[5m]) * 100",
               "refId": "A",
-              "legendFormat": "{{pod}}"
+              "legendFormat": "{{node}}"
             }
           ],
           "title": "Tetragon CPU Usage",
@@ -542,9 +360,7 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
+              "color": { "mode": "palette-classic" },
               "custom": {
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
@@ -554,69 +370,37 @@ data:
                 "drawStyle": "line",
                 "fillOpacity": 10,
                 "gradientMode": "none",
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
+                "hideFrom": { "tooltip": false, "viz": false, "legend": false },
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
+                "scaleDistribution": { "type": "linear" },
                 "showPoints": "never",
                 "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
               },
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  }
-                ]
+                "steps": [{ "color": "green", "value": null }]
               },
               "unit": "short"
             },
             "overrides": []
           },
-          "gridPos": {
-            "h": 8,
-            "w": 24,
-            "x": 0,
-            "y": 24
-          },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
           "id": 7,
           "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
               "expr": "rate(tetragon_events_total{type=\"PROCESS_EXEC\"}[5m])",
               "refId": "A",
-              "legendFormat": "{{namespace}}/{{pod}}"
+              "legendFormat": "{{namespace}}/{{pod}} node={{node}}"
             }
           ],
           "title": "Process Execution Events",
@@ -629,9 +413,7 @@ data:
           },
           "fieldConfig": {
             "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
+              "color": { "mode": "palette-classic" },
               "custom": {
                 "axisCenteredZero": false,
                 "axisColorMode": "text",
@@ -641,72 +423,167 @@ data:
                 "drawStyle": "line",
                 "fillOpacity": 10,
                 "gradientMode": "none",
-                "hideFrom": {
-                  "tooltip": false,
-                  "viz": false,
-                  "legend": false
-                },
+                "hideFrom": { "tooltip": false, "viz": false, "legend": false },
                 "lineInterpolation": "linear",
                 "lineWidth": 1,
                 "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
+                "scaleDistribution": { "type": "linear" },
                 "showPoints": "never",
                 "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [{ "color": "green", "value": null }]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 32 },
+          "id": 8,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "rate(tetragon_observer_ringbuf_events_received_total[5m])",
+              "refId": "A",
+              "legendFormat": "received node={{node}}"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "rate(tetragon_observer_ringbuf_queue_events_received_total[5m])",
+              "refId": "B",
+              "legendFormat": "queue-received node={{node}}"
+            }
+          ],
+          "title": "eBPF Ringbuf Events Received",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": { "tooltip": false, "viz": false, "legend": false },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": { "type": "linear" },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "line+area" }
               },
               "mappings": [],
               "thresholds": {
                 "mode": "absolute",
                 "steps": [
-                  {
-                    "color": "green",
-                    "value": null
-                  }
+                  { "color": "transparent", "value": null },
+                  { "color": "red", "value": 0.001 }
                 ]
               },
               "unit": "short"
             },
             "overrides": []
           },
-          "gridPos": {
-            "h": 8,
-            "w": 24,
-            "x": 0,
-            "y": 32
-          },
-          "id": 8,
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 40 },
+          "id": 9,
           "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom",
-              "showLegend": true
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "multi", "sort": "none" }
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "${DS_PROMETHEUS}"
-              },
-              "expr": "rate(tetragon_policy_events_total{policy=\"network-connect-external\"}[5m])",
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "rate(tetragon_observer_ringbuf_events_lost_total[5m])",
               "refId": "A",
-              "legendFormat": "{{hook}}"
+              "legendFormat": "ringbuf-lost node={{node}}"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "rate(tetragon_observer_ringbuf_queue_events_lost_total[5m])",
+              "refId": "B",
+              "legendFormat": "queue-lost node={{node}}"
+            },
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "rate(tetragon_missed_prog_probes_total[5m])",
+              "refId": "C",
+              "legendFormat": "missed-probe policy={{policy}} attach={{attach}}"
             }
           ],
-          "title": "Network Events",
+          "title": "Event Loss (CRITICAL — any non-zero means dropped security events)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${DS_PROMETHEUS}"
+          },
+          "fieldConfig": {
+            "defaults": {
+              "color": { "mode": "palette-classic" },
+              "custom": {
+                "axisCenteredZero": false,
+                "axisColorMode": "text",
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 10,
+                "gradientMode": "none",
+                "hideFrom": { "tooltip": false, "viz": false, "legend": false },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": { "type": "linear" },
+                "showPoints": "never",
+                "spanNulls": false,
+                "stacking": { "group": "A", "mode": "none" },
+                "thresholdsStyle": { "mode": "off" }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [{ "color": "green", "value": null }]
+              },
+              "unit": "short"
+            },
+            "overrides": []
+          },
+          "gridPos": { "h": 8, "w": 24, "x": 0, "y": 48 },
+          "id": 10,
+          "options": {
+            "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true },
+            "tooltip": { "mode": "single", "sort": "none" }
+          },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+              "expr": "rate(tetragon_handler_errors_total[5m])",
+              "refId": "A",
+              "legendFormat": "{{error_type}} node={{node}}"
+            }
+          ],
+          "title": "Handler Errors",
           "type": "timeseries"
         }
       ],
@@ -749,6 +626,6 @@ data:
       "timezone": "",
       "title": "Tetragon Runtime Security Metrics",
       "uid": "tetragon-metrics",
-      "version": 1,
+      "version": 2,
       "weekStart": ""
     }
