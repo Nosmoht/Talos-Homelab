@@ -16,7 +16,7 @@ spec:
   sources:
     - repoURL: https://helm.cilium.io/
       chart: tetragon
-      targetRevision: 1.2.1
+      targetRevision: 1.6.1
       helm:
         valueFiles:
           - $values/kubernetes/base/infrastructure/tetragon/values.yaml
