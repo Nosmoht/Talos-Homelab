@@ -20,8 +20,12 @@ spec:
   kprobes:
     - call: "tcp_connect"
       syscall: false
+      return: false
       args:
         - index: 0
           type: "sock"
+          maxData: false
+          resolve: ""
+          returnCopy: false
       # No selectors: trace all TCP connections from matched pods (kube-system, argocd, tetragon).
       # Note: gVisor-sandboxed pods bypass tcp_connect in the host kernel and are not visible here.

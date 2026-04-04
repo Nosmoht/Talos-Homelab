@@ -20,8 +20,12 @@ spec:
   kprobes:
     - call: "sys_execve"
       syscall: true
+      return: false
       args:
         - index: 0
           type: "string"
+          maxData: false
+          resolve: ""
+          returnCopy: false
       selectors:
         - matchArgs: []

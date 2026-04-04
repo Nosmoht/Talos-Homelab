@@ -22,13 +22,23 @@ spec:
   kprobes:
     - call: "sys_openat"
       syscall: true
+      return: false
       args:
         - index: 0
           type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
         - index: 1
           type: "string"
+          maxData: false
+          resolve: ""
+          returnCopy: false
         - index: 2
           type: "int"
+          maxData: false
+          resolve: ""
+          returnCopy: false
       selectors:
         - matchArgs:
             - index: 1
