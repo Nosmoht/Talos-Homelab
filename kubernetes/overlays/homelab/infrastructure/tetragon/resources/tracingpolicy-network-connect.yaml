@@ -18,14 +18,10 @@ spec:
           - argocd
           - tetragon
   kprobes:
-    - call: "sys_connect"
-      syscall: true
+    - call: "tcp_connect"
+      syscall: false
       args:
         - index: 0
-          type: "int"
-        - index: 1
-          type: "sock_addr"
-        - index: 2
-          type: "int"
+          type: "sock"
       selectors:
         - matchArgs: []
