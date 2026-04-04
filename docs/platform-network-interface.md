@@ -109,6 +109,7 @@ Admission policy (Kyverno) enforces this separation.
 | `gpu-runtime` | `nvidia-device-plugin`, `nvidia-dcgm-exporter`, `node-feature-discovery` | GPU workload scheduling and telemetry |
 | `hpa-metrics` | `metrics-server` | Resource metrics for autoscaling |
 | `internet-egress` | `cilium` | Egress to public internet (all ports) |
+| `controlplane-egress` | `kube-apiserver` | kube-apiserver + DNS access for Kubernetes controllers |
 
 ## Onboarding Workflow (Consumer)
 
@@ -126,16 +127,11 @@ The following core flows are currently implemented through platform-owned PNI po
 - Monitoring DNS visibility: `monitoring` -> `kube-dns` (`53/TCP,UDP`)
 - Monitoring scrape to Vault Config Operator metrics: `prometheus` -> `vault-config-operator` (`8443/TCP`)
 - Monitoring scrape to External Secrets metrics: `prometheus` -> `external-secrets`, `external-secrets-webhook`, `external-secrets-cert-controller` (`8080/TCP`)
-- Redis operator control-plane baseline: `redis-operator` -> API server + DNS
+- Controlplane egress (consolidated): all namespaces with `consume.controlplane-egress=true` -> API server (`10.96.0.1:443` + `kube-apiserver:6443`) + DNS — covers cert-manager, external-secrets, vault, cnpg-system, redis-system, kafka, piraeus-datastore, minio-operator
 - Redis operator data-plane access: `redis-operator` -> managed Redis pods (`6379/TCP`, `26379/TCP`)
-- Strimzi operator control-plane baseline: `strimzi-cluster-operator` -> API server + DNS
 - Strimzi operator data-plane access: `strimzi-cluster-operator` -> managed Kafka pods (`9090/TCP`, `9091/TCP`, `9092/TCP`)
-- Vault operator control-plane baseline: `vault-operator` -> API server + DNS
-- External Secrets operator control-plane baseline: `external-secrets` -> API server + DNS
-- CNPG operator control-plane baseline: `cloudnative-pg` -> API server + DNS + managed CNPG pods (`5432/TCP`, `8000/TCP`)
+- CNPG operator data-plane access: `cloudnative-pg` -> managed CNPG pods (`5432/TCP`, `8000/TCP`)
 - Vault CA distribution for consumers: `cert-manager/vault-ca` -> namespaces labeled `platform.io/network-interface-version=v1` and `platform.io/consume.vault-secrets=true`
-- MinIO operator control-plane baseline: `minio-operator` -> API server + DNS
-- Piraeus operator control-plane baseline: `piraeus-operator` -> API server + DNS
 
 ### Consumer Capability Policies
 
@@ -153,6 +149,9 @@ Most consumer CCNPs are **egress** grants (consumer -> provider). The `gateway-b
 - Redis managed: namespaces with `consume.redis-managed=true` -> Redis pods (`6379/TCP`) + DNS
 - Kafka managed: namespaces with `consume.kafka-managed=true` -> Kafka broker pods (`9092/TCP`) + DNS
 - Internet egress: namespaces with `consume.internet-egress=true` -> public internet via `toCIDRSet 0.0.0.0/0` excluding RFC1918 (all ports/protocols) + DNS
+- Controlplane egress: namespaces with `consume.controlplane-egress=true` -> kube-apiserver (`10.96.0.1:443` + `kube-apiserver:6443`) + kube-dns (`53/UDP,TCP`)
+
+> **Platform operator capability**: `controlplane-egress` is consumed by platform operator namespaces (cert-manager, external-secrets, vault-operator, cnpg-system, etc.), not application workload namespaces. Application teams interact with the API server through CRDs and controllers — no direct pod-to-apiserver network path is needed. This capability replaces 7 per-operator CCNPs with a single namespace-label-based policy, covering all pods in the opted-in namespace including sidecar controllers (e.g., `external-secrets-cert-controller`).
 
 #### Ingress (gateway proxy -> consumer)
 

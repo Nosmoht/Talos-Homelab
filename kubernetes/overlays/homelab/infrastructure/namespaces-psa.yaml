@@ -60,6 +60,7 @@ metadata:
     platform.io/network-interface-version: v1
     platform.io/network-profile: managed
     platform.io/consume.monitoring-scrape: "true"
+    platform.io/consume.controlplane-egress: "true"
     pod-security.kubernetes.io/enforce: restricted
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/audit: restricted
@@ -136,6 +137,7 @@ metadata:
     platform.io/network-interface-version: v1
     platform.io/network-profile: managed
     platform.io/consume.monitoring-scrape: "true"
+    platform.io/consume.controlplane-egress: "true"
     pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/audit: restricted
@@ -155,6 +157,7 @@ metadata:
     platform.io/network-interface-version: v1
     platform.io/network-profile: managed
     platform.io/consume.monitoring-scrape: "true"
+    platform.io/consume.controlplane-egress: "true"
     pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/audit: restricted
@@ -284,6 +287,7 @@ metadata:
     platform.io/network-profile: managed
     platform.io/consume.monitoring-scrape: "true"
     platform.io/consume.gateway-backend: "true"
+    platform.io/consume.controlplane-egress: "true"
     pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/audit: restricted
