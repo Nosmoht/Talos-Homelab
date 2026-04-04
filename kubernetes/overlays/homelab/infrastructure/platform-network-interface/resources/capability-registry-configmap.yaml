@@ -60,3 +60,6 @@ data:
       - id: internet-egress
         providers:
           - cilium
+      - id: controlplane-egress
+        providers:
+          - kube-apiserver
