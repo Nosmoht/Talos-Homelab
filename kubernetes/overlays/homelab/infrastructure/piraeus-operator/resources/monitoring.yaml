@@ -46,29 +46,6 @@ spec:
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: linstor-csi-nfs
-  namespace: monitoring
-  labels:
-    app.kubernetes.io/name: piraeus-datastore
-    app.kubernetes.io/instance: homelab
-    app.kubernetes.io/component: monitoring
-    app.kubernetes.io/part-of: homelab
-    app.kubernetes.io/managed-by: argocd
-    monitoring: default
-spec:
-  namespaceSelector:
-    matchNames:
-      - piraeus-datastore
-  selector:
-    matchLabels:
-      app.kubernetes.io/component: linstor-csi-nfs
-  endpoints:
-    - port: metrics
-      interval: 30s
----
-apiVersion: monitoring.coreos.com/v1
-kind: ServiceMonitor
-metadata:
   name: linstor-controller
   namespace: monitoring
   labels:

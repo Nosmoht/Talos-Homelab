@@ -14,6 +14,5 @@ resources:
   - cnp-linstor-satellite.yaml
   - cnp-ha-controller.yaml
   - cnp-linstor-csi-controller.yaml
-  - cnp-linstor-csi-nfs-server.yaml
   - cnp-linstor-affinity-controller.yaml
   - cnp-linstor-storage-pool-autovg.yaml

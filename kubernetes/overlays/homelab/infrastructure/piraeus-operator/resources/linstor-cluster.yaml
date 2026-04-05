@@ -12,6 +12,8 @@ metadata:
 spec:
   nodeSelector:
     feature.node.kubernetes.io/storage-nvme.present: "true"
+  nfsServer:
+    enabled: false
   apiTLS:
     certManager:
       kind: Issuer
