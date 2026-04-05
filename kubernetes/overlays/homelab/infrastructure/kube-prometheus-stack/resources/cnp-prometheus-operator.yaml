@@ -22,9 +22,11 @@ spec:
         - ports:
             - port: "10250"
               protocol: TCP
-    # kube-apiserver webhook calls
+    # kube-apiserver webhook calls (host/remote-node: SNAT'd via cilium_host across nodes)
     - fromEntities:
         - kube-apiserver
+        - host
+        - remote-node
       toPorts:
         - ports:
             - port: "10250"
