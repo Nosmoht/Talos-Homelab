@@ -286,6 +286,21 @@ kubectl get csr
 kubectl certificate approve <csr-name>
 ```
 
+### XFS Corruption on DRBD Volume
+
+**Symptom:** Pod stuck in ContainerCreating. Events show mount exit code 32
+or "bad superblock" on `/dev/drbd<N>`. CSI logs show promote/demote loop repeating every ~2 minutes.
+
+**Cause:** Unclean DRBD demotion (node crash, power loss) corrupts XFS metadata.
+
+**Fix:**
+```
+/linstor-volume-repair --resource <linstor-resource-name> --node <node-name>
+```
+
+Manual steps: scale down workload → promote DRBD in satellite pod → `xfs_repair /dev/drbd<N>` → demote → scale up.
+Find resource name with `kubectl linstor resource list`. Find DRBD minor with `kubectl linstor volume list -r <resource>`.
+
 ### LINSTOR Controller CrashLoopBackOff
 
 Transient errors often resolve with a pod restart:

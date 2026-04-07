@@ -151,6 +151,12 @@ Present a storage health report:
 
 If the pre-drain check blocks, output **only** the BLOCK message with resource names and the exact replica-add command. Do not continue to other output.
 
+## Escalation
+
+If triage reveals XFS corruption (resource UpToDate but pod fails with mount exit code 32
+or "bad superblock" in events), escalate to:
+`/linstor-volume-repair --resource <name> --node <node>`
+
 ## Hard Rules
 
 - Read-only: this skill observes storage state, never modifies it.

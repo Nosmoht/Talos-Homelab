@@ -45,6 +45,7 @@ Examples:
 This is a read-only health check. If remediation is needed, suggest the appropriate skill:
 - ArgoCD sync failures → `/gitops-health-triage`
 - Storage degraded/DRBD issues → `/linstor-storage-triage`
+- XFS corruption (mount exit 32, bad superblock) → `/linstor-volume-repair` (after triage)
 - Cilium policy drops → `/cilium-policy-debug`
 - Node config or upgrade needed → `/talos-apply` or `/talos-upgrade`
 
