@@ -32,6 +32,9 @@ Orchestration targets (use `make`):
 - `make clean` / `make talosconfig` / `make gen-secrets`
 
 Direct talosctl (do NOT use make wrappers):
+> **MCP-First**: For queries (version, health, get, etcd status, logs, dmesg) and operations (validate, apply_config, patch_config, service_action, upgrade, reboot, rollback, etcd_snapshot), use Talos MCP tools.
+> The commands below are listed because they have no MCP equivalent or are CLI-only operations.
+> See `.claude/rules/talos-mcp-first.md`.
 - Apply config: `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`
 - Dry-run: `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml --dry-run`
 - Upgrade: `talosctl apply-config ...` then `talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve --wait --timeout 10m`

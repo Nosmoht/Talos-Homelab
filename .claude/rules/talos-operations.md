@@ -7,6 +7,10 @@ paths:
 
 # Talos Operations Guardrails
 
+## MCP-First Policy
+Use Talos MCP tools instead of `talosctl` CLI wherever an MCP equivalent exists.
+See `.claude/rules/talos-mcp-first.md` for the full mapping and CLI-only exceptions.
+
 ## Node Connectivity
 - Use explicit node endpoint for operational commands: `talosctl -n <node-ip> -e <node-ip> ...`.
 - Do not rely on VIP for operations known to fail via forwarding (dry-run/apply in degraded states).
