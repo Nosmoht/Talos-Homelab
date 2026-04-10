@@ -59,7 +59,7 @@ If the plan is missing any required field or section, stop. Do not infer missing
 ### 1. Validate the approved plan artifact
 Read:
 - the approved plan file passed as the argument
-- `CLAUDE.md`
+- `AGENTS.md`
 - `README.md`
 - `docs/day2-operations.md`
 - `talos/Makefile`
