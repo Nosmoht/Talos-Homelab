@@ -197,16 +197,18 @@ After applying changes, update or create the kernel tuning documentation:
 Provide verification commands for each change:
 
 ```bash
-# After talosctl apply-config or talosctl upgrade:
+# After config apply or upgrade:
 
 # Verify sysctls
 talosctl -n $NODE_IP -e $NODE_IP read /proc/sys/<sysctl-path>
 
 # Verify boot parameters (only after upgrade)
 talosctl -n $NODE_IP -e $NODE_IP read /proc/cmdline
-
-# Verify module parameters
-talosctl -n $NODE_IP -e $NODE_IP dmesg | grep -i <module-name>
+```
+```
+# Verify module parameters via MCP (filter output for <module-name>):
+talos_dmesg(nodes=["$NODE_IP"])
+# Fallback: talosctl -n $NODE_IP -e $NODE_IP dmesg | grep -i <module-name>
 ```
 
 ## Important Notes

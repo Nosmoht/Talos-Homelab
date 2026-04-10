@@ -149,10 +149,15 @@ Present a structured summary. **Stop and wait for user approval before making ch
 ### Post-Apply Steps
 1. Run `make schematics` to generate new schematic IDs and update install image URLs
 2. Run `make gen-configs` to regenerate node configs
-3. For each affected node, upgrade with direct talosctl (extension changes require image upgrade):
-   ```bash
-   talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml
-   talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve --wait --timeout 10m
+3. For each affected node, upgrade using the `/talos-upgrade` skill (extension changes require image upgrade):
+   ```
+   # Apply config via MCP:
+   talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=false, confirm=true, nodes=["<ip>"], mode="auto")
+   # Upgrade via MCP (fires and returns — poll talos_health until node rejoins):
+   talos_upgrade(nodes=["<ip>"], image="<install-image>", preserve=true, confirm=true)
+   talos_health(nodes=["<ip>"])
+   # Fallback: talosctl -n <ip> -e <ip> apply-config -f talos/generated/<role>/<node>.yaml
+   # Fallback: talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve
    ```
    Resolve `<install-image>` from `talos/.schematic-ids.mk` + `talos/versions.mk`.
    - **IMPORTANT:** Drain DRBD volumes before upgrading to avoid stuck shutdown
@@ -209,10 +214,13 @@ Install images are built dynamically from `.schematic-ids.mk` + `TALOS_VERSION`.
 To apply the new schematics to nodes, upgrade each affected node with direct talosctl:
 - **IMPORTANT:** Drain DRBD volumes before upgrading: `kubectl linstor resource list` to check placements
 - Resolve install image from `talos/.schematic-ids.mk` + `talos/versions.mk`
-- For each node:
+- For each node, use `/talos-upgrade` skill or MCP directly:
   ```
-  talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml
-  talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve --wait --timeout 10m
+  talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=false, confirm=true, nodes=["<ip>"], mode="auto")
+  talos_upgrade(nodes=["<ip>"], image="<install-image>", preserve=true, confirm=true)
+  talos_health(nodes=["<ip>"])
+  # Fallback: talosctl -n <ip> -e <ip> apply-config -f talos/generated/<role>/<node>.yaml
+  # Fallback: talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve
   ```
 - Boot parameter changes (in `extraKernelArgs`) also require upgrade — they are baked into the UKI image
 ```

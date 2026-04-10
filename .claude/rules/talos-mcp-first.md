@@ -13,7 +13,7 @@ Use Talos MCP tools for all supported operations. Fall back to `talosctl` CLI on
 
 When a MCP tool fails: retry once, then fall back to CLI for the remainder of the session and log the fallback.
 
-**Skill exemption:** Skills with `allowed-tools` that do not include MCP tools are exempt from this policy until their `allowed-tools` list is updated.
+**Skill CLI-only exceptions:** Skills may use `talosctl get machineconfig -o yaml > <file>` for config backup to file, `talosctl upgrade-k8s` (no MCP equivalent), and bulk `/proc`/`/sys` reads in `analyze-node-hardware`. Planning skills (`plan-*`) may use `talosctl apply-config --dry-run` for validation only (B2: planning skills must not have mutating MCP tools). All other Talos operations must use MCP tools.
 
 ## MCP Tool Mapping
 
