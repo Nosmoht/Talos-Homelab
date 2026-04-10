@@ -1,0 +1,40 @@
+# Repo-local Codex CLI configuration — auto-loaded from CWD by Codex CLI.
+# Claude Code uses .mcp.json in the repo root (unchanged).
+#
+# SAFETY INVARIANT: approval_policy = "on-request" is HARD-PINNED.
+# Do NOT change to "never" or "auto" without repo-maintainer approval.
+# This prevents destructive Talos/kubectl operations running without confirmation.
+approval_policy = "on-request"
+
+# MCP servers — projected from .mcp.json with Codex TOML env-var syntax.
+# Codex uses ${VAR} (shell-style); .mcp.json uses ${env:VAR} (Claude-specific).
+# Sanity check: grep -o '\${env:' .codex/config.toml | wc -l  → must output 0.
+#
+# Sync discipline: .mcp.json is the source of truth for Claude Code.
+# When .mcp.json changes, manually update this file. The two formats are NOT
+# auto-synchronized. Run the sanity check above after any update.
+
+[mcp_servers.github]
+command = "gh"
+args = ["mcp-server"]
+env = { GITHUB_TOKEN = "${GITHUB_TOKEN}" }
+
+[mcp_servers.kubernetes-mcp-server]
+# kubeconfig is passed as a CLI arg (not env) to match kubernetes-mcp-server's
+# --kubeconfig flag. The server does not read KUBECONFIG from env.
+command = "npx"
+args = ["-y", "kubernetes-mcp-server@0.0.60", "--read-only", "--kubeconfig", "${HOME}/.kube/config", "--disable-multi-cluster"]
+
+[mcp_servers.talos]
+# TALOS_CONTEXT selects the talosconfig context. Set to "homelab" for this cluster.
+# TALOSCONFIG (path to talosconfig file) is read from the Talos MCP server's
+# default location (~/.talos/config) unless overridden in your shell environment.
+command = "npx"
+args = ["-y", "talos-mcp@0.31.4"]
+env = { TALOS_CONTEXT = "homelab" }
+
+# Linear MCP (optional — user-personal, configure in ~/.codex/config.toml):
+# [mcp_servers.linear]
+# command = "npx"
+# args = ["-y", "@linear/mcp-server"]
+# env = { LINEAR_API_KEY = "${LINEAR_API_KEY}" }
