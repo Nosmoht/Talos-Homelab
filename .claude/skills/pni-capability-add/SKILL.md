@@ -23,12 +23,12 @@ KUBECONFIG=$(yq '.kubeconfig' .claude/environment.yaml)
 Read before acting:
 - `docs/platform-network-interface.md` — capability catalog, CCNP patterns, API-only table, onboarding workflow
 - `.claude/rules/cilium-network-policy.md` — CCNP naming conventions, identity selectors, post-DNAT ports
-- `kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml` — current registry (must update)
-- `kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/kyverno-clusterpolicy-pni-capability-validation-enforce.yaml` — current allowlist (must update)
+- `kubernetes/base/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml` — current registry (must update)
+- `kubernetes/base/infrastructure/platform-network-interface/resources/kyverno-clusterpolicy-pni-capability-validation-enforce.yaml` — current allowlist (must update)
 
 Also read 2-3 existing CCNPs as examples:
 ```bash
-ls kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/ccnp-pni-*.yaml
+ls kubernetes/base/infrastructure/platform-network-interface/resources/ccnp-pni-*.yaml
 ```
 Read each one to understand the selector and port patterns.
 
@@ -42,7 +42,7 @@ Read each one to understand the selector and port patterns.
 
 Before proceeding, run this check:
 ```bash
-grep "<capability-name>" kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml
+grep "<capability-name>" kubernetes/base/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml
 ```
 If the capability name is found, stop: "Capability '<name>' already registered. To modify it, edit the existing CCNP and update docs/platform-network-interface.md."
 
@@ -79,7 +79,7 @@ If the provider is not yet deployed, check `docs/platform-network-interface.md` 
 
 Draft file path:
 ```
-kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/ccnp-pni-<capability>-consumer-<egress|ingress>.yaml
+kubernetes/base/infrastructure/platform-network-interface/resources/ccnp-pni-<capability>-consumer-<egress|ingress>.yaml
 ```
 
 Rules:
@@ -97,7 +97,7 @@ Prepare the new capability name entry for `capability-registry-configmap.yaml` u
 
 Prepare the new capability name addition to the allowlist array in:
 ```
-kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/kyverno-clusterpolicy-pni-capability-validation-enforce.yaml
+kubernetes/base/infrastructure/platform-network-interface/resources/kyverno-clusterpolicy-pni-capability-validation-enforce.yaml
 ```
 
 ### 6. Draft documentation row
@@ -129,9 +129,9 @@ If either fails, stop: "Validation failed. See the error above and fix before co
 
 All changed files MUST be in a single commit:
 ```bash
-git add kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/ccnp-pni-<capability>-consumer-<direction>.yaml
-git add kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml
-git add kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/kyverno-clusterpolicy-pni-capability-validation-enforce.yaml
+git add kubernetes/base/infrastructure/platform-network-interface/resources/ccnp-pni-<capability>-consumer-<direction>.yaml
+git add kubernetes/base/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml
+git add kubernetes/base/infrastructure/platform-network-interface/resources/kyverno-clusterpolicy-pni-capability-validation-enforce.yaml
 git add docs/platform-network-interface.md
 git commit -m "feat(pni): add <capability-name> capability"
 ```

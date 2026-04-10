@@ -16,7 +16,7 @@ spec:
   source:
     repoURL: https://github.com/Nosmoht/Talos-Homelab.git
     targetRevision: main
-    path: kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources
+    path: kubernetes/base/infrastructure/platform-network-interface
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno

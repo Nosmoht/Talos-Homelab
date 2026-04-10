@@ -61,7 +61,7 @@ Deployed in two passes per SRE recommendation:
 
 ## Step 3: Kyverno PNI Policy Enforcement
 
-**Files:** `kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/kyverno-clusterpolicy-pni-*-enforce.yaml`
+**Files:** `kubernetes/base/infrastructure/platform-network-interface/resources/kyverno-clusterpolicy-pni-*-enforce.yaml`
 
 Three ClusterPolicies transitioned from `Audit` to `Enforce`:
 - `pni-contract-audit` — requires `platform.io/network-interface-version=v1` + `platform.io/network-profile` on namespaces

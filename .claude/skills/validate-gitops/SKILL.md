@@ -86,7 +86,7 @@ Run:
 make validate-kyverno-policies
 ```
 
-Only required if `kubernetes/overlays/homelab/infrastructure/platform-network-interface/` files were modified. If non-zero, report which ClusterPolicy has a JMESPath or variable error.
+Only required if `kubernetes/base/infrastructure/platform-network-interface/` files were modified. If non-zero, report which ClusterPolicy has a JMESPath or variable error.
 
 ### 5. Conftest OPA policy checks
 

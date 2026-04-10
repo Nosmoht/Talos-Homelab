@@ -26,7 +26,7 @@ Read before acting:
 - `docs/platform-network-interface.md` — PNI contract v1, capability catalog, namespace label requirements
 - `.claude/rules/kubernetes-gitops.md` — Application CR pattern, directory structure, sync-waves, ArgoCD patterns
 - `.claude/rules/manifest-quality.md` — required labels, validation commands
-- `kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml` — registered capabilities (for validation)
+- `kubernetes/base/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml` — registered capabilities (for validation)
 - `kubernetes/overlays/homelab/projects/infrastructure.yaml` — AppProject destinations and sourceRepos
 
 If `--vault`, also read:
@@ -59,7 +59,7 @@ If the user wants to ADD a new PNI capability (not consume an existing one):
 
 For each capability in `--capabilities`, verify it exists in `capability-registry-configmap.yaml`:
 ```bash
-grep "<capability>" kubernetes/overlays/homelab/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml
+grep "<capability>" kubernetes/base/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml
 ```
 If any capability is not found, stop: "Capability '<name>' is not registered. Run `/pni-capability-add` first, then re-run this skill."
 

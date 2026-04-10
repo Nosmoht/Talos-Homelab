@@ -252,6 +252,30 @@ Yes. Opt in to exactly the capabilities you need.
 
 Yes, with self-managed policies. You then own policy design, testing, and incident handling for that traffic path.
 
+## Repository Structure
+
+PNI resources live in the base layer — they are not environment-specific:
+
+```
+kubernetes/base/infrastructure/platform-network-interface/
+├── kustomization.yaml          # lists all resources with resources/ prefix
+└── resources/
+    ├── capability-registry-configmap.yaml
+    ├── kyverno-clusterpolicy-pni-*.yaml    (3 ClusterPolicies)
+    ├── kyverno-clusterpolicy-vault-ca-distribution.yaml
+    └── ccnp-pni-*.yaml                     (capability CCNPs)
+```
+
+The ArgoCD Application CR that deploys these resources lives in the overlay:
+
+```
+kubernetes/overlays/homelab/infrastructure/platform-network-interface/
+├── kustomization.yaml          # references application.yaml only
+└── application.yaml            # ArgoCD Application CR, source.path → base
+```
+
+To add a capability: use `/pni-capability-add`. To onboard a namespace: use `/onboard-workload-namespace`.
+
 ## Versioning and Compatibility
 
 - Current contract: `v1`
