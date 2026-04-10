@@ -2,7 +2,7 @@
 name: plan-cilium-upgrade
 description: Build a repo-specific Cilium upgrade and migration plan for this homelab cluster by resolving current and target versions, reading all intermediate release notes, identifying breaking changes and risks, and reviewing the plan before presenting it.
 argument-hint: [from-version] [to-version]
-allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch, Agent, mcp__talos__talos_version, mcp__talos__talos_health
+allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch, Agent, mcp__talos__talos_version, mcp__talos__talos_health, mcp__kubernetes-mcp-server__resources_get, mcp__kubernetes-mcp-server__resources_list, mcp__kubernetes-mcp-server__pods_list_in_namespace
 ---
 
 # Plan Cilium Upgrade
@@ -40,7 +40,7 @@ This skill is read-only. For live Talos-layer queries, prefer MCP tools over CLI
 - `talos_health(nodes=[...])` — cluster health check (preferred over `talosctl health`)
 - `curl` / `wget` — fetching upstream release metadata
 - `git log` / `git diff` / `git status` — repo history
-- Cilium live state must use `kubectl` (no MCP equivalent for Cilium daemonset/CiliumNode)
+- Cilium live state: use `resources_get` / `resources_list` / `pods_list_in_namespace` MCP tools (see §2, §7 below)
 - `talosctl apply-config ... --dry-run` — validation only (no MCP equivalent; CLI only — B2)
 Do NOT run any mutating commands during planning.
 
@@ -143,10 +143,20 @@ If omitted, resolve in this order:
 4. if the cluster is unreachable, fail closed instead of guessing, unless the user explicitly allows repo-only planning
 
 Preferred live checks:
+```
+resources_get(apiVersion="apps/v1", kind="DaemonSet", name="cilium", namespace="kube-system")
+# Read .spec.template.spec.containers[0].image for the daemonset image tag.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get ds cilium -o json
+
+resources_get(apiVersion="apps/v1", kind="Deployment", name="cilium-operator", namespace="kube-system")
+# Read .spec.template.spec.containers[0].image for the operator image tag.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get deploy cilium-operator -o json
+
+resources_get(apiVersion="v1", kind="ConfigMap", name="cilium-config", namespace="kube-system")
+# Read .data for current Cilium configuration values.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get cm cilium-config -o yaml
+```
 ```bash
-KUBECONFIG=<kubeconfig> kubectl -n kube-system get ds cilium -o json
-KUBECONFIG=<kubeconfig> kubectl -n kube-system get deploy cilium-operator -o json
-KUBECONFIG=<kubeconfig> kubectl -n kube-system get cm cilium-config -o yaml
 KUBECONFIG=<kubeconfig> cilium version
 ```
 
@@ -254,9 +264,14 @@ talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", 
 talos_upgrade(nodes=["<node-ip>"], image="<install-image>", preserve=true, confirm=true)
 talos_health(nodes=["<cp-node-ip>"])
 ```
-```bash
-kubectl -n kube-system get pods -l k8s-app=cilium
-kubectl get ciliumnode
+```
+pods_list_in_namespace(namespace="kube-system", labelSelector="k8s-app=cilium")
+# Check items[].status.phase — all should be "Running". Read items[].metadata.name for pod names.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium
+
+resources_list(apiVersion="cilium.io/v2", kind="CiliumNode")
+# Check items[].metadata.name and items[].status for node health fields.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl get ciliumnode
 ```
 
 If the version bump changes `CILIUM_VERSION`, require the plan to address:
@@ -364,6 +379,10 @@ In the chat response, also include:
 - the saved plan path
 - that the plan is currently `draft`
 - the exact frontmatter fields the operator must edit to approve it
+
+## Hard Rules
+
+On Kubernetes MCP tool failure: retry once, then run the `# Fallback:` kubectl command from the same step. Applies to all `mcp__kubernetes-mcp-server__*` calls in this skill.
 
 ## Failure Modes
 - If cluster access is required to resolve `from-version` and it is unavailable, state that clearly and stop unless the user accepts repo-only planning.

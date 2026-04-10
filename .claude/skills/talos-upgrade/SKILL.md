@@ -16,6 +16,8 @@ allowed-tools:
   - mcp__talos__talos_etcd_snapshot
   - mcp__talos__talos_upgrade
   - mcp__talos__talos_rollback
+  - mcp__kubernetes-mcp-server__resources_get
+  - mcp__kubernetes-mcp-server__resources_list
 ---
 
 # Talos Upgrade
@@ -168,13 +170,18 @@ talos_etcd(subcommand="status", nodes=["<ip>"])
 Confirm all members show `started` before declaring success.
 
 Then confirm node readiness:
-```bash
-KUBECONFIG=<kubeconfig> kubectl get node <node>
+```
+resources_get(apiVersion="v1", kind="Node", name="<node>")
+# Check .status.conditions[] — find type=="Ready", verify status=="True".
+# Fallback: KUBECONFIG=<kubeconfig> kubectl get node <node>
 ```
 
 If the node remains NotReady, check for pending CSR approval:
-```bash
-KUBECONFIG=<kubeconfig> kubectl get csr
+```
+resources_list(apiVersion="certificates.k8s.io/v1", kind="CertificateSigningRequest")
+# Check items[].status.conditions[].type == "Approved" and items[].status.conditions[].status == "True".
+# Pending CSRs show no conditions or conditions with type=="Pending".
+# Fallback: KUBECONFIG=<kubeconfig> kubectl get csr
 ```
 
 ### 9. Uncordon
@@ -223,6 +230,7 @@ Present the completed report to the user for review. After user confirmation, wr
 
 ## Hard Rules
 
+- On Kubernetes MCP tool failure: retry once, then run the `# Fallback:` kubectl command from the same step. Applies to all `mcp__kubernetes-mcp-server__*` calls in this skill.
 - Never edit `talos/generated/**` directly.
 - Never use VIP for direct operations — always use explicit `-n <ip> -e <ip>`.
 - Never operate on a CP node with degraded etcd quorum.

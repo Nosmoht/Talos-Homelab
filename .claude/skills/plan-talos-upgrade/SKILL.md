@@ -2,7 +2,7 @@
 name: plan-talos-upgrade
 description: Build a repo-specific Talos upgrade and migration plan for this homelab cluster by resolving current and target Talos versions, reading all intermediate release notes and upgrade guidance, identifying cluster-specific risks, and saving a reviewed draft plan for manual approval.
 argument-hint: [from-version] [to-version]
-allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch, Agent, mcp__talos__talos_version, mcp__talos__talos_health, mcp__talos__talos_etcd, mcp__talos__talos_get, mcp__talos__talos_validate
+allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch, Agent, mcp__talos__talos_version, mcp__talos__talos_health, mcp__talos__talos_etcd, mcp__talos__talos_get, mcp__talos__talos_validate, mcp__kubernetes-mcp-server__pods_list_in_namespace
 ---
 
 # Plan Talos Upgrade
@@ -252,8 +252,14 @@ talos_health(nodes=["<cp-node-ip>"])
 ```
 ```bash
 kubectl get nodes -o wide
-kubectl -n kube-system get pods -l k8s-app=cilium
+# ^ CLI-Only: token-negative (no selector); see .claude/rules/kubernetes-mcp-first.md §CLI-Only
 kubectl linstor node list
+# ^ CLI-Only: kubectl plugin, no MCP surface
+```
+```
+pods_list_in_namespace(namespace="kube-system", labelSelector="k8s-app=cilium")
+# Check items[].status.phase — all should be "Running". Read items[].metadata.name for pod names.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium
 ```
 
 Require the plan to address:
@@ -361,6 +367,10 @@ In the chat response, also include:
 - the saved plan path
 - that the plan is currently `draft`
 - the exact frontmatter fields the operator must edit to approve it
+
+## Hard Rules
+
+On Kubernetes MCP tool failure: retry once, then run the `# Fallback:` kubectl command from the same step. Applies to all `mcp__kubernetes-mcp-server__*` calls in this skill.
 
 ## Failure Modes
 - If cluster access is required to resolve `from-version` and it is unavailable, state that clearly and stop unless the user accepts repo-only planning.

@@ -3,7 +3,7 @@ name: cilium-policy-debug
 description: Diagnose Cilium and Gateway API traffic drops, map failures to CiliumNetworkPolicy manifests, and propose least-privilege fixes.
 argument-hint: [namespace/app-or-flow]
 disable-model-invocation: true
-allowed-tools: Bash, Read, Grep, Glob, Write
+allowed-tools: Bash, Read, Grep, Glob, Write, mcp__kubernetes-mcp-server__resources_list, mcp__kubernetes-mcp-server__pods_list_in_namespace
 ---
 
 # Cilium Policy Debug
@@ -36,13 +36,22 @@ Read before proceeding:
 ### 1. Gather live signals
 
 Run baseline checks:
+```
+resources_list(apiVersion="cilium.io/v2", kind="CiliumNetworkPolicy")
+# Check items[].metadata.name, items[].metadata.namespace for policy inventory.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl get cnp -A
+```
 ```bash
-KUBECONFIG=<kubeconfig> kubectl get cnp -A
 KUBECONFIG=<kubeconfig> kubectl get pods -A -o wide
-KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium
+# ^ CLI-Only: no selector; token-negative — see .claude/rules/kubernetes-mcp-first.md §CLI-Only
+```
+```
+pods_list_in_namespace(namespace="kube-system", labelSelector="k8s-app=cilium")
+# Check items[].status.phase and items[].metadata.name to identify Cilium agent pods.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium
 ```
 
-If kubectl exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify the kubeconfig path in `.claude/environment.yaml` is correct and cluster is reachable."
+If the first MCP call errors with timeout (not empty — empty list is a valid zero result), fall back to `kubectl`. If kubectl exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify the kubeconfig path in `.claude/environment.yaml` is correct and cluster is reachable."
 
 Capture drop evidence (required before proceeding to Step 2):
 ```bash
@@ -121,3 +130,4 @@ hubble observe --verdict AUDIT --namespace <namespace> --last 50
 
 - Do not propose wildcard policies unless justified as temporary incident mitigation.
 - Include a follow-up hardening step when temporary broadening is used.
+- On Kubernetes MCP tool failure: retry once, then run the `# Fallback:` kubectl command from the same step. Applies to all `mcp__kubernetes-mcp-server__*` calls in this skill.
