@@ -2,7 +2,7 @@
 name: plan-talos-upgrade
 description: Build a repo-specific Talos upgrade and migration plan for this homelab cluster by resolving current and target Talos versions, reading all intermediate release notes and upgrade guidance, identifying cluster-specific risks, and saving a reviewed draft plan for manual approval.
 argument-hint: [from-version] [to-version]
-allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch, Agent
+allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch, Agent, mcp__talos__talos_version, mcp__talos__talos_health, mcp__talos__talos_etcd, mcp__talos__talos_get, mcp__talos__talos_validate
 ---
 
 # Plan Talos Upgrade
@@ -35,12 +35,14 @@ plan-talos-upgrade
 ```
 
 ## Bash Usage Constraints
-Bash is permitted ONLY for read-only operations during planning:
-- `talosctl get` / `talosctl version` / `talosctl disks` / `talosctl health` / `talosctl etcd members` (cluster queries)
-- `curl` / `wget` (fetching upstream release metadata)
-- `git log` / `git diff` / `git status` (repo history)
-- `talosctl apply-config -n <ip> -e <ip> -f <config> --dry-run` (validation only)
-- `talosctl validate --config <file> --mode metal --strict` (offline validation)
+This skill is read-only. For live cluster queries, prefer MCP tools over CLI:
+- `talos_version(nodes=[...])` — live Talos version (preferred over `talosctl version`)
+- `talos_health(nodes=[...])` — cluster health check
+- `talos_etcd(subcommand="members"|"status", nodes=[...])` — etcd quorum
+- `talosctl apply-config ... --dry-run` — validation only (no MCP equivalent; CLI only — B2)
+- `talosctl validate --config <file> --mode metal --strict` — offline validation (CLI only)
+- `curl` / `wget` — fetching upstream release metadata
+- `git log` / `git diff` / `git status` — repo history
 Do NOT run any mutating commands (`talosctl upgrade`, `talosctl apply-config` without `--dry-run`, `kubectl drain`, `kubectl delete`) during planning.
 
 ## Repository Facts You Must Respect
@@ -130,10 +132,11 @@ If omitted, resolve in this order:
 4. if the cluster is unreachable, fail closed instead of guessing, unless the user explicitly allows repo-only planning
 
 Preferred live checks — use control-plane node IPs from `environment.yaml`:
+```
+talos_version(nodes=["<cp-node-1-ip>", "<cp-node-2-ip>", "<cp-node-3-ip>"])
+# Fallback: talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> version
+```
 ```bash
-talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> version
-talosctl -n <cp-node-2-ip> -e <cp-node-2-ip> version
-talosctl -n <cp-node-3-ip> -e <cp-node-3-ip> version
 kubectl get nodes -o wide
 ```
 
@@ -221,9 +224,9 @@ Include these sections:
 
 The execution plan must cover:
 1. preflight checks, including:
-   - etcd snapshot: `talosctl -n <cp-node-ip> -e <cp-node-ip> etcd snapshot /tmp/etcd-backup-<date>.snapshot`
+   - etcd snapshot: `talos_etcd_snapshot(nodes=["<cp-node-ip>"], path="/tmp/etcd-backup-<date>.snapshot")`
    - verify snapshot file size is non-zero before proceeding
-   - confirm `talosctl version --client` matches or exceeds the target Talos version
+   - confirm `talosctl version --client` matches or exceeds the target Talos version (CLI-only)
 2. repo changes required before rollout
 3. config generation and validation
 4. commit/push expectations
@@ -235,14 +238,19 @@ Use repo-accurate commands where relevant, for example:
 ```bash
 make -C talos schematics
 make -C talos gen-configs
-# Validate generated configs
+# Validate generated configs (CLI — no MCP equivalent for file-based validation)
 find talos/generated -type f -name '*.yaml' | sort | while read f; do talosctl validate --config "$f" --mode metal --strict; done
-# Dry-run per node
+# Dry-run per node (CLI-only for planning skills — B2: no mutating MCP tools in plan skills)
 talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml --dry-run
-# Upgrade per node (resolve install image from .schematic-ids.mk + versions.mk)
-talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml
-talosctl upgrade -n <node-ip> -e <node-ip> --image <install-image> --preserve --wait --timeout 10m
-talosctl -n <cp-node-ip> -e <cp-node-ip> health --control-plane-nodes <cp-node-1-ip>,<cp-node-2-ip>,<cp-node-3-ip>
+```
+```
+# Apply config per node (execute-talos-upgrade uses MCP):
+talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=false, confirm=true, nodes=["<node-ip>"], mode="auto")
+# Upgrade per node (execute-talos-upgrade uses MCP — fires and returns, poll talos_health):
+talos_upgrade(nodes=["<node-ip>"], image="<install-image>", preserve=true, confirm=true)
+talos_health(nodes=["<cp-node-ip>"])
+```
+```bash
 kubectl get nodes -o wide
 kubectl -n kube-system get pods -l k8s-app=cilium
 kubectl linstor node list

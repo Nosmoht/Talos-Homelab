@@ -2,7 +2,7 @@
 name: plan-cilium-upgrade
 description: Build a repo-specific Cilium upgrade and migration plan for this homelab cluster by resolving current and target versions, reading all intermediate release notes, identifying breaking changes and risks, and reviewing the plan before presenting it.
 argument-hint: [from-version] [to-version]
-allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch, Agent
+allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch, Agent, mcp__talos__talos_version, mcp__talos__talos_health
 ---
 
 # Plan Cilium Upgrade
@@ -33,6 +33,16 @@ plan-cilium-upgrade 1.18.3 1.19.0
 plan-cilium-upgrade 1.19.2   # interpreted as to-version
 plan-cilium-upgrade
 ```
+
+## Bash Usage Constraints
+This skill is read-only. For live Talos-layer queries, prefer MCP tools over CLI:
+- `talos_version(nodes=[...])` — live Talos version (preferred over `talosctl version`)
+- `talos_health(nodes=[...])` — cluster health check (preferred over `talosctl health`)
+- `curl` / `wget` — fetching upstream release metadata
+- `git log` / `git diff` / `git status` — repo history
+- Cilium live state must use `kubectl` (no MCP equivalent for Cilium daemonset/CiliumNode)
+- `talosctl apply-config ... --dry-run` — validation only (no MCP equivalent; CLI only — B2)
+Do NOT run any mutating commands during planning.
 
 ## Repository Facts You Must Respect
 - Cilium is bootstrap-managed from `kubernetes/bootstrap/cilium/cilium.yaml`.
@@ -232,13 +242,19 @@ Use repo-accurate commands where relevant, for example:
 make -C talos cilium-bootstrap
 make -C talos cilium-bootstrap-check
 make -C talos gen-configs
-# Dry-run all nodes
+# Dry-run per node (CLI-only for planning skills — B2: no mutating MCP tools in plan skills)
 for each node: talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml --dry-run
-# Reconcile extraManifests (ensure cilium-bootstrap-check passed first)
+# Reconcile extraManifests (ensure cilium-bootstrap-check passed first — CLI-only: no MCP equivalent)
 talosctl upgrade-k8s --to <kubernetes-version> -n <cp-node-1-ip> -e <cp-node-1-ip>
-# Per-node upgrade (resolve install image from .schematic-ids.mk + versions.mk)
-talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml
-talosctl upgrade -n <node-ip> -e <node-ip> --image <install-image> --preserve --wait --timeout 10m
+```
+```
+# Apply config per node (execute-cilium-upgrade uses MCP):
+talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=false, confirm=true, nodes=["<node-ip>"], mode="auto")
+# Upgrade per node (execute-cilium-upgrade uses MCP — fires and returns, poll talos_health):
+talos_upgrade(nodes=["<node-ip>"], image="<install-image>", preserve=true, confirm=true)
+talos_health(nodes=["<cp-node-ip>"])
+```
+```bash
 kubectl -n kube-system get pods -l k8s-app=cilium
 kubectl get ciliumnode
 ```

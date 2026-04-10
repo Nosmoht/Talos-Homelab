@@ -3,7 +3,7 @@ name: execute-cilium-upgrade
 description: Execute a reviewed Cilium upgrade for this homelab cluster by validating an approved migration plan, updating the repo-managed bootstrap version, reconciling via the Talos workflow, and enforcing health gates, stop conditions, and recovery actions.
 argument-hint: <approved-plan-path>
 disable-model-invocation: true
-allowed-tools: Bash, Read, Grep, Glob, Write
+allowed-tools: Bash, Read, Grep, Glob, Write, mcp__talos__talos_apply_config, mcp__talos__talos_health, mcp__talos__talos_version
 ---
 
 # Execute Cilium Upgrade
@@ -98,7 +98,12 @@ Check:
 - cluster health and node readiness
 - Argo CD application health for platform apps that depend on Cilium
 
-Run at minimum:
+Run at minimum (use control-plane node IPs from `environment.yaml`):
+```
+talos_version(nodes=["<cp-node-1-ip>", "<cp-node-2-ip>", "<cp-node-3-ip>"])
+talos_health(nodes=["<cp-node-1-ip>"])
+# Fallback: talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> health --control-plane-nodes <cp-node-1-ip>,<cp-node-2-ip>,<cp-node-3-ip>
+```
 ```bash
 KUBECONFIG=<kubeconfig> kubectl get nodes -o wide
 KUBECONFIG=<kubeconfig> kubectl -n kube-system get ds cilium -o json
@@ -156,8 +161,13 @@ make -C talos cilium-bootstrap-check
 Also run repo validation required by the changed files. At minimum:
 ```bash
 make -C talos gen-configs
-# Dry-run all nodes (resolve IPs from environment.yaml)
-for each node: talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml --dry-run
+```
+Dry-run all nodes via MCP (resolve IPs from environment.yaml):
+```
+talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=true, nodes=["<node-ip>"])
+# Fallback: talosctl -n <node-ip> -e <node-ip> apply-config -f talos/generated/<role>/<node>.yaml --dry-run
+```
+```bash
 kubectl kustomize kubernetes/overlays/<overlay>
 kubectl apply -k kubernetes/overlays/<overlay> --dry-run=client
 ```
