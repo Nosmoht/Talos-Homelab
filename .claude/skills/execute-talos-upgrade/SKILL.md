@@ -19,6 +19,9 @@ allowed-tools:
   - mcp__talos__talos_upgrade
   - mcp__talos__talos_rollback
   - mcp__talos__talos_validate
+  - mcp__kubernetes-mcp-server__resources_get
+  - mcp__kubernetes-mcp-server__resources_list
+  - mcp__kubernetes-mcp-server__pods_list_in_namespace
 ---
 
 # Execute Talos Upgrade
@@ -129,10 +132,18 @@ talos_etcd(subcommand="status", nodes=["<cp-node-1-ip>"])
 ```
 ```bash
 KUBECONFIG=<kubeconfig> kubectl get nodes -o wide
+# ^ CLI-Only: token-negative; see .claude/rules/kubernetes-mcp-first.md §CLI-Only
 KUBECONFIG=<kubeconfig> kubectl get pods -A | grep -v Running
-KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+# ^ CLI-Only: no selector, token-negative; see .claude/rules/kubernetes-mcp-first.md §CLI-Only
 KUBECONFIG=<kubeconfig> kubectl linstor node list
+# ^ CLI-Only: kubectl plugin, no MCP surface
 KUBECONFIG=<kubeconfig> kubectl linstor resource list
+# ^ CLI-Only: kubectl plugin, no MCP surface
+```
+```
+pods_list_in_namespace(namespace="kube-system", labelSelector="k8s-app=cilium")
+# Check items[].status.phase — all should be "Running". Read items[].metadata.name for pod names.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
 ```
 
 If the live cluster version does not match the plan’s `from_version`, stop and report drift.
@@ -275,11 +286,21 @@ talosctl upgrade-k8s --to <kubernetes-version> -n <cp-node-1-ip> -e <cp-node-1-i
 After each node upgrade, verify health before proceeding.
 
 Minimum per-node health gates:
+```
+resources_get(apiVersion="v1", kind="Node", name="<node>")
+# Check .status.conditions[] — find type=="Ready", verify status=="True".
+# Fallback: KUBECONFIG=<kubeconfig> kubectl get node <node>
+```
 ```bash
-KUBECONFIG=<kubeconfig> kubectl get node <node>
 KUBECONFIG=<kubeconfig> kubectl get nodes -o wide
-KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+# ^ CLI-Only: token-negative; see .claude/rules/kubernetes-mcp-first.md §CLI-Only
 KUBECONFIG=<kubeconfig> kubectl linstor node list
+# ^ CLI-Only: kubectl plugin, no MCP surface
+```
+```
+pods_list_in_namespace(namespace="kube-system", labelSelector="k8s-app=cilium")
+# Check items[].status.phase — all should be "Running" after node reboot.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
 ```
 ```
 talos_version(nodes=["<node-ip>"])
@@ -324,11 +345,22 @@ talos_dmesg(nodes=["<node-ip>"])
 talos_etcd(subcommand="members", nodes=["<cp-node-1-ip>"])
 # Fallback: talosctl -n <node-ip> -e <node-ip> version && talosctl -n <node-ip> -e <node-ip> services && talosctl -n <node-ip> -e <node-ip> dmesg | tail -n 200
 ```
+```
+resources_list(apiVersion="certificates.k8s.io/v1", kind="CertificateSigningRequest")
+# Check items[].status.conditions[].type == "Approved" and status == "True".
+# Pending CSRs show no conditions or conditions with type=="Pending".
+# Fallback: KUBECONFIG=<kubeconfig> kubectl get csr
+```
 ```bash
-KUBECONFIG=<kubeconfig> kubectl get csr
 KUBECONFIG=<kubeconfig> kubectl get nodes -o wide
-KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+# ^ CLI-Only: token-negative; see .claude/rules/kubernetes-mcp-first.md §CLI-Only
 KUBECONFIG=<kubeconfig> kubectl linstor resource list
+# ^ CLI-Only: kubectl plugin, no MCP surface
+```
+```
+pods_list_in_namespace(namespace="kube-system", labelSelector="k8s-app=cilium")
+# Check items[].status.phase for Cilium recovery after node reboots.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
 ```
 
 If recovery requires repo reversion:
@@ -368,6 +400,7 @@ Return a concise execution summary with:
 - path to the execution record
 
 ## Hard Rules
+- On Kubernetes MCP tool failure: retry once, then run the `# Fallback:` kubectl command from the same step. Applies to all `mcp__kubernetes-mcp-server__*` calls in this skill.
 - Never execute without an approved plan artifact that matches the planning skill’s output contract.
 - Never execute a plan whose frontmatter approval fields are missing or still set to `draft`.
 - Never skip the “state still matches plan” check.

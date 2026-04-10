@@ -3,7 +3,7 @@ name: execute-cilium-upgrade
 description: Execute a reviewed Cilium upgrade for this homelab cluster by validating an approved migration plan, updating the repo-managed bootstrap version, reconciling via the Talos workflow, and enforcing health gates, stop conditions, and recovery actions.
 argument-hint: <approved-plan-path>
 disable-model-invocation: true
-allowed-tools: Bash, Read, Grep, Glob, Write, mcp__talos__talos_apply_config, mcp__talos__talos_health, mcp__talos__talos_version
+allowed-tools: Bash, Read, Grep, Glob, Write, mcp__talos__talos_apply_config, mcp__talos__talos_health, mcp__talos__talos_version, mcp__kubernetes-mcp-server__resources_get, mcp__kubernetes-mcp-server__resources_list, mcp__kubernetes-mcp-server__pods_list_in_namespace, mcp__kubernetes-mcp-server__pods_log
 ---
 
 # Execute Cilium Upgrade
@@ -106,12 +106,26 @@ talos_health(nodes=["<cp-node-1-ip>"])
 ```
 ```bash
 KUBECONFIG=<kubeconfig> kubectl get nodes -o wide
-KUBECONFIG=<kubeconfig> kubectl -n kube-system get ds cilium -o json
-KUBECONFIG=<kubeconfig> kubectl -n kube-system get deploy cilium-operator -o json
-KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
-KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l app.kubernetes.io/name=cilium-operator -o wide
-KUBECONFIG=<kubeconfig> kubectl get ciliumnode
+# ^ CLI-Only: token-negative; see .claude/rules/kubernetes-mcp-first.md §CLI-Only
 KUBECONFIG=<kubeconfig> kubectl -n argocd get applications
+# ^ CLI-Only: summary table, token-negative; see .claude/rules/kubernetes-mcp-first.md §CLI-Only
+```
+```
+resources_get(apiVersion="apps/v1", kind="DaemonSet", name="cilium", namespace="kube-system")
+# Read .spec.template.spec.containers[0].image for the daemonset image tag.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get ds cilium -o json
+resources_get(apiVersion="apps/v1", kind="Deployment", name="cilium-operator", namespace="kube-system")
+# Read .spec.template.spec.containers[0].image for the operator image tag.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get deploy cilium-operator -o json
+pods_list_in_namespace(namespace="kube-system", labelSelector="k8s-app=cilium")
+# Check items[].status.phase and items[].spec.nodeName for pod placement across nodes.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+pods_list_in_namespace(namespace="kube-system", labelSelector="app.kubernetes.io/name=cilium-operator")
+# Check items[].status.phase for operator pod health.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l app.kubernetes.io/name=cilium-operator -o wide
+resources_list(apiVersion="cilium.io/v2", kind="CiliumNode")
+# Check items[].metadata.name and items[].status for per-node cilium state.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl get ciliumnode
 ```
 
 If the live cluster version does not match the plan’s `from_version`, stop and report drift.
@@ -227,12 +241,20 @@ After each stage, verify health before proceeding.
 
 Minimum health gates:
 ```bash
-KUBECONFIG=<kubeconfig> kubectl get nodes
 KUBECONFIG=<kubeconfig> kubectl -n kube-system rollout status ds/cilium --timeout=10m
+# ^ CLI-Only: rollout status — no MCP equivalent; see .claude/rules/kubernetes-mcp-first.md §CLI-Only
 KUBECONFIG=<kubeconfig> kubectl -n kube-system rollout status deploy/cilium-operator --timeout=10m
-KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
-KUBECONFIG=<kubeconfig> kubectl get ciliumnode
+# ^ CLI-Only: rollout status — no MCP equivalent
 KUBECONFIG=<kubeconfig> kubectl -n argocd get applications
+# ^ CLI-Only: summary table, token-negative; see .claude/rules/kubernetes-mcp-first.md §CLI-Only
+```
+```
+pods_list_in_namespace(namespace="kube-system", labelSelector="k8s-app=cilium")
+# Check items[].status.phase — all should be "Running". Check items[].spec.nodeName for per-node placement.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
+resources_list(apiVersion="cilium.io/v2", kind="CiliumNode")
+# Check items[].metadata.name — one CiliumNode per Ready node expected.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl get ciliumnode
 ```
 
 Also run plan-specific verification for:
@@ -270,9 +292,24 @@ If a stop condition is met:
 Useful diagnostics:
 ```bash
 KUBECONFIG=<kubeconfig> kubectl -n kube-system describe ds cilium
-KUBECONFIG=<kubeconfig> kubectl -n kube-system logs ds/cilium --tail=200
-KUBECONFIG=<kubeconfig> kubectl -n kube-system logs deploy/cilium-operator --tail=200
-KUBECONFIG=<kubeconfig> kubectl get ciliumnode -o yaml
+# ^ CLI-Only: describe — no MCP event-aggregation equivalent; see .claude/rules/kubernetes-mcp-first.md §CLI-Only
+```
+```
+# Collect per-pod logs for crashlooping Cilium agents (fan-out: list → log per pod):
+pods_list_in_namespace(namespace="kube-system", labelSelector="k8s-app=cilium")
+# For each pod in items[].metadata.name that is not Running:
+pods_log(name="<cilium-pod>", namespace="kube-system", tail=200)
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system logs ds/cilium --tail=200
+
+# Collect operator logs:
+pods_list_in_namespace(namespace="kube-system", labelSelector="app.kubernetes.io/name=cilium-operator")
+# For each pod in items[].metadata.name:
+pods_log(name="<cilium-operator-pod>", namespace="kube-system", tail=200)
+# Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system logs deploy/cilium-operator --tail=200
+
+resources_list(apiVersion="cilium.io/v2", kind="CiliumNode")
+# Check items[].status for stale or missing ciliumnode objects.
+# Fallback: KUBECONFIG=<kubeconfig> kubectl get ciliumnode -o yaml
 ```
 
 If rollback requires repo reversion:
@@ -312,6 +349,7 @@ Return a concise execution summary with:
 - path to the execution record
 
 ## Hard Rules
+- On Kubernetes MCP tool failure: retry once, then run the `# Fallback:` kubectl command from the same step. Applies to all `mcp__kubernetes-mcp-server__*` calls in this skill.
 - Never execute without an approved plan artifact that matches the planning skill’s output contract.
 - Never execute a plan whose frontmatter approval fields are missing or still set to `draft`.
 - Never skip the “state still matches plan” check.
