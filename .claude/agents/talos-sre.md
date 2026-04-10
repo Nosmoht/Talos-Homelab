@@ -48,11 +48,14 @@ Read these files at the start of every task — they contain authoritative opera
 Follow this sequence for any node operation. Do not skip steps.
 
 1. **validate-schematics + gen-configs** — `make -C talos validate-schematics && make -C talos gen-configs` (validates schematic IDs match YAML, then decrypts secrets and applies patches). If validation fails, run `make -C talos schematics` first.
-2. **Dry-run** — `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml --dry-run`; inspect output for unexpected reboots or config diffs.
+2. **Dry-run** — `talos_apply_config(config_file=<abs-path-to-talos/generated/<role>/<node>.yaml>, dry_run=true, nodes=[<ip>])`; inspect output for unexpected reboots or config diffs.
+   - Fallback (MCP unavailable): `talosctl -n <ip> -e <ip> apply-config -f talos/generated/<role>/<node>.yaml --dry-run`
 3. **Review** — Confirm node role, check workload and DRBD/LINSTOR placement for reboot-class changes. Present dry-run diff and reasoning protocol answers to the user. **Wait for explicit user approval before proceeding.**
 4. **Apply or Upgrade** — Only after user confirms:
-   - Config/sysctl changes: `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`
-   - Boot arg/extension/image changes: `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml` then `talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve --wait --timeout 10m` (resolve install image from `talos/.schematic-ids.mk` + `talos/versions.mk`)
+   - Config/sysctl changes: `talos_apply_config(config_file=<abs-path>, dry_run=false, confirm=true, nodes=[<ip>], mode="auto")`
+     - Fallback: `talosctl -n <ip> -e <ip> apply-config -f talos/generated/<role>/<node>.yaml`
+   - Boot arg/extension/image changes: Apply config first (same as above), then `talos_upgrade(nodes=[<ip>], image=<install-image>, preserve=true, confirm=true)` — resolve install image from `talos/.schematic-ids.mk` + `talos/versions.mk`. `talos_upgrade` returns immediately; poll `talos_health(nodes=[<ip>])` until node rejoins.
+     - Fallback: `talosctl -n <ip> -e <ip> upgrade --image <install-image> --preserve --wait --timeout 10m`
 5. **Verify** — Use MCP tools: `talos_version(nodes=[<ip>])`, `talos_health(nodes=[<ip>])`, `talos_etcd(subcommand='members')`. Confirm node rejoins, etcd quorum healthy, workloads reschedule.
 
 ## Stop Conditions
@@ -88,9 +91,12 @@ After completing an operation, report:
 - **Post-checks:** etcd quorum, node Ready, workloads rescheduled
 
 ## Rollback Procedures
-- **Failed apply:** Re-run `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml` with previous config (revert patch change, regenerate configs).
-- **Failed upgrade:** If node is stuck, use `talosctl -n <ip> -e <ip> rollback` to revert to previous boot image.
-- **Etcd quorum loss:** Restore from snapshot: `talosctl -n <cp-ip> -e <cp-ip> etcd snapshot restore <path>`.
+- **Before any disruptive change:** Take etcd snapshot: `talos_etcd_snapshot(nodes=[<cp-ip>], path=<local-abs-path>)`.
+- **Failed apply:** Re-apply previous config: `talos_apply_config(config_file=<previous-config-abs-path>, dry_run=false, confirm=true, nodes=[<ip>])` (revert patch change, regenerate configs).
+  - Fallback: `talosctl -n <ip> -e <ip> apply-config -f talos/generated/<role>/<node>.yaml`
+- **Failed upgrade:** If node is stuck, use `talos_rollback(nodes=[<ip>], confirm=true)` to revert to previous boot image.
+  - Fallback: `talosctl -n <ip> -e <ip> rollback`
+- **Etcd quorum loss:** Restore from snapshot (CLI-only — no MCP equivalent): `talosctl -n <cp-ip> -e <cp-ip> etcd snapshot restore <path>`.
 - **After any rollback:** Re-run verification step (etcd health, node Ready, workload scheduling).
 
 ## Guardrails
