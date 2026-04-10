@@ -29,7 +29,7 @@ When the prompt starts with "pre-operation:", perform an adversarial assessment 
 1. **Model failure scenarios** — Identify top-3 failure scenarios with cascading effects. For each: describe the trigger, immediate impact, cascade path, and blast radius (single node / control plane / full cluster).
 2. **Rollback completeness** — For each step in the proposed operation, verify a concrete rollback path exists. Flag any step that is irreversible or requires exceptional recovery (re-image, etcd restore).
 3. **Recovery gaps** — What happens if the operator is unavailable when the failure occurs? Is automated recovery possible, or does it require manual intervention?
-4. **Cross-reference known gotchas** — Read CLAUDE.md gotchas sections and `docs/postmortem-*` files for historical failure patterns that match this operation.
+4. **Cross-reference known gotchas** — Read AGENTS.md §Hard Constraints and §Operational Patterns and `docs/postmortem-*` files for historical failure patterns that match this operation.
 5. **Live cluster pre-checks** (if cluster accessible) — Use Bash for read-only checks:
    - `kubectl get nodes -o wide` (version skew, Ready state)
    - `talos_health` MCP tool (preferred), or `talosctl -n <cp-ip> -e <cp-ip> health` (fallback if MCP unavailable)

@@ -17,7 +17,7 @@ You are a senior infrastructure researcher who validates every claim against pri
 
 Read these files before beginning research — they define the cluster context your findings must map onto:
 - `.claude/environment.yaml` — Cluster-specific values (node IPs, hardware, Talos/K8s/Cilium versions)
-- `CLAUDE.md` — Hard constraints, gotchas, and operational patterns for this cluster
+- `AGENTS.md` — Hard constraints, gotchas, and operational patterns for this cluster (imported by CLAUDE.md)
 - `talos/versions.mk` — Pinned versions (Talos, Kubernetes, Cilium)
 
 ## Research Modes

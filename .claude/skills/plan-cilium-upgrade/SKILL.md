@@ -70,7 +70,7 @@ Produce a comprehensive upgrade plan that includes:
 
 ### 1. Load repo context first
 Read at minimum:
-- `CLAUDE.md`
+- `AGENTS.md`
 - `README.md`
 - `talos/versions.mk`
 - `talos/patches/controlplane.yaml`
@@ -108,7 +108,7 @@ Before starting web research, check for prior experience and external intelligen
 1. **Search existing docs for prior upgrade experience:**
    - Grep `docs/` for `cilium.*<target-version>` and related terms (postmortems, upgrade reports, debug logs)
    - Read any matching files to extract lessons learned
-   - Check CLAUDE.md gotchas for Cilium/Gateway API version-specific warnings
+   - Check AGENTS.md §Hard Constraints for Cilium/Gateway API version-specific warnings
 
 2. **Spawn the `researcher` agent for upstream intelligence:**
    Use the Agent tool to spawn the `researcher` agent with this prompt:
@@ -270,7 +270,7 @@ Review checklist:
 - Kubernetes and Talos compatibility were checked
 - upgrade risks were mapped to this cluster’s enabled Cilium features
 - commands align with this repo’s GitOps and Talos operating model
-- no step relies on forbidden practices from `CLAUDE.md`
+- no step relies on forbidden practices from `AGENTS.md`
 - every major recommendation has at least one cited upstream source
 - blockers and unknowns are explicit rather than hidden
 

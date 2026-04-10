@@ -68,7 +68,7 @@ Produce a comprehensive upgrade plan that includes:
 
 ### 1. Load repo context first
 Read at minimum:
-- `CLAUDE.md`
+- `AGENTS.md`
 - `README.md`
 - `docs/day2-operations.md`
 - `talos/Makefile`
@@ -106,7 +106,7 @@ Before starting web research, check for prior experience and external intelligen
 1. **Search existing docs for prior upgrade experience:**
    - Grep `docs/` for `talos.*<target-version>` and related terms (postmortems, upgrade reports, maintenance logs)
    - Read any matching files to extract lessons learned
-   - Check CLAUDE.md gotchas for version-specific warnings
+   - Check AGENTS.md §Hard Constraints for version-specific warnings
 
 2. **Spawn the `researcher` agent for upstream intelligence:**
    Use the Agent tool to spawn the `researcher` agent with subagent_type "researcher" (or general-purpose with the researcher persona) and this prompt:
@@ -276,7 +276,7 @@ Review checklist:
 - Kubernetes compatibility and coupled version impacts were checked
 - upgrade risks were mapped to this cluster’s hardware, storage, and control-plane topology
 - commands align with this repo’s Talos and GitOps operating model
-- no step relies on forbidden practices from `CLAUDE.md`
+- no step relies on forbidden practices from `AGENTS.md`
 - every major recommendation has at least one cited upstream source
 - blockers and unknowns are explicit rather than hidden
 
