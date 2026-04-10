@@ -8,8 +8,9 @@ resources:
   - kyverno-clusterpolicy-pni-capability-validation-enforce.yaml
   - kyverno-clusterpolicy-vault-ca-distribution.yaml
   - ccnp-pni-monitoring-dns-visibility.yaml
-  - ccnp-pni-monitoring-vault-config-operator-metrics-egress.yaml
   - ccnp-pni-monitoring-external-secrets-metrics-egress.yaml
+  - ccnp-pni-admission-webhook-provider-ingress.yaml
+  - ccnp-pni-monitoring-scrape-provider-ingress.yaml
   - ccnp-pni-controlplane-egress-consumer-egress.yaml
   - ccnp-pni-cnpg-operator-dataplane-egress.yaml
   - ccnp-pni-redis-operator-dataplane-egress.yaml

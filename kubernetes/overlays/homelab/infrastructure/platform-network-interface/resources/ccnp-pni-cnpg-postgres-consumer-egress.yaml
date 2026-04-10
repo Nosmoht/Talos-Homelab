@@ -13,6 +13,7 @@ spec:
     matchLabels:
       k8s:io.cilium.k8s.namespace.labels.platform.io/consume.cnpg-postgres: "true"
       k8s:io.cilium.k8s.namespace.labels.platform.io/network-interface-version: "v1"
+      platform.io/capability-consumer.cnpg-postgres: "true"
   egress:
     - toEndpoints:
         - matchExpressions:

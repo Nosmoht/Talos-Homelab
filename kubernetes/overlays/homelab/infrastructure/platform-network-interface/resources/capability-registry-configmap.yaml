@@ -63,3 +63,22 @@ data:
       - id: controlplane-egress
         providers:
           - kube-apiserver
+      - id: admission-webhook-provider
+        direction: provider-ingress
+        selector: pod-label capability-provider.admission-webhook
+        providers:
+          - kyverno
+          - cloudnative-pg
+          - redis-operator
+          - piraeus-operator
+          - minio-operator
+          - vault-config-operator
+      - id: monitoring-scrape-provider
+        direction: provider-ingress
+        selector: pod-label capability-provider.monitoring-scrape
+        providers:
+          - vault-operator
+          - cloudnative-pg
+          - redis-operator
+          - strimzi-kafka-operator
+          - vault

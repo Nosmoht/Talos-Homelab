@@ -14,6 +14,7 @@ spec:
     matchLabels:
       k8s:io.cilium.k8s.namespace.labels.platform.io/consume.internet-egress: "true"
       k8s:io.cilium.k8s.namespace.labels.platform.io/network-interface-version: "v1"
+      platform.io/capability-consumer.internet-egress: "true"
   egress:
     # Public internet only (RFC1918 excluded)
     - toCIDRSet:
