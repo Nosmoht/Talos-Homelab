@@ -10,6 +10,11 @@ allowed-tools:
   - mcp__talos__talos_health
   - mcp__talos__talos_etcd
   - mcp__talos__talos_version
+  - mcp__kubernetes-mcp-server__resources_list
+  - mcp__kubernetes-mcp-server__resources_get
+  - mcp__kubernetes-mcp-server__pods_list
+  - mcp__kubernetes-mcp-server__pods_list_in_namespace
+  - mcp__kubernetes-mcp-server__nodes_top
 ---
 
 # Cluster Health Snapshot
@@ -77,31 +82,38 @@ If any member is unhealthy, record as **CRIT**.
 ### 2. Kubernetes layer (skip if --subsystem not k8s/all)
 
 Run:
-```bash
-KUBECONFIG=$KUBECONFIG kubectl get nodes -o wide
-KUBECONFIG=$KUBECONFIG kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded
-KUBECONFIG=$KUBECONFIG kubectl top nodes
+```
+resources_list(apiVersion="v1", kind="Node")
+pods_list(fieldSelector="status.phase!=Running,status.phase!=Succeeded")
+nodes_top()
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl get nodes -o wide && KUBECONFIG=$KUBECONFIG kubectl get pods -A --field-selector=status.phase!=Running,status.phase!=Succeeded && KUBECONFIG=$KUBECONFIG kubectl top nodes
 ```
 
-If `kubectl get nodes` fails, record as **CRIT**: "Kubernetes API unreachable."
-If `kubectl top nodes` fails (metrics-server unavailable), record as **WARN**: "Resource usage unavailable — metrics-server not running." Continue with other checks.
+Note: `pods_list` returns structured `containerStatuses`. CrashLoopBackOff is
+a container state, not a pod phase — detect it client-side from
+`containerStatuses[].state.waiting.reason`, not via `fieldSelector`.
+
+If `resources_list` for `Node` fails, record as **CRIT**: "Kubernetes API unreachable."
+If `nodes_top` fails (metrics-server unavailable), record as **WARN**: "Resource usage unavailable — metrics-server not running." Continue with other checks.
 NotReady nodes: **CRIT**. CrashLoopBackOff or OOMKilled pods in non-completed state: **WARN**. Nodes above 90% CPU or memory: **WARN**.
 
 ### 3. Cilium layer (skip if --subsystem not cilium/all)
 
 Run:
-```bash
-KUBECONFIG=$KUBECONFIG kubectl -n kube-system get pods -l k8s-app=cilium -o wide
-KUBECONFIG=$KUBECONFIG kubectl get ciliumnode -o wide
+```
+pods_list_in_namespace(namespace="kube-system", labelSelector="k8s-app=cilium")
+resources_list(apiVersion="cilium.io/v2", kind="CiliumNode")
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl -n kube-system get pods -l k8s-app=cilium -o wide && KUBECONFIG=$KUBECONFIG kubectl get ciliumnode -o wide
 ```
 
-If `kubectl get ciliumnode` returns no resources, record as **CRIT**: "No CiliumNode objects — Cilium may not be running."
+If `resources_list` for `CiliumNode` returns an empty list, record as **CRIT**: "No CiliumNode objects — Cilium may not be running."
 Any Cilium agent not Running: **CRIT**. Stale or mismatched CiliumNode IPs: **WARN**.
 
 ### 4. LINSTOR/Storage layer (skip if --subsystem not storage/all)
 
 Run:
 ```bash
+# kubectl-only: kubectl-linstor plugin has no MCP equivalent
 KUBECONFIG=$KUBECONFIG kubectl linstor node list
 KUBECONFIG=$KUBECONFIG kubectl linstor resource list
 KUBECONFIG=$KUBECONFIG kubectl linstor storage-pool list
@@ -113,12 +125,13 @@ Satellite OFFLINE or UNKNOWN: **CRIT**. Resources in Degraded/SyncTarget/Inconsi
 ### 5. PKI layer (skip if --subsystem not pki/all)
 
 Run:
-```bash
-KUBECONFIG=$KUBECONFIG kubectl get clusterissuer
-KUBECONFIG=$KUBECONFIG kubectl get certificate -A
+```
+resources_list(apiVersion="cert-manager.io/v1", kind="ClusterIssuer")
+resources_list(apiVersion="cert-manager.io/v1", kind="Certificate")
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl get clusterissuer && KUBECONFIG=$KUBECONFIG kubectl get certificate -A
 ```
 
-If `kubectl get clusterissuer` returns no resources, record as **WARN**: "cert-manager not installed — PKI checks skipped." Continue with other layers.
+If `resources_list` for `ClusterIssuer` returns an empty list, record as **WARN**: "cert-manager not installed — PKI checks skipped." Continue with other layers.
 ClusterIssuer not Ready: **CRIT**. Certificates expired or expiring within 7 days: **WARN**.
 
 ## Output
@@ -145,3 +158,4 @@ Optionally write a snapshot to `docs/cluster-health-<date>.md` if the user reque
 - Use `-n $CP1 -e $CP1` (first control plane IP from environment.yaml) for all talosctl commands. Never use VIP.
 - Do not attempt automated remediation — report findings and point to the appropriate skill.
 - If a command fails due to tool unavailability (linstor plugin, metrics-server), record as WARN and continue — do not stop the entire health check.
+- On Kubernetes MCP tool failure: retry once, then run the `# Fallback:` kubectl command from the same step. Record the fallback in the report. Applies to all `mcp__kubernetes-mcp-server__*` calls in this skill.
