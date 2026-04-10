@@ -4,6 +4,11 @@ prometheus:
   thanosServiceMonitor:
     enabled: true
   prometheusSpec:
+    podMetadata:
+      labels:
+        platform.io/capability-consumer.storage-csi: "true"
+        platform.io/capability-consumer.s3-object: "true"
+        platform.io/capability-consumer.gateway-backend: "true"
     replicas: 2
     retention: 15d
     externalLabels:
@@ -84,6 +89,8 @@ kube-state-metrics:
 
 grafana:
   replicas: 1
+  podLabels:
+    platform.io/capability-consumer.gateway-backend: "true"
   service:
     type: ClusterIP
     sessionAffinity: None

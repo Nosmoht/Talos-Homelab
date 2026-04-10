@@ -288,6 +288,7 @@ metadata:
     platform.io/consume.monitoring-scrape: "true"
     platform.io/consume.gateway-backend: "true"
     platform.io/consume.controlplane-egress: "true"
+    platform.io/consume.vault-secrets: "true"
     pod-security.kubernetes.io/enforce: baseline
     pod-security.kubernetes.io/enforce-version: latest
     pod-security.kubernetes.io/audit: restricted
