@@ -14,6 +14,7 @@ allowed-tools:
   - mcp__talos__talos_health
   - mcp__talos__talos_etcd
   - mcp__talos__talos_etcd_snapshot
+  - mcp__kubernetes-mcp-server__resources_get
 ---
 
 # Talos Apply
@@ -139,8 +140,10 @@ talos_etcd(subcommand="status", nodes=["<ip>"])
 Confirm all members show `started` before declaring success.
 
 Then confirm node readiness:
-```bash
-KUBECONFIG=<kubeconfig> kubectl get node <node>
+```
+resources_get(apiVersion="v1", kind="Node", name="<node>")
+# Check .status.conditions[] — find type=="Ready", verify status=="True".
+# Fallback: KUBECONFIG=<kubeconfig> kubectl get node <node>
 ```
 
 ### 8. Write maintenance report

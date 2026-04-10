@@ -3,7 +3,7 @@ name: gitops-health-triage
 description: Triage ArgoCD app sync/health drift and produce a focused remediation plan with safe GitOps-first actions for this homelab repository.
 argument-hint: [application-name|all]
 disable-model-invocation: true
-allowed-tools: Bash, Read, Grep, Glob, Write
+allowed-tools: Bash, Read, Grep, Glob, Write, mcp__kubernetes-mcp-server__resources_list, mcp__kubernetes-mcp-server__resources_get
 ---
 
 # GitOps Health Triage
@@ -36,21 +36,25 @@ Read before proceeding:
 ### 1. Gather status quickly
 
 First verify cluster connectivity:
-```bash
-KUBECONFIG=<kubeconfig> kubectl -n argocd get applications
 ```
-If kubectl exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify the kubeconfig path in `.claude/environment.yaml` is correct and cluster is reachable."
+resources_list(apiVersion="argoproj.io/v1alpha1", kind="Application", namespace="argocd")
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl -n argocd get applications
+```
+If the MCP tool errors (not empty — empty list is a valid cluster state), fall back to the kubectl command. If that also exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify the kubeconfig path in `.claude/environment.yaml` is correct and cluster is reachable."
 
 If a specific app is provided, also run:
-```bash
-KUBECONFIG=<kubeconfig> kubectl -n argocd get application <app> -o yaml
-KUBECONFIG=<kubeconfig> kubectl -n argocd describe application <app>
+```
+resources_get(apiVersion="argoproj.io/v1alpha1", kind="Application", name="<app>", namespace="argocd")
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl -n argocd get application <app> -o yaml
+KUBECONFIG=$KUBECONFIG kubectl -n argocd describe application <app>
+# ^ describe stays CLI — no MCP equivalent for event-aggregated output (see .claude/rules/kubernetes-mcp-first.md §CLI-Only)
 ```
 
-Extract the exact failure message:
-```bash
-KUBECONFIG=<kubeconfig> kubectl -n argocd get application <app> \
-  -o jsonpath='{.status.operationState.message}'
+Extract the exact failure message from the `resources_get` JSON above — read `.status.operationState.message` from the response.
+```
+# No second MCP call needed — extract from resources_get result: .status.operationState.message
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl -n argocd get application <app> \
+#   -o jsonpath='{.status.operationState.message}'
 ```
 
 If the `operationState.message` is empty or generic ("ComparisonError"), inspect controller logs per `references/argocd-remediation-patterns.md`.
@@ -64,7 +68,8 @@ Read `references/argocd-remediation-patterns.md` and classify into one of:
 - Cilium network policy blocking hooks or control-plane traffic
 - stale operation state / exhausted retries
 - admission webhook rejection (distinct from defaulted-field drift — the resource is actively rejected, not just drifting)
-- pre/post-sync hook failure (Job pods fail; check hook pod logs: `kubectl -n <namespace> logs -l app.kubernetes.io/managed-by=argocd --tail=50`)
+- pre/post-sync hook failure (Job pods fail; check hook pod logs: `kubectl -n <namespace> logs -l app.kubernetes.io/managed-by=argocd --tail=50`
+  — label-selector logs stay CLI; `pods_log` takes a pod name, not a selector — see `.claude/rules/kubernetes-mcp-first.md` §CLI-Only)
 - RBAC / permission denied (service account lacks required verbs on target resources)
 - resource quota exceeded (namespace quota blocks resource creation)
 - sync loop (external controller drift — HPA, VPA, cert-manager modifying ArgoCD-managed fields; fix with `ignoreDifferences`)

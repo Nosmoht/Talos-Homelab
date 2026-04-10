@@ -12,6 +12,7 @@ allowed-tools:
   - mcp__talos__talos_version
   - mcp__talos__talos_dmesg
   - mcp__talos__talos_get
+  - mcp__kubernetes-mcp-server__resources_get
 ---
 
 # Analyze Node Hardware
@@ -130,17 +131,22 @@ done
 # Fallback: talosctl -n $NODE_IP -e $NODE_IP get extensions
 ```
 
-### Step 2: NFD Data via kubectl
+### Step 2: NFD Data via Kubernetes MCP
 
-```bash
-# Node labels (includes NFD feature labels)
-kubectl get node $NODE_NAME -o yaml
+```
+# Node labels (includes NFD feature labels) — named lookup
+resources_get(apiVersion="v1", kind="Node", name="$NODE_NAME")
+# Read .metadata.labels for all NFD feature labels (keys starting "feature.node.kubernetes.io/").
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl get node $NODE_NAME -o yaml
 
-# Full NFD feature discovery (if NFD is deployed)
-kubectl get nodefeature -n node-feature-discovery $NODE_NAME -o yaml 2>/dev/null
+# Full NFD feature discovery (if NFD is deployed) — named lookup
+resources_get(apiVersion="nfd.k8s-sigs.io/v1alpha1", kind="NodeFeature", name="$NODE_NAME", namespace="node-feature-discovery")
+# Read full .spec.features from JSON for hardware capability details.
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl get nodefeature -n node-feature-discovery $NODE_NAME -o yaml 2>/dev/null
 
-# USB device labels for inventory (Section 3)
-kubectl get node $NODE_NAME -o json | jq '.metadata.labels | to_entries[] | select(.key | startswith("feature.node.kubernetes.io/usb"))'
+# USB device labels for inventory (Section 3) — reuse Node resources_get result from above.
+# Filter .metadata.labels client-side: select entries whose key starts with "feature.node.kubernetes.io/usb".
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl get node $NODE_NAME -o json | jq '.metadata.labels | to_entries[] | select(.key | startswith("feature.node.kubernetes.io/usb"))'
 ```
 
 If `kubectl get nodefeature` returns no output or an error, note "NFD not deployed" in Section 4 and write "N/A — NFD not deployed" in Section 3 (USB Device Inventory). Do not emit empty table placeholders.

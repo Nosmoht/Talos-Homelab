@@ -3,7 +3,7 @@ name: pni-capability-add
 description: "Add a PNI capability: author CCNP, register in ConfigMap, update Kyverno allowlist, update docs — as one atomic commit. Use when onboarding new platform services."
 argument-hint: "<capability-name> --provider <ns/component> --type egress|ingress|api-only"
 disable-model-invocation: true
-allowed-tools: Bash, Read, Grep, Glob, Write, Edit
+allowed-tools: Bash, Read, Grep, Glob, Write, Edit, mcp__kubernetes-mcp-server__resources_list, mcp__kubernetes-mcp-server__resources_get
 ---
 
 # PNI Capability Add
@@ -66,12 +66,17 @@ Determine from `--type`:
 Determine the container port (post-DNAT) for the provider component. Service ports are NOT the same as container ports — do not use Service `port:` values.
 
 Run:
-```bash
-KUBECONFIG=$KUBECONFIG kubectl get service -n <provider-ns> -o jsonpath='{.items[*].spec.ports[*]}'
-KUBECONFIG=$KUBECONFIG kubectl get endpoints -n <provider-ns> -o wide
+```
+resources_list(apiVersion="v1", kind="Service", namespace="<provider-ns>")
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl get service -n <provider-ns> -o jsonpath='{.items[*].spec.ports[*]}'
+
+resources_list(apiVersion="discovery.k8s.io/v1", kind="EndpointSlice", namespace="<provider-ns>")
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl get endpointslices -n <provider-ns> -o wide
+# Note: project uses EndpointSlice (discovery.k8s.io/v1), never Endpoints (deprecated since Kubernetes v1.33.0)
+# kubectl kustomize stays CLI — local render, no cluster call (see .claude/rules/kubernetes-mcp-first.md §CLI-Only)
 ```
 
-Identify the target container port from the endpoints output (`ENDPOINTS` column shows `<ip>:<port>`). Use that port in the CCNP `toPorts` field.
+Identify the target container port from the EndpointSlice JSON: `.endpoints[].addresses` shows pod IPs, `.ports[].port` shows the container port. Use that port in the CCNP `toPorts` field.
 
 If the provider is not yet deployed, check `docs/platform-network-interface.md` for a documented port, or ask the user.
 

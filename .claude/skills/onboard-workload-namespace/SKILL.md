@@ -3,7 +3,7 @@ name: onboard-workload-namespace
 description: "Onboard a new namespace: set PNI labels, create ArgoCD Application CR, validate Kyverno admission, and optionally wire Vault ExternalSecrets. Full git-only workflow."
 argument-hint: "<namespace> [--profile restricted|managed] [--capabilities cap1,cap2] [--vault]"
 disable-model-invocation: true
-allowed-tools: Bash, Read, Grep, Glob, Write, Edit
+allowed-tools: Bash, Read, Grep, Glob, Write, Edit, mcp__kubernetes-mcp-server__resources_get, mcp__kubernetes-mcp-server__resources_list
 ---
 
 # Onboard Workload Namespace
@@ -193,14 +193,23 @@ git push
 
 ### 11. Post-push verification (after ArgoCD sync)
 
-ArgoCD's default polling interval is up to 3 minutes. After pushing, wait for sync before checking. Run:
-```bash
-KUBECONFIG=$KUBECONFIG kubectl -n argocd get application $COMPONENT -w --timeout=5m
+ArgoCD's default polling interval is up to 3 minutes. After pushing, poll until Application shows `Synced` and `Healthy` (bounded poll — max 12 × 10s = 2-minute ceiling; report last status on timeout):
 ```
-Wait until Application shows `Synced` and `Healthy`. Then verify:
-```bash
-KUBECONFIG=$KUBECONFIG kubectl get ns $NAMESPACE --show-labels
-KUBECONFIG=$KUBECONFIG kubectl get policyreport -n $NAMESPACE
+# Poll: resources_get(apiVersion="argoproj.io/v1alpha1", kind="Application", name="$COMPONENT", namespace="argocd")
+# Check .status.sync.status == "Synced" AND .status.health.status == "Healthy" in JSON response.
+# Repeat up to 12 times with 10s sleep between iterations. Stop and report on timeout.
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl -n argocd get application $COMPONENT --watch --timeout=5m
+# ^ kubectl watch stays CLI for longer-ceiling waits (see .claude/rules/kubernetes-mcp-first.md §CLI-Only)
+```
+Then verify:
+```
+resources_get(apiVersion="v1", kind="Namespace", name="$NAMESPACE")
+# Check .metadata.labels in JSON for PNI labels and capability opt-ins.
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl get ns $NAMESPACE --show-labels
+
+resources_list(apiVersion="wgpolicyk8s.io/v1alpha2", kind="PolicyReport", namespace="$NAMESPACE")
+# Check items[].results[].result for any "fail" entries.
+# Fallback: KUBECONFIG=$KUBECONFIG kubectl get policyreport -n $NAMESPACE
 ```
 
 If Application is not Healthy within 5 minutes, suggest `/gitops-health-triage` for diagnosis.
