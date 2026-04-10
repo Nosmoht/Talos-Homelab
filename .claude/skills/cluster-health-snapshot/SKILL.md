@@ -3,7 +3,13 @@ name: cluster-health-snapshot
 description: "Check cluster health across Talos, Kubernetes, Cilium, LINSTOR, and PKI. Use after upgrades, maintenance, or ArgoCD syncs to verify all subsystems are healthy."
 argument-hint: "[--subsystem talos|k8s|cilium|storage|pki|all]"
 disable-model-invocation: true
-allowed-tools: Bash, Read, Write
+allowed-tools:
+  - Bash
+  - Read
+  - Write
+  - mcp__talos__talos_health
+  - mcp__talos__talos_etcd
+  - mcp__talos__talos_version
 ---
 
 # Cluster Health Snapshot
@@ -56,14 +62,15 @@ Do not attempt remediation from this skill.
 ### 1. Talos layer (skip if --subsystem not talos/all)
 
 Run:
-```bash
-talosctl -n $CP1 -e $CP1 health --control-plane-nodes $CP1,$CP2,$CP3
-talosctl -n $CP1 -e $CP1 etcd members
-talosctl -n $CP1 -e $CP1 etcd status
+```
+talos_health(nodes=["$CP1"])
+talos_etcd(subcommand="members", nodes=["$CP1"])
+talos_etcd(subcommand="status", nodes=["$CP1"])
+# Fallback: talosctl -n $CP1 -e $CP1 health --control-plane-nodes $CP1,$CP2,$CP3 && talosctl -n $CP1 -e $CP1 etcd members && talosctl -n $CP1 -e $CP1 etcd status
 ```
 
-If `talosctl health` exits non-zero with a connection error, record as **CRIT**: "Cannot reach control plane node $CP1. Verify the node is up before running this skill."
-If `talosctl health` exits non-zero with a health failure, record as **CRIT** with the specific error.
+If `talos_health` returns an error or connection failure, record as **CRIT**: "Cannot reach control plane node $CP1. Verify the node is up before running this skill."
+If `talos_health` returns a health failure, record as **CRIT** with the specific error.
 If etcd member count < 3 or learner count > 0, record as **WARN**.
 If any member is unhealthy, record as **CRIT**.
 

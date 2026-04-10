@@ -3,7 +3,17 @@ name: talos-apply
 description: Apply Talos config changes (sysctl, network, patches) to a single node with dry-run validation and health verification.
 argument-hint: <node-name>
 disable-model-invocation: true
-allowed-tools: Bash, Read, Grep, Glob, Write
+allowed-tools:
+  - Bash
+  - Read
+  - Grep
+  - Glob
+  - Write
+  - mcp__talos__talos_apply_config
+  - mcp__talos__talos_version
+  - mcp__talos__talos_health
+  - mcp__talos__talos_etcd
+  - mcp__talos__talos_etcd_snapshot
 ---
 
 # Talos Apply
@@ -48,14 +58,18 @@ Read `talos/Makefile` to map node name → IP and role (control-plane, worker, G
 ### 2. Preflight (control-plane only)
 
 If node is control-plane, take backups first:
-```bash
-talosctl etcd snapshot /tmp/etcd-backup-$(date +%Y%m%d).snapshot -n <ip> -e <ip>
-talosctl get machineconfig -n <ip> -e <ip> -o yaml > /tmp/machineconfig-<node>-$(date +%Y%m%d).yaml
+```
+# MCP — etcd snapshot to local file:
+talos_etcd_snapshot(nodes=[<ip>], path="/tmp/etcd-backup-YYYYMMDD.snapshot")
+
+# CLI-only — config backup to file (no MCP equivalent):
+talosctl get machineconfig -n <ip> -e <ip> -o yaml > /tmp/machineconfig-<node>-YYYYMMDD.yaml
 ```
 
 Verify etcd quorum:
-```bash
-talosctl etcd status -n <ip> -e <ip>
+```
+talos_etcd(subcommand="status", nodes=[<ip>])
+# Fallback: talosctl etcd status -n <ip> -e <ip>
 ```
 If quorum is degraded (fewer than (n/2)+1 members healthy), stop and report. Do not operate on a CP node with pre-existing quorum issues.
 
@@ -63,9 +77,14 @@ If quorum is degraded (fewer than (n/2)+1 members healthy), stop and report. Do 
 
 ```bash
 make -C talos gen-configs
-talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml --dry-run
 ```
 Where `<role>` is `controlplane` for CP nodes or `worker` for all others.
+
+Then dry-run via MCP:
+```
+talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=true, nodes=["<ip>"])
+# Fallback (MCP unavailable): talosctl -n <ip> -e <ip> apply-config -f talos/generated/<role>/<node>.yaml --dry-run
+```
 
 If dry-run fails, stop and report the error with likely root cause.
 
@@ -93,26 +112,29 @@ Proceed? (yes/no)
 
 ### 6. Apply
 
-After user confirms:
-```bash
-talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml
+After user confirms, apply via MCP (note: `dry_run` defaults to `true` — must be explicitly `false`):
+```
+talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=false, confirm=true, nodes=["<ip>"], mode="auto")
+# Fallback (MCP unavailable): talosctl -n <ip> -e <ip> apply-config -f talos/generated/<role>/<node>.yaml
 ```
 
-This uses `--mode=auto` by default. For other modes:
-- CP under load: `talosctl apply-config --mode=staged -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`
-- Safe probe: `talosctl apply-config --mode=no-reboot -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`
+For other modes pass `mode` parameter:
+- CP under load: `mode="staged"`
+- Safe probe: `mode="no_reboot"`
 
 ### 7. Verify health
 
-```bash
-talosctl -n <ip> -e <ip> version
-talosctl -n <ip> -e <ip> health
+```
+talos_version(nodes=["<ip>"])
+talos_health(nodes=["<ip>"])
+# Fallback: talosctl -n <ip> -e <ip> version && talosctl -n <ip> -e <ip> health
 ```
 
 For control-plane nodes, also verify etcd:
-```bash
-talosctl etcd members -n <ip> -e <ip>
-talosctl etcd status -n <ip> -e <ip>
+```
+talos_etcd(subcommand="members", nodes=["<ip>"])
+talos_etcd(subcommand="status", nodes=["<ip>"])
+# Fallback: talosctl etcd members -n <ip> -e <ip> && talosctl etcd status -n <ip> -e <ip>
 ```
 Confirm all members show `started` before declaring success.
 

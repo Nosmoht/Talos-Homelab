@@ -3,7 +3,15 @@ name: analyze-node-hardware
 description: Analyze hardware of a Talos node using talosctl and NFD. Produces comprehensive hardware profile for kernel tuning.
 argument-hint: [node-name-or-ip]
 disable-model-invocation: true
-allowed-tools: Bash, Read, Glob, Grep, Write
+allowed-tools:
+  - Bash
+  - Read
+  - Glob
+  - Grep
+  - Write
+  - mcp__talos__talos_version
+  - mcp__talos__talos_dmesg
+  - mcp__talos__talos_get
 ---
 
 # Analyze Node Hardware
@@ -38,8 +46,9 @@ Store both `NODE_NAME` and `NODE_IP` for use throughout.
 
 First, verify connectivity with a 10-second timeout. If this fails, stop and report the error — do not proceed to generate a hardware profile with empty data:
 
-```bash
-timeout 10 talosctl -n $NODE_IP -e $NODE_IP version --short
+```
+talos_version(nodes=["$NODE_IP"])
+# Fallback: timeout 10 talosctl -n $NODE_IP -e $NODE_IP version --short
 ```
 
 For all subsequent talosctl commands, if more than 3 consecutive commands fail, abort and report partial results with a connectivity warning.
@@ -90,17 +99,20 @@ for DEV in $BLOCK_DEVS; do
   talosctl -n $NODE_IP -e $NODE_IP read /sys/block/$DEV/queue/rotational 2>/dev/null || echo "not present"
 done
 
-# IOMMU status
-talosctl -n $NODE_IP -e $NODE_IP dmesg | grep -iE "(iommu|dmar|vt-d)"
+# IOMMU status (MCP — filter client-side after retrieving):
+# talos_dmesg(nodes=["$NODE_IP"])  → filter output for iommu|dmar|vt-d
+# Fallback: talosctl -n $NODE_IP -e $NODE_IP dmesg | grep -iE "(iommu|dmar|vt-d)"
 
-# NVIDIA / GPU info (if applicable)
-talosctl -n $NODE_IP -e $NODE_IP dmesg | grep -iE "(nvidia|gpu|drm)"
+# NVIDIA / GPU info (same dmesg call — filter for nvidia|gpu|drm):
+# talos_dmesg(nodes=["$NODE_IP"])  → filter output for nvidia|gpu|drm
+# Fallback: talosctl -n $NODE_IP -e $NODE_IP dmesg | grep -iE "(nvidia|gpu|drm)"
 
 # Network interfaces
 talosctl -n $NODE_IP -e $NODE_IP read /proc/net/dev
 
-# Loaded modules (via dmesg or /proc/modules if accessible)
-talosctl -n $NODE_IP -e $NODE_IP dmesg | grep -iE "module.*loaded|driver.*registered"
+# Loaded modules (same dmesg call — filter for module.*loaded|driver.*registered):
+# talos_dmesg(nodes=["$NODE_IP"])  → filter output for module.*loaded|driver.*registered
+# Fallback: talosctl -n $NODE_IP -e $NODE_IP dmesg | grep -iE "module.*loaded|driver.*registered"
 
 # PCI devices — enumerate and read vendor/device/class for each
 # If PCI device count exceeds 40, summarize by class rather than listing each BDF.
@@ -113,8 +125,9 @@ for BDF in $PCI_DEVS; do
   echo "$BDF vendor=$VENDOR device=$DEVICE class=$CLASS"
 done
 
-# Installed Talos extensions
-talosctl -n $NODE_IP -e $NODE_IP get extensions
+# Installed Talos extensions (MCP):
+# talos_get(resource_type="extensions", nodes=["$NODE_IP"])
+# Fallback: talosctl -n $NODE_IP -e $NODE_IP get extensions
 ```
 
 ### Step 2: NFD Data via kubectl

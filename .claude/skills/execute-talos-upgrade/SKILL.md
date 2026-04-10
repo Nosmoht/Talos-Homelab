@@ -3,7 +3,22 @@ name: execute-talos-upgrade
 description: Execute a reviewed Talos upgrade for this homelab cluster by validating an approved migration plan, updating repo-managed version and schematic inputs, regenerating configs, and performing a gated node-by-node rollout with explicit recovery actions.
 argument-hint: <approved-plan-path>
 disable-model-invocation: true
-allowed-tools: Bash, Read, Grep, Glob, Write
+allowed-tools:
+  - Bash
+  - Read
+  - Grep
+  - Glob
+  - Write
+  - mcp__talos__talos_apply_config
+  - mcp__talos__talos_version
+  - mcp__talos__talos_health
+  - mcp__talos__talos_etcd
+  - mcp__talos__talos_services
+  - mcp__talos__talos_dmesg
+  - mcp__talos__talos_etcd_snapshot
+  - mcp__talos__talos_upgrade
+  - mcp__talos__talos_rollback
+  - mcp__talos__talos_validate
 ---
 
 # Execute Talos Upgrade
@@ -104,12 +119,15 @@ Run at minimum:
 Use control-plane node IPs from `environment.yaml`:
 ```bash
 git status --short
-talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> version
-talosctl -n <cp-node-2-ip> -e <cp-node-2-ip> version
-talosctl -n <cp-node-3-ip> -e <cp-node-3-ip> version
-talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> health --control-plane-nodes <cp-node-1-ip>,<cp-node-2-ip>,<cp-node-3-ip>
-talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> etcd members
-talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> etcd status
+```
+```
+talos_version(nodes=["<cp-node-1-ip>", "<cp-node-2-ip>", "<cp-node-3-ip>"])
+talos_health(nodes=["<cp-node-1-ip>"])
+talos_etcd(subcommand="members", nodes=["<cp-node-1-ip>"])
+talos_etcd(subcommand="status", nodes=["<cp-node-1-ip>"])
+# Fallback: talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> health --control-plane-nodes <cp-node-1-ip>,<cp-node-2-ip>,<cp-node-3-ip>
+```
+```bash
 KUBECONFIG=<kubeconfig> kubectl get nodes -o wide
 KUBECONFIG=<kubeconfig> kubectl get pods -A | grep -v Running
 KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
@@ -127,8 +145,9 @@ If nodes are NotReady, etcd is unhealthy, DRBD state is risky, or Cilium is alre
 Before mutating the repo or cluster, capture baseline evidence and a recovery snapshot.
 
 Take an etcd backup:
-```bash
-talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> etcd snapshot /tmp/etcd-backup-pre-upgrade-$(date +%Y%m%d).db
+```
+talos_etcd_snapshot(nodes=["<cp-node-1-ip>"], path="/tmp/etcd-backup-pre-upgrade-YYYYMMDD.db")
+# Fallback: talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> etcd snapshot /tmp/etcd-backup-pre-upgrade-$(date +%Y%m%d).db
 ```
 Store the backup path in the run record. Verify the snapshot file size is non-zero before proceeding.
 
@@ -186,10 +205,13 @@ make -C talos validate-schematics
 make -C talos cilium-bootstrap
 make -C talos cilium-bootstrap-check
 make -C talos gen-configs
-# Validate all generated configs
+# Validate all generated configs (CLI-only — talos_validate works per-node, not file)
 find talos/generated -type f -name '*.yaml' | sort | while read f; do echo "Validating $f"; talosctl validate --config "$f" --mode metal --strict; done
-# Dry-run all nodes (resolve IPs from environment.yaml)
-talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml --dry-run
+```
+Dry-run all nodes via MCP (resolve IPs from environment.yaml):
+```
+talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=true, nodes=["<node-ip>"])
+# Fallback: talosctl -n <node-ip> -e <node-ip> apply-config -f talos/generated/<role>/<node>.yaml --dry-run
 ```
 
 If the approved plan includes Kubernetes or Cilium coupling, update and validate those repo changes before continuing. Do not continue with a partially updated repo state.
@@ -223,21 +245,29 @@ Before beginning, check etcd leadership: `talosctl -n <cp-node-1-ip> -e <cp-node
 Use the approved plan’s sequencing. Default order: control-plane nodes first (from `nodes.control_plane`), then standard workers (from `nodes.workers`), then GPU workers (from `nodes.gpu_workers`), then Pi nodes (from `nodes.pi_nodes`). Resolve the exact node names and IPs from `environment.yaml`.
 
 For each node (resolve install image from `talos/.schematic-ids.mk` + `talos/versions.mk`):
-```bash
-talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml --dry-run
-talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml
-talosctl upgrade -n <node-ip> -e <node-ip> --image <install-image> --preserve --wait --timeout 10m
+```
+# 1. Dry-run:
+talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=true, nodes=["<node-ip>"])
+# 2. Apply config (dry_run must be false):
+talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=false, confirm=true, nodes=["<node-ip>"], mode="auto")
+# 3. Upgrade (fires and returns — poll talos_health until node rejoins):
+talos_upgrade(nodes=["<node-ip>"], image="<install-image>", preserve=true, confirm=true)
+talos_health(nodes=["<node-ip>"])  # repeat until healthy
+# Fallback for apply: talosctl -n <node-ip> -e <node-ip> apply-config -f talos/generated/<role>/<node>.yaml
+# Fallback for upgrade: talosctl upgrade -n <node-ip> -e <node-ip> --image <install-image> --preserve
 ```
 
 Wait for health gates to pass before moving to the next node. Do not parallelize node upgrades.
 
 If the approved plan includes a separate Kubernetes or Cilium reconciliation step, follow that exact broader sequencing and do not improvise a shorter path.
 
-If the approved plan includes a coupled Cilium refresh through Talos `extraManifests`, apply config to all nodes then run `talosctl upgrade-k8s`:
+If the approved plan includes a coupled Cilium refresh through Talos `extraManifests`, apply config to all nodes then run `talosctl upgrade-k8s` (CLI-only — no MCP equivalent):
+```
+# Apply config to all nodes via MCP:
+for each node: talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=false, confirm=true, nodes=["<node-ip>"], mode="auto")
+```
 ```bash
-# Apply config to all nodes
-for each node: talosctl apply-config -n <node-ip> -e <node-ip> -f talos/generated/<role>/<node>.yaml
-# Then reconcile extraManifests (ensure cilium-bootstrap-check passed first)
+# Then reconcile extraManifests (ensure cilium-bootstrap-check passed first — CLI-only):
 talosctl upgrade-k8s --to <kubernetes-version> -n <cp-node-1-ip> -e <cp-node-1-ip>
 ```
 
@@ -247,12 +277,15 @@ After each node upgrade, verify health before proceeding.
 Minimum per-node health gates:
 ```bash
 KUBECONFIG=<kubeconfig> kubectl get node <node>
-talosctl -n <node-ip> -e <node-ip> version
-talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> health --control-plane-nodes <cp-node-1-ip>,<cp-node-2-ip>,<cp-node-3-ip>
-talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> etcd members
 KUBECONFIG=<kubeconfig> kubectl get nodes -o wide
 KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide
 KUBECONFIG=<kubeconfig> kubectl linstor node list
+```
+```
+talos_version(nodes=["<node-ip>"])
+talos_health(nodes=["<cp-node-1-ip>"])
+talos_etcd(subcommand="members", nodes=["<cp-node-1-ip>"])
+# Fallback: talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> health --control-plane-nodes <cp-node-1-ip>,<cp-node-2-ip>,<cp-node-3-ip>
 ```
 
 Also run plan-specific verification for:
@@ -284,11 +317,14 @@ If a stop condition is met:
 4. choose the least-risk recovery path supported by the plan
 
 Useful diagnostics:
+```
+talos_version(nodes=["<node-ip>"])
+talos_services(nodes=["<node-ip>"])
+talos_dmesg(nodes=["<node-ip>"])
+talos_etcd(subcommand="members", nodes=["<cp-node-1-ip>"])
+# Fallback: talosctl -n <node-ip> -e <node-ip> version && talosctl -n <node-ip> -e <node-ip> services && talosctl -n <node-ip> -e <node-ip> dmesg | tail -n 200
+```
 ```bash
-talosctl -n <node-ip> -e <node-ip> version
-talosctl -n <node-ip> -e <node-ip> services
-talosctl -n <node-ip> -e <node-ip> dmesg | tail -n 200
-talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> etcd members
 KUBECONFIG=<kubeconfig> kubectl get csr
 KUBECONFIG=<kubeconfig> kubectl get nodes -o wide
 KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium -o wide

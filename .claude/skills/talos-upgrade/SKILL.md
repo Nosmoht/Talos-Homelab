@@ -3,7 +3,19 @@ name: talos-upgrade
 description: Upgrade a single Talos node's OS image (version bump, extension changes, boot args) with drain, DRBD safety, and rollback support.
 argument-hint: <node-name>
 disable-model-invocation: true
-allowed-tools: Bash, Read, Grep, Glob, Write
+allowed-tools:
+  - Bash
+  - Read
+  - Grep
+  - Glob
+  - Write
+  - mcp__talos__talos_apply_config
+  - mcp__talos__talos_version
+  - mcp__talos__talos_health
+  - mcp__talos__talos_etcd
+  - mcp__talos__talos_etcd_snapshot
+  - mcp__talos__talos_upgrade
+  - mcp__talos__talos_rollback
 ---
 
 # Talos Upgrade
@@ -48,14 +60,18 @@ Read `talos/Makefile` to map node name → IP, role (control-plane, worker, GPU 
 ### 2. Preflight (control-plane only)
 
 If node is control-plane, take backups first:
-```bash
-talosctl etcd snapshot /tmp/etcd-backup-$(date +%Y%m%d).snapshot -n <ip> -e <ip>
+```
+# MCP — etcd snapshot to local file:
+talos_etcd_snapshot(nodes=["<ip>"], path="/tmp/etcd-backup-YYYYMMDD.snapshot")
+
+# CLI-only — config backup to file (no MCP equivalent):
 talosctl get machineconfig -n <ip> -e <ip> -o yaml > /tmp/machineconfig-<node>-$(date +%Y%m%d).yaml
 ```
 
 Verify etcd quorum:
-```bash
-talosctl etcd status -n <ip> -e <ip>
+```
+talos_etcd(subcommand="status", nodes=["<ip>"])
+# Fallback: talosctl etcd status -n <ip> -e <ip>
 ```
 If quorum is degraded (fewer than (n/2)+1 members healthy), stop and report. Do not operate on a CP node with pre-existing quorum issues.
 
@@ -64,14 +80,19 @@ If quorum is degraded (fewer than (n/2)+1 members healthy), stop and report. Do 
 ```bash
 make -C talos validate-schematics
 make -C talos gen-configs
-talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml --dry-run
 ```
 If `validate-schematics` fails with MISMATCH, run `make -C talos schematics` first to regenerate IDs.
 Where `<role>` is `controlplane` for CP nodes or `worker` for all others.
 
+Then dry-run via MCP:
+```
+talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=true, nodes=["<ip>"])
+# Fallback (MCP unavailable): talosctl -n <ip> -e <ip> apply-config -f talos/generated/<role>/<node>.yaml --dry-run
+```
+
 If dry-run fails, stop and report the error with likely root cause.
 
-Note: `talosctl upgrade` does not support `--dry-run` ([siderolabs/talos#10804](https://github.com/siderolabs/talos/issues/10804)). The dry-run above validates config generation only.
+Note: `talos_upgrade` has no dry-run mode ([siderolabs/talos#10804](https://github.com/siderolabs/talos/issues/10804)). The dry-run above validates config generation only.
 
 ### 4. DRBD/LINSTOR safety check
 
@@ -114,25 +135,35 @@ Resolve the install image from `talos/.schematic-ids.mk` + `talos/versions.mk`:
 - GPU nodes: `factory.talos.dev/metal-installer/<GPU_SCHEMATIC_ID>:<TALOS_VERSION>`
 - Pi nodes: `factory.talos.dev/metal-installer/<PI_SCHEMATIC_ID>:<TALOS_VERSION>`
 
-```bash
-talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml
-talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve --wait --timeout 10m
+```
+# Apply config via MCP (dry_run must be false):
+talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=false, confirm=true, nodes=["<ip>"], mode="auto")
+# Fallback: talosctl -n <ip> -e <ip> apply-config -f talos/generated/<role>/<node>.yaml
+
+# Upgrade via MCP (fires and returns — no wait parameter):
+talos_upgrade(nodes=["<ip>"], image="<install-image>", preserve=true, confirm=true)
+# Fallback: talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve
+
+# Then poll until node rejoins:
+talos_health(nodes=["<ip>"])  # repeat until healthy
 ```
 
-The `--preserve` flag prevents EPHEMERAL partition wipe.
+The `preserve=true` flag prevents EPHEMERAL partition wipe. `talos_upgrade` returns immediately — poll `talos_health` until the node is back.
 
 ### 8. Verify health
 
 Wait for the node to come back, then verify:
-```bash
-talosctl -n <ip> -e <ip> version
-talosctl -n <ip> -e <ip> health
+```
+talos_version(nodes=["<ip>"])
+talos_health(nodes=["<ip>"])
+# Fallback: talosctl -n <ip> -e <ip> version && talosctl -n <ip> -e <ip> health
 ```
 
 For control-plane nodes, also verify etcd:
-```bash
-talosctl etcd members -n <ip> -e <ip>
-talosctl etcd status -n <ip> -e <ip>
+```
+talos_etcd(subcommand="members", nodes=["<ip>"])
+talos_etcd(subcommand="status", nodes=["<ip>"])
+# Fallback: talosctl etcd members -n <ip> -e <ip> && talosctl etcd status -n <ip> -e <ip>
 ```
 Confirm all members show `started` before declaring success.
 
