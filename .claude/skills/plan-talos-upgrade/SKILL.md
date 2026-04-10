@@ -138,6 +138,7 @@ talos_version(nodes=["<cp-node-1-ip>", "<cp-node-2-ip>", "<cp-node-3-ip>"])
 ```
 ```bash
 kubectl get nodes -o wide
+# ^ CLI-Only: token-negative; see .claude/rules/kubernetes-mcp-first.md §CLI-Only
 ```
 
 Use `talosctl version` against at least one control-plane node as the primary source. If nodes differ, record the skew and stop treating the cluster as a clean baseline.
