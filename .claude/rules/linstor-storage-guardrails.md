@@ -34,7 +34,7 @@ Piraeus Operator (Helm, piraeus-datastore namespace)
 
 **XFS superblock corruption** (most common): Unclean DRBD demotion (node crash, power loss) corrupts XFS metadata. Symptom: mount exit code 32, "bad superblock" in CSI logs, pod stuck in ContainerCreating with a looping promote/demote cycle. Fix: `/linstor-volume-repair`.
 
-**DRBD D-state deadlock**: DRBD volumes in D-state block node shutdown. DRBD processes enter an uninterruptible sleep waiting for I/O that never completes. Only fixable with physical power cycle. See `talos-operations.md` D-state recovery. Do not attempt `kubectl drain`, `talosctl upgrade`, or satellite pod restart to resolve D-state.
+**DRBD D-state deadlock**: DRBD volumes in D-state block node shutdown. DRBD processes enter an uninterruptible sleep waiting for I/O that never completes. Only fixable with physical power cycle. See `talos-mcp-first.md` §Node Recovery. Do not attempt `kubectl drain`, `talosctl upgrade`, or satellite pod restart to resolve D-state.
 
 **Split-brain**: Two nodes both promoted to Primary simultaneously (typically after network partition + manual intervention). LINSTOR/DRBD auto-resolution is configured, but if manual promotion occurred, one replica will have diverged data. Do not continue mounting until split-brain is resolved.
 

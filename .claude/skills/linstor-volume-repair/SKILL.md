@@ -25,7 +25,7 @@ If missing, stop: "Copy `.claude/environment.example.yaml` to `.claude/environme
 Read before acting:
 - `.claude/skills/linstor-volume-repair/references/xfs-drbd-repair-procedure.md`
 - `.claude/rules/linstor-storage-guardrails.md`
-- `.claude/rules/talos-operations.md` — D-state recovery section
+- `.claude/rules/talos-mcp-first.md` — D-state recovery section (§Node Recovery)
 
 ## Inputs
 
@@ -242,7 +242,7 @@ KUBECONFIG=$KUBECONFIG kubectl exec -n piraeus-datastore $SATELLITE_POD -- \
 ```
 
 If the demote command hangs (no output after 30s) or fails: stop immediately. Do NOT restart the satellite pod. Report:
-"DRBD demote is hanging — the device may be in D-state. Physical power cycle of the node may be required. See `.claude/rules/talos-operations.md` D-state recovery. Do not attempt further actions on this node."
+"DRBD demote is hanging — the device may be in D-state. Physical power cycle of the node may be required. See `.claude/rules/talos-mcp-first.md` §Node Recovery. Do not attempt further actions on this node."
 
 After successful demote, verify LINSTOR resource state:
 ```bash

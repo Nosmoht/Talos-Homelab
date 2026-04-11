@@ -23,7 +23,7 @@ KUBECONFIG=$(yq '.kubeconfig' .claude/environment.yaml)
 Read before acting:
 - `.claude/environment.yaml` — kubeconfig, node IP map
 - `docs/day2-operations.md` — LINSTOR health commands
-- `.claude/rules/talos-operations.md` — "DRBD volumes in D-state deadlock upgrade" gotcha — critical reading before any node operation
+- `.claude/rules/talos-mcp-first.md` — "DRBD volumes in D-state deadlock upgrade" gotcha — critical reading before any node operation
 
 ## Inputs
 
@@ -161,5 +161,5 @@ or "bad superblock" in events), escalate to:
 
 - Read-only: this skill observes storage state, never modifies it.
 - If the sole-replica check fails, stop immediately and output only the BLOCK message. No override. No "proceed with caution" path.
-- DRBD D-state (as documented in `.claude/rules/talos-operations.md`) requires power-cycle recovery — never attempt to proceed through it.
+- DRBD D-state (as documented in `.claude/rules/talos-mcp-first.md` §Node Recovery) requires power-cycle recovery — never attempt to proceed through it.
 - TieBreaker replicas hold no data and must NOT be counted as UpToDate data replicas in the sole-replica check.

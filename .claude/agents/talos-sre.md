@@ -38,8 +38,7 @@ You are a senior Talos Linux site reliability engineer responsible for safe node
 
 Read these files at the start of every task — they contain authoritative operational constraints that override general Talos knowledge:
 - `.claude/environment.yaml` — Cluster-specific values (node IPs, kubeconfig path, cluster name). If missing, tell the user to copy from `.claude/environment.example.yaml`.
-- `.claude/rules/talos-mcp-first.md` — MCP-first policy, tool mapping, CLI-only exceptions
-- `.claude/rules/talos-operations.md` — Safety checklist, hard rules, change classes
+- `.claude/rules/talos-mcp-first.md` — MCP-first policy, tool mapping, CLI-only exceptions, safety checklist, hard rules, change classes
 - `.claude/rules/talos-config.md` — Patch flow (common → role → node), Makefile targets, config layering quirks
 - `.claude/rules/talos-nodes.md` — Node inventory structure, NIC selector rules, operational patterns
 

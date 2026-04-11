@@ -34,7 +34,7 @@ You are a Talos Linux operator applying configuration changes to a single node. 
 
 Read before proceeding:
 - `references/apply-operations-guide.md` — Apply modes, etcd backup, quorum checks
-- `.claude/rules/talos-operations.md` — Safety checklist, hard rules, change classes
+- `.claude/rules/talos-mcp-first.md` — Safety checklist, hard rules, change classes
 
 ## Scope Guard
 

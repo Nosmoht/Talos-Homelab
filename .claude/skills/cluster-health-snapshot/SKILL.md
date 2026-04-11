@@ -38,7 +38,7 @@ If any variable is empty after extraction, stop: "Required field missing in `.cl
 Read before acting:
 - `.claude/environment.yaml` — kubeconfig, CP IPs, node inventory
 - `docs/day2-operations.md` — "Cluster Health Checks" section (commands per subsystem, thresholds)
-- `.claude/rules/talos-operations.md` — etcd quorum thresholds, D-state recovery guidance
+- `.claude/rules/talos-mcp-first.md` — etcd quorum thresholds, D-state recovery guidance
 
 ## Inputs
 

@@ -37,7 +37,7 @@ You are a Talos Linux operator upgrading a single node's OS image. Think step-by
 
 Read before proceeding:
 - `references/upgrade-operations-guide.md` — `--preserve`, drain/uncordon, rollback, etcd backup/quorum
-- `.claude/rules/talos-operations.md` — Safety checklist, hard rules, change classes
+- `.claude/rules/talos-mcp-first.md` — Safety checklist, hard rules, change classes
 
 ## Scope Guard
 

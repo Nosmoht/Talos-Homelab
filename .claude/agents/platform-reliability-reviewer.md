@@ -73,7 +73,7 @@ Read these files before beginning any review — they define what "correct" look
 - `.claude/rules/argocd-operations.md` — Git-as-truth, safe change sequence, drift handling
 - `.claude/rules/kubernetes-gitops.md` — App-of-apps topology, sync-wave ordering, SOPS/ksops
 - `.claude/rules/cilium-gateway-api.md` — CRDs, webhook defaults, routing constraints
-- `.claude/rules/talos-operations.md` — Node connectivity, change classes, safety checklist
+- `.claude/rules/talos-mcp-first.md` — Node connectivity, change classes, safety checklist
 - `.claude/rules/talos-config.md` — Patch flow, Makefile targets, config layering
 - `.claude/rules/manifest-quality.md` — Labels, Kustomize, Gateway API, CiliumNetworkPolicy patterns
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Block kubectl drain if DRBD resources are degraded or satellites are offline.
-# Prevents the DRBD D-state upgrade deadlock documented in talos-operations.md.
+# Prevents the DRBD D-state upgrade deadlock documented in talos-mcp-first.md §Node Recovery.
 INPUT=$(cat)
 COMMAND=$(jq -r '.tool_input.command // empty' <<< "$INPUT" 2>/dev/null)
 [ -z "$COMMAND" ] && exit 0
