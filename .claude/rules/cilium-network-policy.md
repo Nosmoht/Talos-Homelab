@@ -10,6 +10,26 @@ paths:
 
 # Cilium Network Policy Authoring
 
+## PNI-First Check Before CNP Authoring
+
+**Before adding any egress rule to a CNP or CCNP, run this checklist:**
+
+1. Does the pod's namespace have `platform.io/network-interface-version: v1`?
+2. Does a CCNP exist for the needed capability? (`kubectl get ccnp | grep pni-<capability>`)
+3. Does the pod have the required pod-level label `platform.io/capability-consumer.<capability>: "true"`?
+
+**If 1 + 2 are true but 3 is missing**: add the pod-level label via Helm `podLabels` or the operator's `podTemplate` — do NOT copy CCNP rules into the CNP.
+
+**If no CCNP covers the need**: author the CNP rule directly, and consider whether a new PNI capability is warranted.
+
+The `pni-controlplane-egress-consumer-egress` CCNP requires **both**:
+- Namespace label: `platform.io/consume.controlplane-egress: "true"` (propagated as `k8s:io.cilium.k8s.namespace.labels.*`)
+- Pod label: `platform.io/capability-consumer.controlplane-egress: "true"`
+
+Omitting the pod label means the CCNP never matches the pod — no kube-apiserver egress, no DNS.
+
+**Validation after shipping any CNP change**: verify the target component is reachable (check logs, lease timestamps, Hubble) before treating the change as done. `--dry-run=server` passing does not prove traffic flows.
+
 ## Identity & Selector Rules
 - `fromEntities: ["ingress"]` matches Cilium's `reserved:ingress` identity (ID 8) for Gateway API backend pods
 - **kube-apiserver port after DNAT**: use `port: "6443"` in CNP egress rules — Cilium kube-proxy replacement DNATs ClusterIP `10.96.0.1:443` → endpoint:6443 before policy evaluation; `port: "443"` won't match
