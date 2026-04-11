@@ -1,3 +1,9 @@
+---
+# paths: "**/*" — intentionally broad; search-scope exclusions are context-independent
+paths:
+  - "**/*"
+---
+
 ## Search Scope Exclusions
 
 Always exclude these paths from Glob and Grep searches — they are not source-of-truth:
