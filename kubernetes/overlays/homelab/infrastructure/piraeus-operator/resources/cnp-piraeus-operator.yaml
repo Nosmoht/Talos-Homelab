@@ -31,6 +31,30 @@ spec:
             - port: "8081"
               protocol: TCP
   egress:
+    # Kubernetes API (leader election, resource watch/update)
+    - toCIDRSet:
+        - cidr: 10.96.0.1/32
+      toPorts:
+        - ports:
+            - port: "443"
+              protocol: TCP
+    - toEntities:
+        - kube-apiserver
+      toPorts:
+        - ports:
+            - port: "6443"
+              protocol: TCP
+    # DNS resolution
+    - toEndpoints:
+        - matchLabels:
+            k8s-app: kube-dns
+            k8s:io.kubernetes.pod.namespace: kube-system
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
     # LINSTOR controller API (management operations)
     - toEndpoints:
         - matchLabels:
