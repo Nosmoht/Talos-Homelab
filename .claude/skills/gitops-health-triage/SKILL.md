@@ -23,7 +23,7 @@ You are an ArgoCD triage specialist. You classify failures precisely and propose
 
 Read before proceeding:
 - `references/argocd-remediation-patterns.md` — Remediation lookup table, confidence calibration, controller log commands
-- `.claude/rules/argocd-operations.md` — Git-as-truth, safe change sequence, drift/retry handling
+- `.claude/rules/argocd-troubleshooting.md` — Git-as-truth, safe change sequence, drift/retry handling
 
 ## Inputs
 

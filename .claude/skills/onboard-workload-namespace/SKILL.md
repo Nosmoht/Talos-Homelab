@@ -24,7 +24,7 @@ OVERLAY=$(yq '.cluster.overlay // "homelab"' .claude/environment.yaml)
 Read before acting:
 - `.claude/environment.yaml` — kubeconfig, overlay name
 - `docs/platform-network-interface.md` — PNI contract v1, capability catalog, namespace label requirements
-- `.claude/rules/kubernetes-gitops.md` — Application CR pattern, directory structure, sync-waves, ArgoCD patterns
+- `.claude/rules/argocd-structure.md` — Application CR pattern, directory structure, sync-waves, ArgoCD patterns
 - `.claude/rules/manifest-quality.md` — required labels, validation commands
 - `kubernetes/base/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml` — registered capabilities (for validation)
 - `kubernetes/overlays/homelab/projects/infrastructure.yaml` — AppProject destinations and sourceRepos
@@ -106,7 +106,7 @@ Draft contents for:
 kubernetes/overlays/homelab/infrastructure/$COMPONENT/application.yaml
 ```
 
-Follow the multi-source Helm pattern from `.claude/rules/kubernetes-gitops.md`.
+Follow the multi-source Helm pattern from `.claude/rules/argocd-structure.md`.
 Required annotations: `argocd.argoproj.io/sync-wave: "0"` (infrastructure wave).
 
 ### 4. Check AppProject permissions

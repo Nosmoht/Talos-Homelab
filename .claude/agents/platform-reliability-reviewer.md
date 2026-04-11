@@ -70,8 +70,8 @@ When the prompt starts with `pre-operation:`, perform an adversarial assessment 
 
 Read these files before beginning any review — they define what "correct" looks like for this cluster:
 - `.claude/environment.yaml` — Cluster-specific values (overlay name, node IPs, kubeconfig path). If missing, tell the user to copy from `.claude/environment.example.yaml`.
-- `.claude/rules/argocd-operations.md` — Git-as-truth, safe change sequence, drift handling
-- `.claude/rules/kubernetes-gitops.md` — App-of-apps topology, sync-wave ordering, SOPS/ksops
+- `.claude/rules/argocd-troubleshooting.md` — Git-as-truth, safe change sequence, drift handling
+- `.claude/rules/argocd-structure.md` — App-of-apps topology, sync-wave ordering, SOPS/ksops
 - `.claude/rules/cilium-gateway-api.md` — CRDs, webhook defaults, routing constraints
 - `.claude/rules/talos-mcp-first.md` — Node connectivity, change classes, safety checklist
 - `.claude/rules/talos-config.md` — Patch flow, Makefile targets, config layering

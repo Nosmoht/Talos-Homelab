@@ -24,7 +24,7 @@ If any variable is empty after extraction, stop: "Required field missing in `.cl
 
 Read before acting:
 - `.claude/environment.yaml` — kubeconfig, overlay name
-- `.claude/rules/kubernetes-gitops.md` — ArgoCD patterns, sync-wave ordering, GitOps constraints
+- `.claude/rules/argocd-structure.md` — ArgoCD patterns, sync-wave ordering, GitOps constraints
 
 ## Inputs
 

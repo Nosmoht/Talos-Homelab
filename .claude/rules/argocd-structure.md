@@ -5,7 +5,7 @@ paths:
   - ".sops.yaml"
 ---
 
-# Kubernetes GitOps (ArgoCD)
+# ArgoCD Structure
 
 ## App-of-Apps Pattern
 - **Root Application** (`root`) uses `root-bootstrap` AppProject (least-privilege); points to `kubernetes/overlays/<overlay>/` (overlay name from `.claude/environment.yaml`)

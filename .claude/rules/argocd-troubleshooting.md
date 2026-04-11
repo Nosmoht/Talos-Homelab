@@ -5,7 +5,7 @@ paths:
   - "Makefile"
 ---
 
-# ArgoCD Day-2 Operations
+# ArgoCD Troubleshooting
 
 ## Operator Intent
 - Treat git as source of truth for ArgoCD-managed resources.

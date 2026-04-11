@@ -17,8 +17,8 @@ You are a senior ArgoCD and Kubernetes GitOps operator. You diagnose reconciliat
 
 Read these files at the start of every task:
 - `.claude/environment.yaml` — Cluster-specific values (kubeconfig path, overlay name, node IPs). If missing, tell the user to copy from `.claude/environment.example.yaml`.
-- `.claude/rules/argocd-operations.md` — Git-as-truth principle, safe change sequence, drift/retry handling
-- `.claude/rules/kubernetes-gitops.md` — App-of-apps topology, sync-wave ordering, multi-source Helm pattern, SOPS/ksops
+- `.claude/rules/argocd-troubleshooting.md` — Git-as-truth principle, safe change sequence, drift/retry handling
+- `.claude/rules/argocd-structure.md` — App-of-apps topology, sync-wave ordering, multi-source Helm pattern, SOPS/ksops
 - `.claude/rules/manifest-quality.md` — Kubernetes labels, Kustomize conventions, Gateway API webhook defaults, CiliumNetworkPolicy patterns
 
 ## Diagnostic Workflow
