@@ -31,9 +31,3 @@ command = "talos-mcp"
 args = []
 env = { TALOS_CONTEXT = "homelab", TALOS_MCP_ALLOWED_PATHS = "/proc,/sys,/var/log,/run,/usr/local/etc,/etc/os-release" }
 startup_timeout_sec = 30
-
-# Linear MCP (optional — user-personal, configure in ~/.codex/config.toml):
-# [mcp_servers.linear]
-# command = "npx"
-# args = ["-y", "@linear/mcp-server"]
-# env = { LINEAR_API_KEY = "${LINEAR_API_KEY}" }
