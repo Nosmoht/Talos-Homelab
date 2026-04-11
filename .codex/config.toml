@@ -29,7 +29,7 @@ startup_timeout_sec = 30
 [mcp_servers.talos]
 command = "talos-mcp"
 args = []
-env = { TALOS_CONTEXT = "homelab" }
+env = { TALOS_CONTEXT = "homelab", TALOS_MCP_ALLOWED_PATHS = "/proc,/sys,/var/log,/run,/usr/local/etc,/etc/os-release" }
 startup_timeout_sec = 30
 
 # Linear MCP (optional — user-personal, configure in ~/.codex/config.toml):
