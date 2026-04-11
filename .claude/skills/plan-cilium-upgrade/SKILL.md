@@ -121,12 +121,37 @@ Before starting web research, check for prior experience and external intelligen
    - Check AGENTS.md §Hard Constraints for Cilium/Gateway API version-specific warnings
 
 2. **Spawn the `researcher` agent for upstream intelligence:**
-   Use the Agent tool to spawn the `researcher` agent with this prompt:
+
+   > **Note (GitHub #10061 — Subagent Skill Scope Shadowing):** Subagents spawned via the
+   > Agent tool cannot access `references/` files relative to the parent skill's directory.
+   > Work around this by (a) passing the absolute path so the subagent can Read it directly,
+   > and (b) inlining the load-bearing constraints into the spawn prompt.
+
+   Before spawning, read the constraints file yourself:
+   ```
+   Read(".claude/skills/plan-cilium-upgrade/references/cilium-upgrade-constraints.md")
+   ```
+   Then spawn the `researcher` agent with this prompt (substitute resolved versions and the
+   absolute repo path for `<repo-root>`):
    ```
    Research Cilium <from-version> to <to-version>: eBPF datapath changes,
    Gateway API behavioral changes, NetworkPolicy enforcement changes,
    embedded Envoy updates, macvlan interaction issues, known regressions
    on GitHub. Check Kubernetes version compatibility matrix.
+
+   This repo's cluster constraints (read <repo-root>/.claude/skills/plan-cilium-upgrade/references/cilium-upgrade-constraints.md
+   for the full list; key points inlined below):
+   - Cilium supports only consecutive minor upgrades (e.g. 1.15→1.16, not 1.15→1.17).
+     Multi-minor hops require a staged path. Flag any violation.
+   - Never use --reuse-values when upgrading Cilium Helm charts; always diff and pass
+     explicit values.
+   - Run `cilium preflight check` before the upgrade.
+   - Kubernetes compatibility matrix: https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
+
+   Cluster topology: Cilium WireGuard strict mode, hostNetwork Envoy (Gateway API),
+   macvlan ingress-front on physical interface, DRBD/LINSTOR storage (ports 7000-7999),
+   NVIDIA GPU node (r8152 USB NIC). Flag any upstream change that interacts with these.
+
    Return max 2000 tokens: Sources, Findings, Confidence.
    ```
    Wait for the researcher to return before proceeding.

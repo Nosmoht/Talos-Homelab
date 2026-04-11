@@ -111,11 +111,32 @@ Before starting web research, check for prior experience and external intelligen
    - Check AGENTS.md §Hard Constraints for version-specific warnings
 
 2. **Spawn the `researcher` agent for upstream intelligence:**
-   Use the Agent tool to spawn the `researcher` agent with subagent_type "researcher" (or general-purpose with the researcher persona) and this prompt:
+
+   > **Note (GitHub #10061 — Subagent Skill Scope Shadowing):** Subagents spawned via the
+   > Agent tool cannot access files relative to the parent skill's directory. Work around
+   > this by inlining the load-bearing cluster constraints into the spawn prompt directly.
+   > Read AGENTS.md §Hard Constraints and §Cluster Overview before spawning to extract
+   > the current values.
+
+   Use the Agent tool to spawn the `researcher` agent with subagent_type "researcher" (or
+   general-purpose with the researcher persona) and this prompt (substitute resolved versions):
    ```
    Research Talos <from-version> to <to-version>: breaking changes, extension
    compatibility with DRBD/LINSTOR and NVIDIA, known issues on GitHub, CVE
    advisories. Check Talos and Kubernetes version compatibility matrix.
+
+   This repo's cluster constraints (inlined from AGENTS.md §Hard Constraints):
+   - NEVER use metal-installer-secureboot — causes boot loops; always metal-installer.
+   - NEVER set debugfs=off — causes "failed to create root filesystem" boot loop.
+   - Cluster uses Cilium WireGuard strict mode, hostNetwork Envoy (Gateway API),
+     macvlan ingress-front, DRBD/LINSTOR storage (DRBD 9 kernel module extension).
+   - GPU node (node-gpu-01) uses r8152 USB NIC and nvidia-container-toolkit extension.
+   - Pi nodes require separate schematic (no GPU/DRBD extensions).
+   - Talos extensions in use: drbd, nvidia-container-toolkit. Flag any extension API or
+     schematic changes in the target version that affect these.
+   - Kubernetes version pinned in talos/versions.mk — flag any k8s compatibility window
+     the Talos target version imposes.
+
    Return max 2000 tokens: Sources, Findings, Confidence.
    ```
    Wait for the researcher to return before proceeding.
