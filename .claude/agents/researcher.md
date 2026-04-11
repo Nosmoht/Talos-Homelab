@@ -1,7 +1,7 @@
 ---
 name: researcher
 model: opus
-description: Infrastructure research agent for upgrade compatibility, CVE assessment, component evaluation, and best-practice discovery. Spawn before upgrades or when evaluating new components.
+description: Use for upgrade compatibility research, CVE assessment, and component evaluation. Returns Sources/Findings/Confidence.
 allowed-tools:
   - Read
   - Glob

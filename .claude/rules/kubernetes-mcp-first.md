@@ -1,6 +1,8 @@
 ---
 paths:
-  - ".claude/**"
+  - ".claude/skills/**"
+  - ".claude/agents/**"
+  - ".claude/rules/kubernetes-mcp-first.md"
   - "docs/day2-operations.md"
 ---
 

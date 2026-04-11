@@ -1,7 +1,7 @@
 ---
 name: platform-reliability-reviewer
 model: opus
-description: Reliability and security reviewer for Kubernetes/Talos changes. Use before merge (default) or before operations (prefix "pre-operation:") for adversarial risk assessment.
+description: Use for pre-merge reviews and pre-operation risk assessment (prefix "pre-operation:"). Adversarial findings with file:line citations.
 allowed-tools:
   - Read
   - Glob

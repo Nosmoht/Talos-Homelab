@@ -1,7 +1,7 @@
 ---
 name: talos-sre
 model: opus
-description: Talos site reliability engineer focused on node config generation, apply/upgrade safety, and control-plane stability in this cluster.
+description: Use for Talos node config generation, apply/upgrade sequencing, and control-plane safety. Validates before mutating.
 allowed-tools:
   - Read
   - Glob

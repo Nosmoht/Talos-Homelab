@@ -1,14 +1,12 @@
 ---
 name: gitops-operator
-model: opus
-description: ArgoCD and Kubernetes GitOps operator for this homelab repo. Use for reconciliation failures, app-of-apps drift, and safe rollout planning.
+model: sonnet
+description: Use for ArgoCD sync failures, app-of-apps drift, and sync-wave deadlocks. Diagnoses root cause, proposes git diffs.
 allowed-tools:
   - Read
   - Glob
   - Grep
   - Bash
-  - Edit
-  - Write
   - mcp__kubernetes-mcp-server__resources_get
   - mcp__kubernetes-mcp-server__resources_list
 ---
