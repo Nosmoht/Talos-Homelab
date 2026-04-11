@@ -132,6 +132,14 @@ These parameters must **always** be specified explicitly — never rely on defau
   the instructions in `docs/mcp-setup.md`. A version bump that changes tool schemas is
   load-bearing: verify `allowed-tools` entries in skills still match after any upgrade.
 
+## kubectl Hygiene
+
+- **Always pass explicit `-n <namespace>` for any kubectl command that creates, mutates, or execs into objects** — `run`, `create`, `apply`, `delete`, `edit`, `patch`, `exec`, `debug`, `port-forward`, `cp`, `rollout`, `scale`, `label`, `annotate`, `logs` (if using `-f` or writing to a ticket). Never rely on the kubeconfig context default namespace: it can point at a non-existent namespace, a stale target from a previous cluster, or simply whatever the user was last working on — and the failure mode depends on which value it currently holds. Explicit `-n` makes commands self-describing in git history, PR comments, and runbook output.
+- **Exceptions:**
+  - Cluster-scoped resources (`Node`, `PersistentVolume`, `ClusterRole`, `CRD`, `StorageClass`, `Namespace`) — no namespace needed.
+  - MCP tools (`mcp__kubernetes-mcp-server__*`) take `namespace` as an explicit parameter and cannot inherit the context default.
+  - Interactive read-only `get` / `describe` during live troubleshooting — acceptable to omit if the intent is immediately obvious, but never omit when the output lands in a PR, issue, commit message, or runbook.
+
 ## Watch/Wait Contract
 
 MCP tools are single-shot — there is no `-w` / `--watch` mode. Replace `kubectl get ... -w`,

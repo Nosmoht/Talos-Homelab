@@ -18,6 +18,10 @@ The Makefile (`talos/Makefile`) also contains `IP_<node>` variables that must st
 - Install disks use stable `/dev/disk/by-path/` — check per-node YAML for exact paths
 - API VIP (from `cluster.api_vip` in `environment.yaml`) goes in per-node patches (CP only), NOT role patches (strategic merge appends)
 
+## VLAN Sub-Interface Pattern
+
+For VLAN sub-interfaces on `enp0s31f6` or any NIC whose MAC is shared with a bridge/tap: use `kind: VLANConfig` + a named `interface:` entry in this file for the address. Never use `vlans:` nested under `deviceSelector`. See `.claude/rules/talos-config.md §Interface Patches` for the full pattern, rationale, and upstream issue references.
+
 ## Node Operations
 - CiliumNode CRDs retain stale IPs after IP change — fix: `kubectl delete ciliumnode <node>` + restart Cilium pod
 - Approve kubelet CSRs manually if cert-approver is on unreachable node: `kubectl certificate approve <csr>`

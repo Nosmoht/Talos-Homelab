@@ -27,6 +27,10 @@ See `.claude/rules/talos-mcp-first.md` for the full mapping and CLI-only excepti
 3. Validate generated config exists under `talos/generated/` before apply.
 4. Use dry-run where possible before apply.
 
+## Apply-Config Gotchas
+
+- **Patches that add new `interfaces:` entries: apply with `dry_run=false` directly.** Before applying, read the live `MachineConfig` via `talos_get type=MachineConfig`. If the target `interface:` name is absent from the live config, skip dry-run — `talos_apply_config dry_run=true` panics with `panic: runtime error: index out of range [N] with length N` when the patch introduces an interface entry that the diff engine has no existing object to diff against. The panic is a Talos diff-engine bug, not a config error; the real apply (`dry_run=false`) succeeds cleanly. If the target interface already exists in the live config, `dry_run=true` is safe and preferred.
+
 ## Upgrade Gotchas
 - **Stale schematic IDs**: After editing `talos/talos-factory-schematic*.yaml`, re-run `make -C talos schematics` to update `.schematic-ids.mk`. `make -C talos validate-schematics` detects drift; `upgrade-*` Makefile targets run it automatically.
 - `talosctl upgrade-k8s` requires `-n <node-ip> -e <node-ip>` — `--endpoint` is a different flag (proxy endpoint, not node target)

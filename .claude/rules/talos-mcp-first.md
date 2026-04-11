@@ -76,3 +76,4 @@ These parameters must **always** be specified explicitly — never rely on defau
 
 - `talos_service_action(service=etcd, action=restart)` — NOT supported via Talos API. Use `talosctl service etcd restart` is also unsupported; etcd restarts require node reboot.
 - `talos_reset` — excluded from autonomous agent `allowed-tools` due to irreversibility.
+- **`talos_apply_config dry_run=true` panics on fresh interface additions** — see `talos-operations.md §Apply-Config Gotchas` for the decision rule. Short form: read live `MachineConfig` first; if the target interface is absent, use `dry_run=false` directly.

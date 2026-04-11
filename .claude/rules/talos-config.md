@@ -21,6 +21,26 @@ paths:
 - HostnameConfig quirk: use `auto: null` in node patches + yq post-processing to remove `auto: stable`
 - Strategic merge on interfaces APPENDS arrays — doesn't merge by deviceSelector; keep VIP in per-node patches
 
+## Interface Patches
+
+- **VLAN sub-interfaces on shared-MAC parents: use `kind: VLANConfig` with a named `interface:` entry — never `vlans:` nested under `deviceSelector`.**
+  When the parent NIC's MAC is shared with a bridge or tap device (`br-vm`, KubeVirt, libvirt, Docker), `deviceSelector.hardwareAddr` matches every interface sharing that MAC (bridge, taps, and VLAN sub-interfaces themselves). Result: MAC-spreading — addresses assigned to every match, the API VIP duplicated onto VLAN sub-interfaces, phantom `br-vm.N` artifacts. This is a documented design limitation ([siderolabs/talos#8709](https://github.com/siderolabs/talos/issues/8709), closed `not_planned`). `VLANConfig` was added in Talos v1.12 ([#10961](https://github.com/siderolabs/talos/issues/10961)) and is the [recommended v1.12 pattern](https://www.talos.dev/v1.12/talos-guides/network/vlans/).
+  ```yaml
+  # in talos/nodes/<node>.yaml — named interface entry carries the address
+  - interface: enp0s31f6.110
+    addresses: [192.168.110.X/24]
+  ---
+  # in talos/patches/drbd.yaml (or worker patch) — VLANConfig attaches VLAN to parent
+  apiVersion: v1alpha1
+  kind: VLANConfig
+  name: enp0s31f6.110
+  vlanID: 110
+  vlanMode: 802.1q
+  parent: enp0s31f6
+  up: true
+  ```
+  **Alternative**: narrow `deviceSelector` with both `hardwareAddr:` and `driver:` to exclude bridge/tap devices — acceptable but `VLANConfig` is cleaner.
+
 ## Makefile Targets (`talos/Makefile`)
 
 Orchestration targets (use `make`):
