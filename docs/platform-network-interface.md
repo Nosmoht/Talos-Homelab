@@ -136,8 +136,18 @@ The following core flows are currently implemented through platform-owned PNI po
 ### Consumer Capability Policies
 
 Consumer-side policies grant network access for any namespace that opts in to a capability.
-Selection is by namespace labels (`k8s:io.cilium.k8s.namespace.labels.*`), not by pod or deployment names.
-All pods in the opted-in namespace receive the grant.
+
+Most CCNPs select on **namespace labels only** (`k8s:io.cilium.k8s.namespace.labels.*`) — all pods in the opted-in namespace receive the grant automatically.
+
+Some CCNPs use a **two-level opt-in**: namespace label plus a pod-level label. The pod-level label follows the pattern `platform.io/capability-consumer.<capability>: "true"` and must be set on the pod (e.g., via Helm `podLabels` or an operator's `podTemplate`). If the pod label is absent, the CCNP endpointSelector does not match the pod and the capability is silently not granted.
+
+**Capabilities requiring pod-level label:**
+
+| Capability | Pod label required |
+|---|---|
+| `controlplane-egress` | `platform.io/capability-consumer.controlplane-egress: "true"` |
+
+Capabilities not listed here are namespace-label-only — no pod label required.
 
 Most consumer CCNPs are **egress** grants (consumer -> provider). The `gateway-backend` capability is an **ingress** grant (gateway proxy -> consumer backend pods). In both cases, per-service CNPs on the provider/consumer side remain the fine-grained authorization boundary.
 
@@ -226,11 +236,13 @@ metadata:
 
 ## Troubleshooting
 
-1. Capability not working:
+1. Capability not working — namespace label set, but no traffic allowed:
    - verify exact capability label key and value (`"true"`)
    - verify namespace has `platform.io/network-interface-version: v1`
+   - **check whether the capability requires a pod-level label** (see §Consumer Capability Policies table above) — if so, verify the pod has `platform.io/capability-consumer.<capability>: "true"`; missing pod label = CCNP silently does not match
 2. Traffic blocked:
-   - inspect Hubble drops and effective identities
+   - inspect Hubble drops and effective identities: `hubble observe --from-ip <pod-ip> --type drop`
+   - verify Cilium endpoint has non-empty egress policy: `cilium-dbg endpoint get <id>` → `policy.realized.egress`
    - check whether workload is using unsupported ports/protocols for that capability
 3. Admission denied:
    - confirm you are not setting provider-reserved labels
