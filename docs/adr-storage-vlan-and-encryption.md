@@ -154,10 +154,10 @@ benchmark-driven PR after storage VLAN is stable. Do not bump silently in a non-
 4. **CP satellite presence**: If Spike #1 confirms control-plane nodes do NOT run LINSTOR
    satellites, the VLAN 110 config block moves from `talos/patches/drbd.yaml` (CP + worker) to
    `talos/patches/worker-kubevirt.yaml` (worker-only). Decision documented in Spike #1 findings.
-5. **Spike #2 dependency**: DRBD `transport_tls` via `tlsHandshakeDaemon: true` requires Piraeus
-   Operator 2.3+ feature validation. If Spike #2 shows the feature is not stable at the pinned
-   version, defer TLS until Piraeus ships it and accept storage traffic as cleartext-on-VLAN-110
-   (still isolated by SG3428 ACL as L1 control).
+5. **Spike #2 resolved**: DRBD `transport_tls` via `tlsHandshakeDaemon: true` is confirmed in
+   the CRD schema at Piraeus Operator v2.10.4. The field is under `spec.internalTLS` in
+   `LinstorSatelliteConfiguration`. The `tlshd` sidecar is added automatically by the operator
+   when the flag is set. DRBD TLS rollout is unblocked.
 
 ---
 
@@ -165,12 +165,13 @@ benchmark-driven PR after storage VLAN is stable. Do not bump silently in a non-
 
 | Spike | Question | Result | ADR Impact |
 |---|---|---|---|
-| #1 | Storage node enumeration (NFD label) | — (pending) | Determines patch file: `drbd.yaml` vs `worker-kubevirt.yaml` |
-| #2 | Piraeus `tlsHandshakeDaemon` upstream validation | — (pending) | Gates DRBD TLS rollout |
+| #1 | Storage node enumeration (NFD label) | **PASS** — node-01..06 all carry label; CPs included | VLAN 110 config → `talos/patches/drbd.yaml` (CP + worker Makefile rules) |
+| #2 | Piraeus `tlsHandshakeDaemon` upstream validation | **PASS** — field present in CRD at v2.10.4; description confirms `tlshd` sidecar | `spec.internalTLS.tlsHandshakeDaemon: true` in `linstor-satellite-configuration.yaml` |
 | #3 | Does Cilium drop VLAN 110 frames on bridge-less sub-interface? | **DROPS CONFIRMED** — 12× `bpf_host.c:1546` | Single-layer defense; VLAN 110 → `bpf.vlanBypass` |
-| #4 | AES-NI + kernel CONFIG_TLS on storage nodes | — (pending) | Verification gate for kTLS; expected pass on Kaby/Coffee Lake |
-| #5 | Prometheus baselines (etcd P99, DRBD state) | — (pending) | Regression budget anchor |
+| #4 | AES-NI + kernel CONFIG_TLS on storage nodes | **PASS** — `aes`/`avx`/`avx2` flags confirmed; `CONFIG_TLS=m`, module live (`tls 131072 0`) | kTLS operates in software (AES-NI accelerated); no `machine.kernel.modules` entry needed |
+| #5 | Prometheus baselines (etcd P99, DRBD state) | **CONFIRMED** — `monitoring-kube-prometheus-kube-etcd` ServiceMonitor active in `monitoring` ns | Baseline capture: `histogram_quantile(0.99, rate(etcd_disk_wal_fsync_duration_seconds_bucket[5m]))` |
 | #6 | GPU node r8152 `rx_dropped` baseline (T0) | T0 captured: 288,314 drops / 4,462,921 packets (~6.4% cumulative) | Delta budget: <1% of `rx_packets` over 1h post-PR #3 |
+| #7 | Cilium L2 IPAM + L2 announcements feasibility | **FINDING** — `l2announcements.enabled` and `loadBalancer.l2.enabled` absent from `values.yaml` | Both flags must be added in PR #3 alongside `bpf.vlanBypass` update |
 
 ---
 
