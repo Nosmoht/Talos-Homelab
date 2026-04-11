@@ -22,3 +22,23 @@ spec:
     certManager:
       kind: Issuer
       name: linstor-internal-ca
+  controller:
+    podTemplate:
+      spec:
+        affinity:
+          nodeAffinity:
+            preferredDuringSchedulingIgnoredDuringExecution:
+              - weight: 100
+                preference:
+                  matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: NotIn
+                      values:
+                        - node-03
+        containers:
+          - name: linstor-controller
+            env:
+              - name: K8S_AWAIT_ELECTION_LEASE_DURATION
+                value: "60"
+              - name: K8S_AWAIT_ELECTION_RENEW_DEADLINE
+                value: "45"
