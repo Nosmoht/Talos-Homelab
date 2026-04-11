@@ -12,6 +12,10 @@ machine:
             gateway: 192.168.2.1
         vip:
           ip: 192.168.2.60
+        vlans:
+          - vlanId: 110
+            addresses:
+              - 192.168.110.3/24
     nameservers:
       - 192.168.2.1
 ---

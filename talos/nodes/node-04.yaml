@@ -10,6 +10,10 @@ machine:
         routes:
           - network: 0.0.0.0/0
             gateway: 192.168.2.1
+        vlans:
+          - vlanId: 110
+            addresses:
+              - 192.168.110.4/24
     nameservers:
       - 192.168.2.1
 ---
