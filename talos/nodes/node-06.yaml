@@ -5,6 +5,7 @@ machine:
     interfaces:
       - deviceSelector:
           hardwareAddr: 00:23:24:ea:af:90
+          driver: e1000e
         addresses:
           - 192.168.2.66/24
         routes:
