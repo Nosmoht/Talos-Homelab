@@ -6,7 +6,7 @@ kind: StorageClass
 metadata:
   name: linstor-vm
   annotations:
-    argocd.argoproj.io/sync-options: Replace=true
+    argocd.argoproj.io/sync-options: ServerSideApply=false,Replace=true
   labels:
     app.kubernetes.io/name: piraeus-datastore
     app.kubernetes.io/instance: homelab
