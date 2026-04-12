@@ -53,10 +53,20 @@ spec:
             - port: "3370"
               protocol: TCP
   egress:
-    # Satellite communication
+    # Satellite communication (pod endpoints, pre-hostNetwork fallback)
     - toEndpoints:
         - matchLabels:
             app.kubernetes.io/component: linstor-satellite
+      toPorts:
+        - ports:
+            - port: "3367"
+              protocol: TCP
+    # Satellite communication (hostNetwork: true — satellites present as remote-node,
+    # kube-apiserver (CP nodes), or host (local node) entities in Cilium)
+    - toEntities:
+        - remote-node
+        - kube-apiserver
+        - host
       toPorts:
         - ports:
             - port: "3367"
