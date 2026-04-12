@@ -111,6 +111,8 @@ spec:
     - group: piraeus.io
       kind: LinstorCluster
     - group: piraeus.io
+      kind: LinstorNodeConnection
+    - group: piraeus.io
       kind: LinstorSatelliteConfiguration
     - group: minio.min.io
       kind: Tenant
