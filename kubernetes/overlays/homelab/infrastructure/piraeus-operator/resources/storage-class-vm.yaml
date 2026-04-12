@@ -5,6 +5,8 @@ apiVersion: storage.k8s.io/v1
 kind: StorageClass
 metadata:
   name: linstor-vm
+  annotations:
+    argocd.argoproj.io/sync-options: Replace=true
   labels:
     app.kubernetes.io/name: piraeus-datastore
     app.kubernetes.io/instance: homelab
