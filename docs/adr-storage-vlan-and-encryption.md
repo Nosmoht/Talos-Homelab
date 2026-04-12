@@ -165,6 +165,21 @@ benchmark-driven PR after storage VLAN is stable. Do not bump silently in a non-
    the CRD schema at Piraeus Operator v2.10.4. The field is under `spec.internalTLS` in
    `LinstorSatelliteConfiguration`. The `tlshd` sidecar is added automatically by the operator
    when the flag is set. DRBD TLS rollout is unblocked.
+6. **MAC-spreading via `deviceSelector` without `driver:` filter**: On KubeVirt worker nodes,
+   `br-vm` (bridge, same MAC as `enp0s31f6`) matches any `deviceSelector: {hardwareAddr: X}`
+   without a `driver:` constraint. When `VLANConfig` creates `enp0s31f6.110`, Talos also creates
+   `br-vm.110` as a phantom sub-interface — DRBD sees two competing ARP responders for
+   `192.168.110.X` and connections remain in Connecting state. Fix: add `driver: e1000e` to all
+   worker `deviceSelector` blocks in `talos/nodes/node-0{4,5,6}.yaml`. Ref: siderolabs/talos#8709.
+7. **LINSTOR shared-secret inconsistency for diskless clients**: When a diskless DRBD client
+   resource is added to an existing resource (e.g., for a CSI PVC), LINSTOR v1.33.1 may generate
+   the `.res` file on the diskless node with `cram-hmac-alg sha1` + `shared-secret` in the global
+   `net {}` block while the existing server nodes receive no auth in their `net {}` block. This
+   auth asymmetry causes `Authentication of peer failed` and keeps the diskless client in
+   `StandAlone` indefinitely. Fix: set `DrbdOptions/Net/shared-secret` and
+   `DrbdOptions/Net/cram-hmac-alg` explicitly on the resource-definition — LINSTOR will propagate
+   to all nodes consistently. Example: `kubectl linstor resource-definition set-property <rname>
+   DrbdOptions/Net/shared-secret "<secret-from-node-res-file>"`.
 
 ---
 
