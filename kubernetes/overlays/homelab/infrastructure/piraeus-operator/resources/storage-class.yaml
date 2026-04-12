@@ -18,3 +18,4 @@ parameters:
   autoPlace: "2"
   storagePool: lvm-thick
   csi.storage.k8s.io/fstype: xfs
+  property.linstor.csi.linbit.com/PrefNic: storage-vlan110

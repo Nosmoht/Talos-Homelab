@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - tls.yaml
   - linstor-cluster.yaml
+  - linstor-node-connection.yaml
   - linstor-satellite-configuration.yaml
   - storage-class.yaml
   - storage-class-noreplica.yaml

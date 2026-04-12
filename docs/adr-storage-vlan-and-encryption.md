@@ -41,14 +41,21 @@ protection layer for VLAN 110 replication payload. This is a deliberate, empiric
 decision — see §Layered-Defense below.
 
 Enabled via:
-- `LinstorCluster.spec.properties: { "DrbdOptions/Net/tls": "yes" }`
 - `LinstorSatelliteConfiguration.spec.internalTLS.tlsHandshakeDaemon: true` (Piraeus 2.3+
-  `tlshd` sidecar — contingent on Spike #2 upstream validation)
+  `tlshd` sidecar — Spike #2 confirmed field present at v2.10.4)
 - Certificates minted from the existing `linstor-internal-ca` namespaced Issuer in
   `piraeus-datastore` — **not** a new ClusterIssuer
 
-Bandwidth cap: `DrbdOptions/Net/c-max-rate: 60M` (~50% of 1 Gbps) reserves headroom for etcd
-heartbeats and Cilium WireGuard overhead.
+> **Note (PR #2a)**: `DrbdOptions/Net/tls` does NOT exist in LINSTOR v1.33.1 — the property
+> is not recognized at controller, node, or resource-definition level. DRBD TLS enablement
+> mechanism needs re-research before PR #2b. Tracked in follow-up GitHub issue.
+
+Bandwidth cap: `DrbdOptions/Disk/c-max-rate: 60M` (~50% of 1 Gbps) reserves headroom for
+etcd heartbeats and Cilium WireGuard overhead.
+
+> **Note (PR #2a)**: The correct LINSTOR path is `DrbdOptions/Disk/c-max-rate` (peer-device
+> option). `DrbdOptions/Net/c-max-rate` is not a valid path — `c-max-rate` is a disk/peer-device
+> property, not a net option.
 
 ---
 
@@ -192,7 +199,8 @@ benchmark-driven PR after storage VLAN is stable. Do not bump silently in a non-
 - Storage payloads are encrypted in transit via DRBD `transport_tls` (kTLS)
 - Cilium has no visibility into VLAN 110 traffic (acceptable — storage is not a Kubernetes
   network-policy target; policy enforcement happens at L2 via SG3428 ACL)
-- `bpf.vlanBypass` in `kubernetes/bootstrap/cilium/values.yaml` must be updated to
-  `[100, 110, 120, 130]` in PR #3 (from current `[100]`)
+- `bpf.vlanBypass` in `kubernetes/bootstrap/cilium/values.yaml` updated to `[100, 110]` in
+  PR #2a (VLAN 110 prerequisite — empirically required by Spike #3 findings). VLANs 120/130
+  to be added in their respective PRs when those VLANs are actively used.
 - The "two-layer defense-in-depth" narrative used in the initial design is **corrected** to
   two independent layers: L2 ACL isolation (switch) + L7 encryption (DRBD TLS)

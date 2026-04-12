@@ -18,3 +18,4 @@ volumeBindingMode: WaitForFirstConsumer
 parameters:
   autoPlace: "2"
   storagePool: lvm-thick
+  property.linstor.csi.linbit.com/PrefNic: storage-vlan110

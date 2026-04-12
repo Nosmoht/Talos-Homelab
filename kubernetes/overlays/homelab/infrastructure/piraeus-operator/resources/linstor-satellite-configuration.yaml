@@ -14,6 +14,9 @@ metadata:
 spec:
   nodeSelector:
     feature.node.kubernetes.io/storage-nvme.present: "true"
+  properties:
+    - name: PrefNic
+      value: storage-vlan110
   internalTLS:
     certManager:
       name: linstor-internal-ca
