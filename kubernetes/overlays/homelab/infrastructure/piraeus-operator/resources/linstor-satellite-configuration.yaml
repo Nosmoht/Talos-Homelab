@@ -30,6 +30,8 @@ spec:
         spec:
           template:
             spec:
+              hostNetwork: true
+              dnsPolicy: ClusterFirstWithHostNet
               initContainers:
                 - name: drbd-shutdown-guard
                   $patch: delete
