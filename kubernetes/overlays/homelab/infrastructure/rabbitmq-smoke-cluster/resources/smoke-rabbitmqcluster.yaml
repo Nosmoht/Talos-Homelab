@@ -1,3 +1,6 @@
+# Smoke probe: 1-replica cluster validating cluster-operator + MTO + PNI wiring.
+# Delete once the first real consumer onboards via PNI capability rabbitmq-managed.
+# Not a production-shaped cluster — single replica, Mnesia not HA, no quorum.
 apiVersion: rabbitmq.com/v1beta1
 kind: RabbitmqCluster
 metadata:

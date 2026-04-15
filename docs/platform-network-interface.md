@@ -102,6 +102,7 @@ Admission policy (Kyverno) enforces this separation.
 | `cnpg-postgres` | `cloudnative-pg` | Managed PostgreSQL workloads |
 | `redis-managed` | `redis-operator` | Managed Redis instances |
 | `kafka-managed` | `strimzi-kafka-operator` | Managed Kafka clusters/topics |
+| `rabbitmq-managed` | `rabbitmq-cluster-operator`, `rabbitmq-messaging-topology-operator` | Managed RabbitMQ clusters and topology (User/Vhost/Queue) |
 | `s3-object` | `minio-operator`, `minio` | S3-compatible object storage |
 | `storage-csi` | `piraeus-operator` | Persistent volumes via CSI |
 | `tls-issuance` | `cert-manager`, `cert-approver` | Certificate issuance and renewal |
@@ -119,6 +120,95 @@ Admission policy (Kyverno) enforces this separation.
 4. Deploy your workloads or custom resources.
 5. Consumer egress is automatically granted by PNI consumer CCNPs once the capability label is set.
 6. Validate connectivity and policy behavior.
+
+## Onboarding Workflow (Provider — adding a new capability)
+
+Adding a capability requires touching three places in lockstep. Skipping any one
+causes silent admission failure or untested egress paths. Verified end-to-end
+during the RabbitMQ rollout.
+
+1. **Capability Registry ConfigMap** —
+   `kubernetes/base/infrastructure/platform-network-interface/resources/capability-registry-configmap.yaml`.
+   Add an `id:` entry under `capabilities:` with the providing component(s).
+   This is documentation/inventory only; it does not enforce anything.
+2. **Kyverno enforce-policy allow-list** —
+   `kubernetes/base/infrastructure/platform-network-interface/resources/kyverno-clusterpolicy-pni-capability-validation-enforce.yaml`.
+   The `AnyNotIn` list under `validate-consume-capability-labels` is hardcoded.
+   Append `platform.io/consume.<new-id>` and update the human-readable message.
+   **Skipping this step makes Kyverno reject any namespace that opts into the
+   new capability as "unknown PNI capability label".**
+3. **CCNPs** under
+   `kubernetes/base/infrastructure/platform-network-interface/resources/`:
+   - `ccnp-pni-<capability>-consumer-egress.yaml` — selects on namespace label
+     `platform.io/consume.<capability>=true` plus pod label
+     `platform.io/capability-consumer.<capability>=true`, opens egress to the
+     provider endpoints.
+   - `ccnp-pni-<capability>-operator-dataplane-egress.yaml` (optional) — for
+     operator → managed-resource traffic that is not consumer-facing. Scope
+     ports tightly; do not preemptively include broker-internal protocols
+     (e.g. Erlang distribution) that have no current need — those belong in
+     a separate CCNP when multi-replica clusters are introduced.
+4. Add both CCNP filenames to
+   `kubernetes/base/infrastructure/platform-network-interface/kustomization.yaml`.
+5. Validate end-to-end:
+   `kubectl kustomize kubernetes/base/infrastructure/platform-network-interface/`
+   and `make validate-kyverno-policies`.
+
+### Vendored upstream namespaces
+
+Operators distributed as raw upstream YAML (e.g. KubeVirt, RabbitMQ) ship a
+`Namespace` resource that **lacks the PNI contract labels**. The namespace is
+rejected by `pni-contract-audit` on first sync with
+`Namespaces must set platform.io/network-interface-version=v1`.
+
+Patch via kustomize at the overlay level — do not edit the vendored YAML so
+upstream upgrades stay clean:
+
+```yaml
+patches:
+  - target:
+      kind: Namespace
+      name: <ns>
+    patch: |
+      - op: add
+        path: /metadata/labels/platform.io~1network-interface-version
+        value: v1
+      - op: add
+        path: /metadata/labels/platform.io~1network-profile
+        value: managed
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1enforce
+        value: baseline
+      # plus -enforce-version, -audit, -warn, and audit/warn-version labels
+      # plus app.kubernetes.io/{instance,managed-by,part-of}
+```
+
+Mirror the label set used on existing operator namespaces (e.g. `kafka`,
+`redis-system`) so PSA enforcement stays uniform across the cluster.
+
+### Admission webhooks (Cilium WireGuard strict mode)
+
+Validating/mutating webhook calls from kube-apiserver appear with multiple
+Cilium identities depending on which control-plane node the apiserver runs on
+and whether traffic is rewritten by `cilium_host`. A CNP that allows only
+`fromEntities: [kube-apiserver]` will time out on some control-plane nodes.
+
+Use the existing PNI capability instead of writing per-component rules:
+label the webhook-serving Deployment pod template with
+`platform.io/capability-provider.admission-webhook: "true"`. The cluster-wide
+CCNP `pni-admission-webhook-provider-ingress` already covers
+`fromEntities: [kube-apiserver, host, remote-node]` on standard webhook ports
+(9443, 4221). Add the new component to the `admission-webhook-provider`
+provider list in the registry ConfigMap.
+
+### Selector tightness for managed-resource egress
+
+`<capability>-managed-consumer-egress` CCNPs typically select provider pods
+by `app.kubernetes.io/component` + `app.kubernetes.io/part-of` in the
+provider namespace. This is loose — any future pod in that namespace with
+matching labels (debug sidecar, benchmark client) becomes reachable on the
+opened ports. Tighten with the operator's `managed-by` label or a cluster-name
+selector when introducing managed clusters in additional namespaces.
 
 ## Current Policy Coverage (Core Platform)
 
