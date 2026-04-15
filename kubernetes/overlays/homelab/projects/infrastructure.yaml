@@ -34,7 +34,7 @@ spec:
     - https://charts.external-secrets.io
     - https://operator.min.io/
     - https://helm.cilium.io/
-    - registry-1.docker.io/mbentley*
+    - https://github.com/mbentley/docker-omada-controller.git
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc

@@ -14,13 +14,14 @@ metadata:
 spec:
   project: infrastructure
   sources:
-    - repoURL: registry-1.docker.io/mbentley
-      chart: omada-controller-helm
-      # ArgoCD's OCI tag-list call hits Docker Hub anonymous rate limits
-      # ("GET /v2/.../tags/list": 403 Forbidden) even when `helm pull` of a
-      # specific tag succeeds. Pin an explicit version so ArgoCD skips tag
-      # enumeration. Bump manually when upgrading the chart.
-      targetRevision: 1.2.0
+    # Chart lives in the upstream git repo under helm/omada-controller-helm/.
+    # Using git source (not OCI) because Docker Hub anonymous rate limits
+    # block ArgoCD's /v2/.../tags/list call (403) even when helm pull of a
+    # specific version succeeds. Bump targetRevision when tracking a new
+    # upstream release.
+    - repoURL: https://github.com/mbentley/docker-omada-controller.git
+      targetRevision: v6.2.0.17
+      path: helm/omada-controller-helm
       helm:
         releaseName: omada-controller
         valueFiles:
