@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/part-of: homelab
     app.kubernetes.io/managed-by: argocd
 spec:
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
     rollingUpdate: null
@@ -30,7 +30,7 @@ spec:
       annotations:
         k8s.v1.cni.cncf.io/networks: '[{"name": "homelab-gateway-macvlan", "mac": "02:42:c0:a8:02:46"}, {"name": "homelab-gateway-macvlan-public", "mac": "00:00:5e:00:01:63"}]'
         # Bumped to force Multus NAD re-read on pod roll (NADs do not hot-reload).
-        kubectl.kubernetes.io/restartedAt: "2026-04-15T00:00:00Z"
+        kubectl.kubernetes.io/restartedAt: "2026-04-15T12:00:00Z"
     spec:
       tolerations:
         # Allow scheduling on nodes with the DRBD lost-quorum taint so
@@ -53,15 +53,26 @@ spec:
           resources:
             requests: { cpu: 5m, memory: 16Mi }
             limits: { cpu: 100m, memory: 32Mi }
-        # NOTE: ARP-flux suppression on net1/net2 (arp_ignore/arp_announce)
-        # is NOT applied here. The default namespace enforces PodSecurity
-        # baseline, which forbids NET_ADMIN — the cap an init container would
-        # need to write to /proc/sys. The proper fix is to add the per-iface
-        # arp_ignore/arp_announce sysctls to the kubelet's allowedUnsafeSysctls
-        # list via Talos machine config, then declare them in pod
-        # securityContext.sysctls. Tracked separately - the functional impact
-        # is that the LAN/router may cache either VIP under the net1 MAC; the
-        # data plane still works because both interfaces share one netns.
+        # Force a DHCPv4 DISCOVER/OFFER/REQUEST/ACK exchange on net2 using the
+        # pinned MAC so the Fritzbox populates its per-IP host entry
+        # (GetSpecificHostEntryByIP.NewActive=True) and binds the IP<->MAC
+        # mapping via real DHCP, not manual UI entry or ARP observation alone.
+        # Without this, FRITZ!OS 8.20+ silently refuses to NAT inbound port
+        # forwards to the pod. udhcpc uses -s /bin/true to skip interface
+        # configuration (static IPAM already owns the address), so only
+        # NET_RAW is needed - NET_ADMIN is forbidden by PSA baseline in the
+        # default namespace.
+        - name: net2-dhcp-register
+          image: busybox:1.36
+          command: ["sh", "-c", "udhcpc -s /bin/true -n -q -f -i net2 || echo 'dhcp probe failed, continuing'"]
+          securityContext:
+            capabilities:
+              add: ["NET_RAW"]
+              drop: ["ALL"]
+            allowPrivilegeEscalation: false
+          resources:
+            requests: { cpu: 5m, memory: 8Mi }
+            limits: { cpu: 50m, memory: 16Mi }
       containers:
         - name: nginx
           image: nginx:1.27-alpine
