@@ -11,7 +11,7 @@ metadata:
     app.kubernetes.io/part-of: homelab
     app.kubernetes.io/managed-by: argocd
 spec:
-  replicas: 0
+  replicas: 1
   strategy:
     type: Recreate
     rollingUpdate: null
@@ -28,9 +28,12 @@ spec:
         app.kubernetes.io/component: l4-proxy
         app.kubernetes.io/part-of: homelab
       annotations:
-        k8s.v1.cni.cncf.io/networks: '[{"name": "homelab-gateway-macvlan", "mac": "02:42:c0:a8:02:46"}, {"name": "homelab-gateway-macvlan-public", "mac": "00:00:5e:00:01:63"}]'
+        # Public VIP net2 MAC: locally-administered (02:42 prefix, U/L bit set).
+        # Switched from IANA VRRP OUI 00:00:5E:00:01:63 to isolate Fritzbox
+        # port-forward delivery failure hypothesis (Test B from Phase 0 plan).
+        k8s.v1.cni.cncf.io/networks: '[{"name": "homelab-gateway-macvlan", "mac": "02:42:c0:a8:02:46"}, {"name": "homelab-gateway-macvlan-public", "mac": "02:42:c0:a8:02:63"}]'
         # Bumped to force Multus NAD re-read on pod roll (NADs do not hot-reload).
-        kubectl.kubernetes.io/restartedAt: "2026-04-15T13:00:00Z"
+        kubectl.kubernetes.io/restartedAt: "2026-04-15T14:00:00Z"
     spec:
       tolerations:
         # Allow scheduling on nodes with the DRBD lost-quorum taint so
