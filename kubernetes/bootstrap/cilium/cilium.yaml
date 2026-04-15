@@ -283,13 +283,15 @@ data:
   vtep-cidr: ""
   vtep-mask: ""
   vtep-mac: ""
+  # Enable L2 announcements
+  enable-l2-announcements: "true"
 
   packetization-layer-pmtud-mode: "blackhole"
   procfs: "/host/proc"
   bpf-root: "/sys/fs/bpf"
   cgroup-root: "/run/cilium/cgroupv2"
   # A space separated list of explicitly allowed vlan id's
-  vlan-bpf-bypass: "100 110"
+  vlan-bpf-bypass: "100 110 120 130"
 
   identity-management-mode: "agent"
   enable-sctp: "false"
@@ -450,6 +452,16 @@ rules:
   - get
   - list
   - watch
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - create
+  - get
+  - update
+  - list
+  - delete
 - apiGroups:
   - apiextensions.k8s.io
   resources:
