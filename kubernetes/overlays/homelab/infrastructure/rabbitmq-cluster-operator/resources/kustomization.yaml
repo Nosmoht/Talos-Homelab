@@ -15,9 +15,6 @@ patches:
       name: rabbitmq-system
     patch: |
       - op: add
-        path: /metadata/labels/pod-security.kubernetes.io~1enforce
-        value: baseline
-      - op: add
         path: /metadata/labels/app.kubernetes.io~1instance
         value: homelab
       - op: add
@@ -26,6 +23,36 @@ patches:
       - op: add
         path: /metadata/labels/app.kubernetes.io~1part-of
         value: homelab
+      - op: add
+        path: /metadata/labels/platform.io~1network-interface-version
+        value: v1
+      - op: add
+        path: /metadata/labels/platform.io~1network-profile
+        value: managed
+      - op: add
+        path: /metadata/labels/platform.io~1consume.controlplane-egress
+        value: "true"
+      - op: add
+        path: /metadata/labels/platform.io~1consume.monitoring-scrape
+        value: "true"
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1enforce
+        value: baseline
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1enforce-version
+        value: latest
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1audit
+        value: restricted
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1audit-version
+        value: latest
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1warn
+        value: restricted
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1warn-version
+        value: latest
   - target:
       kind: Deployment
       name: rabbitmq-cluster-operator
