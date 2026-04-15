@@ -255,7 +255,7 @@ Most consumer CCNPs are **egress** grants (consumer -> provider). The `gateway-b
 
 #### Ingress (gateway proxy -> consumer)
 
-- Gateway backend: namespaces with `consume.gateway-backend=true` receive ingress from Cilium Gateway API proxy (`reserved:ingress` identity) on container ports `3000/TCP`, `4180/TCP`, `5556/TCP`, `8200/TCP`
+- Gateway backend: namespaces with `consume.gateway-backend=true` receive ingress from Cilium Gateway API proxy (`reserved:ingress` identity) on container ports `3000/TCP` (Grafana), `4180/TCP` (oauth2-proxy), `5556/TCP` (Dex), `8000/TCP` (Django/Uvicorn — plane.so), `8001/TCP` (kb-mcp), `8200/TCP` (Vault UI)
 
 Ports in the gateway-backend CCNP are **container/pod ports** (post-DNAT), not Service ports — Cilium `toPorts` evaluates after kube-proxy DNAT. When adding a new gateway-exposed backend, add its container port to the CCNP.
 
