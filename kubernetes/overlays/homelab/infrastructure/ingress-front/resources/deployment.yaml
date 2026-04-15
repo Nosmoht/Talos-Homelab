@@ -30,6 +30,15 @@ data:
         server 192.168.2.65:443;
         server 192.168.2.66:443;
       }
+      # SNI allowlist for the public-facing VIP (.71): only *.homelab.ntbc.io
+      # SNIs are forwarded to the gateway Envoy. Anything else (including any
+      # *.homelab.local SNI) maps to an empty upstream, which makes nginx
+      # close the connection at L4 before TLS termination - preventing WAN
+      # attackers from reaching internal HTTPRoutes via SNI manipulation.
+      map $ssl_preread_server_name $public_upstream {
+        ~*\.homelab\.ntbc\.io$  gateway_https;
+        default                          "";
+      }
       server {
         listen 192.168.2.70:80;
         proxy_pass gateway_http;
@@ -37,6 +46,11 @@ data:
       server {
         listen 192.168.2.70:443;
         proxy_pass gateway_https;
+      }
+      server {
+        listen 192.168.2.71:443;
+        ssl_preread on;
+        proxy_pass $public_upstream;
       }
     }
 ---
@@ -70,7 +84,7 @@ spec:
         app.kubernetes.io/component: l4-proxy
         app.kubernetes.io/part-of: homelab
       annotations:
-        k8s.v1.cni.cncf.io/networks: '[{"name": "homelab-gateway-macvlan", "mac": "02:42:c0:a8:02:46"}]'
+        k8s.v1.cni.cncf.io/networks: '[{"name": "homelab-gateway-macvlan", "mac": "02:42:c0:a8:02:46"}, {"name": "homelab-gateway-macvlan-public", "mac": "02:42:c0:a8:02:47"}]'
     spec:
       containers:
         - name: nginx
