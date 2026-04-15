@@ -3,3 +3,4 @@ kind: Kustomization
 
 resources:
   - cilium-lb-pool.yaml
+  - svc-udp-29814.yaml
