@@ -107,6 +107,7 @@ Admission policy (Kyverno) enforces this separation.
 | `storage-csi` | `piraeus-operator` | Persistent volumes via CSI |
 | `tls-issuance` | `cert-manager`, `cert-approver` | Certificate issuance and renewal |
 | `gateway-backend` | `gateway-api` (Cilium dataplane) | Backend exposure via Gateway API |
+| `external-gateway-routes` | `gateway-api` (homelab-gateway external-https listener) | Opt-in to attach HTTPRoutes to the public `*.homelab.ntbc.io` listener. Gateway-API `allowedRoutes` selector only — network policy continues to be governed by `gateway-backend`. Every external HTTPRoute MUST enforce its own auth (Dex/OIDC); SNI dispatch is routing isolation, not authz. |
 | `gpu-runtime` | `nvidia-device-plugin`, `nvidia-dcgm-exporter`, `node-feature-discovery` | GPU workload scheduling and telemetry |
 | `hpa-metrics` | `metrics-server` | Resource metrics for autoscaling |
 | `internet-egress` | `cilium` | Egress to public internet (all ports) |
