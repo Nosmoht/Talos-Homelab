@@ -37,3 +37,6 @@ patches:
       - op: add
         path: /spec/template/metadata/labels/platform.io~1capability-consumer.rabbitmq-operator-dataplane
         value: "true"
+      - op: add
+        path: /spec/template/metadata/labels/platform.io~1capability-provider.admission-webhook
+        value: "true"

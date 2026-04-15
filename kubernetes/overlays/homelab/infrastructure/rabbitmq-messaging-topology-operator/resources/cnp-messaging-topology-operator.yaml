@@ -30,10 +30,3 @@ spec:
         - ports:
             - port: "8443"
               protocol: TCP
-    # Admission webhook from kube-apiserver on 9443
-    - fromEntities:
-        - kube-apiserver
-      toPorts:
-        - ports:
-            - port: "9443"
-              protocol: TCP
