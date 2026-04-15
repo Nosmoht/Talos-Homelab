@@ -39,6 +39,7 @@ paths:
 - **Gateway `Programmed: False` blocks root app sync**: Cilium bug #42786; add `argocd.argoproj.io/sync-options: SkipHealthCheck=true` annotation on the Gateway resource
 - **Removing `commonAnnotations` drops sync-wave from raw resources**: Add per-resource `argocd.argoproj.io/sync-wave` annotations or move resources into a child Application
 - **Migrating resources between Applications**: Add `argocd.argoproj.io/sync-options: Prune=false` to resources before removing from the old Application's kustomization — otherwise `prune: true` deletes before new Application recreates, causing an outage window
+- **StatefulSet rollout deadlock on CrashLooping pod**: Default STS `RollingUpdate` replaces pods in reverse ordinal order (N-1 → 0) and waits for each to be Ready before moving on. A pod stuck in `CrashLoopBackOff` on the current ordinal blocks the rollout forever — subsequent ordinals never update, so a template fix (e.g. new env vars, new labels) reaches zero pods. `kubectl rollout restart sts/<name>` only writes the template annotation; it does NOT force a delete. Also note that `updated=0/2 ready=1` with mismatched `currentRevision` vs `updateRevision` is the diagnostic signature. Fix: `kubectl delete pod <name>-<ordinal>` to force the STS controller to create a fresh pod on the `updateRevision` template; the ordinal above rolls once the crashing pod is Ready on the new revision.
 
 ## Hard Rules
 - Never use `kubectl apply` for resources already managed by ArgoCD.
