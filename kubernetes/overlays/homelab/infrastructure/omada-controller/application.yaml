@@ -16,7 +16,11 @@ spec:
   sources:
     - repoURL: registry-1.docker.io/mbentley
       chart: omada-controller-helm
-      targetRevision: "*"
+      # ArgoCD's OCI tag-list call hits Docker Hub anonymous rate limits
+      # ("GET /v2/.../tags/list": 403 Forbidden) even when `helm pull` of a
+      # specific tag succeeds. Pin an explicit version so ArgoCD skips tag
+      # enumeration. Bump manually when upgrading the chart.
+      targetRevision: 1.2.0
       helm:
         releaseName: omada-controller
         valueFiles:
