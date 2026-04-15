@@ -20,7 +20,7 @@ spec:
           "ipam": {
             "type": "static",
             "addresses": [
-              { "address": "192.168.2.71/24", "gateway": "192.168.2.1" }
+              { "address": "192.168.2.99/24", "gateway": "192.168.2.1" }
             ]
           }
         },

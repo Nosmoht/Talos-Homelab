@@ -1,59 +1,3 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: ingress-front-config
-  namespace: default
-  labels:
-    app.kubernetes.io/name: ingress-front
-    app.kubernetes.io/instance: homelab
-    app.kubernetes.io/component: l4-proxy
-    app.kubernetes.io/part-of: homelab
-    app.kubernetes.io/managed-by: argocd
-data:
-  nginx.conf: |
-    worker_processes 1;
-    events { worker_connections 512; }
-    stream {
-      # Gateway Envoy listens on hostNetwork ports 80/443 on all gateway nodes.
-      # Traffic must arrive via net1 (macvlan) as external LAN traffic to bypass
-      # Cilium's eBPF identity-marking and the cilium.l7policy filter (which
-      # causes 403 for pod-origin traffic via eth0).
-      # Macvlan bridge mode blocks same-host traffic, so the local node's IP
-      # will fail — nginx stream upstream automatically fails over to other nodes.
-      upstream gateway_http {
-        server 192.168.2.64:80;
-        server 192.168.2.65:80;
-        server 192.168.2.66:80;
-      }
-      upstream gateway_https {
-        server 192.168.2.64:443;
-        server 192.168.2.65:443;
-        server 192.168.2.66:443;
-      }
-      # SNI allowlist for the public-facing VIP (.71): only *.homelab.ntbc.io
-      # SNIs are forwarded to the gateway Envoy. Anything else (including any
-      # *.homelab.local SNI) maps to an empty upstream, which makes nginx
-      # close the connection at L4 before TLS termination - preventing WAN
-      # attackers from reaching internal HTTPRoutes via SNI manipulation.
-      map $ssl_preread_server_name $public_upstream {
-        ~*\.homelab\.ntbc\.io$  gateway_https;
-        default                          "";
-      }
-      server {
-        listen 192.168.2.70:80;
-        proxy_pass gateway_http;
-      }
-      server {
-        listen 192.168.2.70:443;
-        proxy_pass gateway_https;
-      }
-      server {
-        listen 192.168.2.71:443;
-        ssl_preread on;
-        proxy_pass $public_upstream;
-      }
-    }
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -87,12 +31,26 @@ spec:
         k8s.v1.cni.cncf.io/networks: '[{"name": "homelab-gateway-macvlan", "mac": "02:42:c0:a8:02:46"}, {"name": "homelab-gateway-macvlan-public", "mac": "02:42:c0:a8:02:47"}]'
     spec:
       tolerations:
-        # Allow scheduling on nodes that have lost DRBD quorum so ingress-front
-        # stays available even when LINSTOR storage is degraded. The pod has no
-        # PVC and does not depend on DRBD.
+        # Allow scheduling on nodes with the DRBD lost-quorum taint so
+        # ingress-front survives storage-degraded events. The pod has no PVC
+        # and does not depend on DRBD.
         - key: drbd.linbit.com/lost-quorum
           operator: Exists
           effect: NoSchedule
+      initContainers:
+        # Validate nginx config before the main container starts. Pod refuses
+        # to start on syntax errors instead of crash-looping with a broken
+        # config and taking LAN ingress down.
+        - name: nginx-validate
+          image: nginx:1.27-alpine
+          command: ["nginx", "-t", "-c", "/etc/nginx/nginx.conf"]
+          volumeMounts:
+            - name: config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+          resources:
+            requests: { cpu: 5m, memory: 16Mi }
+            limits: { cpu: 100m, memory: 32Mi }
       containers:
         - name: nginx
           image: nginx:1.27-alpine
@@ -100,11 +58,23 @@ spec:
             - name: config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+          ports:
+            - name: https-int
+              containerPort: 443
+              protocol: TCP
+          readinessProbe:
+            tcpSocket:
+              port: 443
+            initialDelaySeconds: 1
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 2
           resources:
             requests:
               cpu: 10m
               memory: 32Mi
             limits:
+              cpu: 500m
               memory: 64Mi
       volumes:
         - name: config
