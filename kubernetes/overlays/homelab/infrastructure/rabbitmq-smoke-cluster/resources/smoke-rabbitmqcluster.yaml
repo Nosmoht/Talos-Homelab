@@ -24,6 +24,7 @@ spec:
   rabbitmq:
     additionalConfig: |
       prometheus.return_per_object_metrics = true
+      deprecated_features.permit.management_metrics_collection = false
 ---
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
