@@ -36,6 +36,8 @@ Piraeus Operator (Helm, piraeus-datastore namespace)
 
 **DRBD D-state deadlock**: DRBD volumes in D-state block node shutdown. DRBD processes enter an uninterruptible sleep waiting for I/O that never completes. Only fixable with physical power cycle. See `talos-mcp-first.md` §Node Recovery. Do not attempt `kubectl drain`, `talosctl upgrade`, or satellite pod restart to resolve D-state.
 
+**Controller-Satellite SSL handshake failure after cert rotation**: After a cert-manager rotation (which can be triggered by `rollout restart deploy linstor-controller`), satellites may go OFFLINE if the CA and leaf-cert algorithms diverge (e.g. ECDSA CA vs. RSA leaf). Symptoms: `linstor node list` reports all satellites OFFLINE even though `LinstorSatellite` CRs still show `CONNECTED=True`; `linstor-affinity-controller` logs `x509: signature algorithm specifies an ECDSA public key, but have public key of type *rsa.PublicKey` against `linstor-controller:3371`. Fix: reconcile the cert-manager Issuer, then coordinated restart of the controller **and** all `linstor-satellite.*` StatefulSets so both sides re-read the new CA bundle.
+
 **Split-brain**: Two nodes both promoted to Primary simultaneously (typically after network partition + manual intervention). LINSTOR/DRBD auto-resolution is configured, but if manual promotion occurred, one replica will have diverged data. Do not continue mounting until split-brain is resolved.
 
 ## Safety Constraints
@@ -47,6 +49,9 @@ Piraeus Operator (Helm, piraeus-datastore namespace)
 - Never promote DRBD manually on a node where the satellite pod is not Running.
 - Talos nodes have no host shell — all device-level operations must go through satellite pod exec.
 - Satellite exec for device ops: `kubectl exec -n piraeus-datastore <satellite-pod> -- <command>`
+- Never restart the `linstor-controller` Deployment casually. It can trigger a cert-manager cert rotation that breaks SSL trust with ALL satellites. Before any controller restart, run `kubectl -n piraeus-datastore get certificate,secret | grep -i linstor` and inspect the CA/leaf algorithm alignment.
+- If a `linstor-controller` restart is required for a real fix, plan a coordinated restart of `linstor-satellite.*` StatefulSets immediately afterwards so satellites re-read the CA bundle. Prefer `kubectl exec` into the controller pod for diagnostics over restart.
+- Never use a `linstor-controller` restart as a first-order remedy for "stale" taints or HA quirks. Diagnose the specific subsystem first: run `/linstor-storage-triage`, check `LinstorSatellite` CRs, and inspect DRBD state directly on the node via Talos MCP.
 
 ## Access Patterns
 
