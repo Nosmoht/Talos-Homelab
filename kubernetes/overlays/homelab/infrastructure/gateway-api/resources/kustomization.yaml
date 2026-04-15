@@ -5,4 +5,5 @@ resources:
   - gatewayclass-config.yaml
   - gateway.yaml
   - certificate.yaml
+  - certificate-external.yaml
   - httproute-redirect.yaml

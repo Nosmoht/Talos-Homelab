@@ -37,3 +37,19 @@ spec:
       allowedRoutes:
         namespaces:
           from: All
+    - name: external-https
+      protocol: HTTPS
+      port: 443
+      hostname: "*.homelab.ntbc.io"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: external-wildcard-tls
+      allowedRoutes:
+        namespaces:
+          from: Selector
+          selector:
+            matchLabels:
+              platform.io/consume.external-gateway-routes: "true"
