@@ -28,7 +28,7 @@ spec:
         app.kubernetes.io/component: l4-proxy
         app.kubernetes.io/part-of: homelab
       annotations:
-        k8s.v1.cni.cncf.io/networks: '[{"name": "homelab-gateway-macvlan", "mac": "02:42:c0:a8:02:46"}, {"name": "homelab-gateway-macvlan-public", "mac": "02:42:c0:a8:02:47"}]'
+        k8s.v1.cni.cncf.io/networks: '[{"name": "homelab-gateway-macvlan", "mac": "02:42:c0:a8:02:46"}, {"name": "homelab-gateway-macvlan-public", "mac": "00:00:5e:00:01:63"}]'
     spec:
       tolerations:
         # Allow scheduling on nodes with the DRBD lost-quorum taint so
