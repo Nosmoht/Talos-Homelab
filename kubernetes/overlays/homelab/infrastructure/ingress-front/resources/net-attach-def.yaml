@@ -26,11 +26,7 @@ spec:
         },
         {
           "type": "tuning",
-          "capabilities": { "mac": true },
-          "sysctl": {
-            "net.ipv4.conf.net1.arp_ignore": "1",
-            "net.ipv4.conf.net1.arp_announce": "2"
-          }
+          "capabilities": { "mac": true }
         }
       ]
     }
