@@ -18,6 +18,9 @@ resources:
   - external-secrets
   - redis-operator
   - strimzi-kafka-operator
+  - rabbitmq-cluster-operator
+  - rabbitmq-messaging-topology-operator
+  - rabbitmq-smoke-cluster
   - dex
   - kyverno
   - platform-network-interface

@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - cluster-operator.yaml
+  - cnp-rabbitmq-cluster-operator.yaml
+
+patches:
+  # PSA baseline + Kubernetes recommended labels on the upstream Namespace.
+  # Also tags operator Deployment pods with PNI capability-consumer labels so
+  # existing CCNPs (controlplane-egress, monitoring-scrape, internet-egress)
+  # cover the operator without a custom per-operator egress CNP.
+  - target:
+      kind: Namespace
+      name: rabbitmq-system
+    patch: |
+      - op: add
+        path: /metadata/labels/pod-security.kubernetes.io~1enforce
+        value: baseline
+      - op: add
+        path: /metadata/labels/app.kubernetes.io~1instance
+        value: homelab
+      - op: add
+        path: /metadata/labels/app.kubernetes.io~1managed-by
+        value: argocd
+      - op: add
+        path: /metadata/labels/app.kubernetes.io~1part-of
+        value: homelab
+  - target:
+      kind: Deployment
+      name: rabbitmq-cluster-operator
+      namespace: rabbitmq-system
+    patch: |
+      - op: add
+        path: /spec/template/metadata/labels/platform.io~1capability-consumer.controlplane-egress
+        value: "true"
+      - op: add
+        path: /spec/template/metadata/labels/platform.io~1capability-consumer.monitoring-scrape
+        value: "true"
+      - op: add
+        path: /spec/template/metadata/labels/platform.io~1capability-consumer.internet-egress
+        value: "true"
+      - op: add
+        path: /spec/template/metadata/labels/platform.io~1capability-consumer.rabbitmq-operator-dataplane
+        value: "true"
