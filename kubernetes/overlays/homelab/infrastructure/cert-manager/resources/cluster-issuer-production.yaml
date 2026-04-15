@@ -24,3 +24,12 @@ spec:
         selector:
           dnsZones:
             - homelab.local
+      - dns01:
+          cloudDNS:
+            project: io-ntbc-domain-control-1900413
+            serviceAccountSecretRef:
+              key: service-account-key.json
+              name: google-cloud-dns
+        selector:
+          dnsZones:
+            - homelab.ntbc.io
