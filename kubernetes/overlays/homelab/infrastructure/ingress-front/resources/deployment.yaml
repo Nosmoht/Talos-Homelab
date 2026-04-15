@@ -86,6 +86,13 @@ spec:
       annotations:
         k8s.v1.cni.cncf.io/networks: '[{"name": "homelab-gateway-macvlan", "mac": "02:42:c0:a8:02:46"}, {"name": "homelab-gateway-macvlan-public", "mac": "02:42:c0:a8:02:47"}]'
     spec:
+      tolerations:
+        # Allow scheduling on nodes that have lost DRBD quorum so ingress-front
+        # stays available even when LINSTOR storage is degraded. The pod has no
+        # PVC and does not depend on DRBD.
+        - key: drbd.linbit.com/lost-quorum
+          operator: Exists
+          effect: NoSchedule
       containers:
         - name: nginx
           image: nginx:1.27-alpine
