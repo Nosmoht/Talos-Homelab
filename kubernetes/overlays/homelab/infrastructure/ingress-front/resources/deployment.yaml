@@ -51,6 +51,35 @@ spec:
           resources:
             requests: { cpu: 5m, memory: 16Mi }
             limits: { cpu: 100m, memory: 32Mi }
+        # Suppress ARP flux on the two macvlan interfaces. Both net1 and net2
+        # live in the same pod netns and share the LAN subnet; with kernel
+        # defaults either interface answers ARP for either IP - the router and
+        # switch may cache the wrong MAC for one of the VIPs (the net1 MAC
+        # wins the race for both addresses). arp_ignore=1 makes each interface
+        # only answer ARP for IPs configured on that exact interface;
+        # arp_announce=2 makes outgoing ARP requests use the source IP that
+        # matches the egress interface. Together they pin a 1:1 IP-MAC
+        # mapping on the LAN, which is what the Fritzbox needs to bind a
+        # static MAC reservation per VIP.
+        # Requires NET_ADMIN; PSA in 'default' namespace is not Restricted.
+        - name: arp-sysctls
+          image: nginx:1.27-alpine
+          command:
+            - sh
+            - -c
+            - |
+              set -eu
+              for iface in net1 net2; do
+                echo 1 > /proc/sys/net/ipv4/conf/$iface/arp_ignore
+                echo 2 > /proc/sys/net/ipv4/conf/$iface/arp_announce
+              done
+              echo "arp_ignore + arp_announce set on net1/net2"
+          securityContext:
+            capabilities:
+              add: ["NET_ADMIN"]
+          resources:
+            requests: { cpu: 5m, memory: 8Mi }
+            limits: { cpu: 50m, memory: 16Mi }
       containers:
         - name: nginx
           image: nginx:1.27-alpine
@@ -58,17 +87,11 @@ spec:
             - name: config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
-          ports:
-            - name: https-int
-              containerPort: 443
-              protocol: TCP
-          readinessProbe:
-            tcpSocket:
-              port: 443
-            initialDelaySeconds: 1
-            periodSeconds: 5
-            timeoutSeconds: 2
-            failureThreshold: 2
+          # No containerPorts / readinessProbe: nginx binds only on the macvlan
+          # VIPs (net1/net2), not on the pod-network eth0 IP. A tcpSocket probe
+          # would target eth0 and fail. The init container `nginx-validate`
+          # already gates start on config syntax; verify VIP reachability from
+          # outside the pod (LAN curl) post-deploy.
           resources:
             requests:
               cpu: 10m
