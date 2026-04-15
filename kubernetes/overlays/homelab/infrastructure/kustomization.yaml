@@ -35,3 +35,4 @@ resources:
   - kubevirt
   - kubevirt-cdi
   - tetragon
+  - omada-controller
