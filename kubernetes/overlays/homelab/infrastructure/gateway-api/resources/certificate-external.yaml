@@ -17,7 +17,7 @@ spec:
   duration: 2160h
   renewBefore: 720h
   issuerRef:
-    name: homelab-staging
+    name: homelab
     kind: ClusterIssuer
   dnsNames:
     - homelab.ntbc.io
