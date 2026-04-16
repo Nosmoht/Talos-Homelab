@@ -6,4 +6,5 @@ resources:
   - gateway.yaml
   - certificate.yaml
   - certificate-external.yaml
+  - certificate-internal-trusted.yaml
   - httproute-redirect.yaml
