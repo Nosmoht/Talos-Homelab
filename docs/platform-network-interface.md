@@ -149,9 +149,17 @@ during the RabbitMQ rollout.
      ports tightly; do not preemptively include broker-internal protocols
      (e.g. Erlang distribution) that have no current need — those belong in
      a separate CCNP when multi-replica clusters are introduced.
-4. Add both CCNP filenames to
+4. **Provider pod label**: ensure provider pods carry
+   `platform.io/capability-provider.<capability>: "true"` on the pod template
+   (Helm `podLabels`, operator `spec.podMetadata.labels`, or
+   `spec.override.statefulSet.spec.template.metadata.labels` depending on the
+   operator). The capability CCNP `egress.toEndpoints` selects on this label,
+   so missing it = silent egress denial. The label is reserved for providers —
+   `kyverno-clusterpolicy-pni-reserved-labels-enforce.yaml` blocks consumer
+   workloads from setting it.
+5. Add both CCNP filenames to
    `kubernetes/base/infrastructure/platform-network-interface/kustomization.yaml`.
-5. Validate end-to-end:
+6. Validate end-to-end:
    `kubectl kustomize kubernetes/base/infrastructure/platform-network-interface/`
    and `make validate-kyverno-policies`.
 
@@ -210,6 +218,16 @@ provider namespace. This is loose — any future pod in that namespace with
 matching labels (debug sidecar, benchmark client) becomes reachable on the
 opened ports. Tighten with the operator's `managed-by` label or a cluster-name
 selector when introducing managed clusters in additional namespaces.
+
+For `redis-managed` and `rabbitmq-managed`, the platform now uses the
+canonical `platform.io/capability-provider.<id>: "true"` label as the
+provider selector, making CCNP matching independent of CR name and
+namespace. This is the recommended pattern for new capabilities; the
+`managed-by` / cluster-name advice above remains current for
+`cnpg-postgres` and `kafka-managed` until those CCNPs adopt the same
+convention in a follow-up PR. The `platform.io/capability-provider.*`
+label is reserved for provider pods — `kyverno-clusterpolicy-pni-reserved-labels-enforce`
+blocks consumer workloads from setting it.
 
 ## Current Policy Coverage (Core Platform)
 
