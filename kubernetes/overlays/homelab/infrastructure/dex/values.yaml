@@ -33,9 +33,6 @@ affinity:
           topologyKey: kubernetes.io/hostname
 
 config:
-  logger:
-    level: debug
-    format: text
   enablePasswordDB: true
   storage:
     type: postgres
