@@ -53,3 +53,16 @@ spec:
           selector:
             matchLabels:
               platform.io/consume.external-gateway-routes: "true"
+    - name: internal-trusted-https
+      protocol: HTTPS
+      port: 443
+      hostname: "*.lan.homelab.ntbc.io"
+      tls:
+        mode: Terminate
+        certificateRefs:
+          - group: ""
+            kind: Secret
+            name: internal-trusted-wildcard-tls
+      allowedRoutes:
+        namespaces:
+          from: All
