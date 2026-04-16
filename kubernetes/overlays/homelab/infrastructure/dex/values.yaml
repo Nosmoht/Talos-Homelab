@@ -9,6 +9,9 @@ serviceAccount:
 service:
   type: ClusterIP
 
+podLabels:
+  platform.io/capability-consumer.cnpg-postgres: "true"
+
 topologySpreadConstraints:
   - maxSkew: 1
     topologyKey: kubernetes.io/hostname
