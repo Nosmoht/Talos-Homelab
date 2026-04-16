@@ -19,10 +19,21 @@ Install via:
   macOS:   brew install aquasecurity/trivy/trivy
   Linux:   see https://aquasecurity.github.io/trivy/latest/getting-started/installation/
 
+Pinned target version: $(cat .trivy-version 2>/dev/null || echo 'unpinned')
+
 Or bypass this hook once with:
   SKIP=trivy-config git commit ...
 EOF
   exit 1
+fi
+
+expected_version=$(cat .trivy-version 2>/dev/null || echo "")
+if [ -n "$expected_version" ]; then
+  installed_version="v$(trivy --version 2>/dev/null | awk '/^Version:/ {print $2}')"
+  if [ "$installed_version" != "$expected_version" ]; then
+    echo "warning: trivy version mismatch (installed: $installed_version, pinned: $expected_version from .trivy-version)" >&2
+    echo "         install the pinned version to match CI, or ignore if intentionally testing" >&2
+  fi
 fi
 
 mkdir -p "$work_dir"
