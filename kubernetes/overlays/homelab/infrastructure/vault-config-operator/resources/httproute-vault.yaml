@@ -16,8 +16,14 @@ spec:
       name: homelab-gateway
       namespace: default
       sectionName: https
+    - group: gateway.networking.k8s.io
+      kind: Gateway
+      name: homelab-gateway
+      namespace: default
+      sectionName: internal-trusted-https
   hostnames:
     - vault.homelab.local
+    - vault.lan.homelab.ntbc.io
   rules:
     - matches:
         - path:
