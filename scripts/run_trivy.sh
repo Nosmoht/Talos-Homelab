@@ -32,6 +32,7 @@ trivy config \
   --severity "$severity" \
   --exit-code 1 \
   --skip-files "$skip_files" \
+  --ignorefile .trivyignore.yaml \
   --format table \
   --output "$report_file" \
   . || status=$?
