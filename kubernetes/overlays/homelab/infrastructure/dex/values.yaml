@@ -47,6 +47,7 @@ config:
       name: Argo CD
       redirectURIs:
         - https://argocd.homelab.local/auth/callback
+        - https://argocd.lan.homelab.ntbc.io/auth/callback
       secretEnv: ARGOCD_OIDC_CLIENT_SECRET
     - id: argo-workflows
       name: Argo Workflows
