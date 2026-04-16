@@ -72,7 +72,7 @@ spec:
             - --login-url=https://dex.homelab.local/auth
             - --redeem-url=http://dex.dex.svc.cluster.local:5556/token
             - --oidc-jwks-url=http://dex.dex.svc.cluster.local:5556/keys
-            - --redirect-url=https://prometheus.homelab.local/oauth2/callback
+            - --redirect-url=https://prometheus.lan.homelab.ntbc.io/oauth2/callback
             - --upstream=http://monitoring-kube-prometheus-prometheus.monitoring.svc:9090
             - --email-domain=*
             - --oidc-email-claim=preferred_username

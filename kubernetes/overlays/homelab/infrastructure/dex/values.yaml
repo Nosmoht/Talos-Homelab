@@ -62,6 +62,7 @@ config:
       name: Prometheus
       redirectURIs:
         - https://prometheus.homelab.local/oauth2/callback
+        - https://prometheus.lan.homelab.ntbc.io/oauth2/callback
       secretEnv: PROMETHEUS_OIDC_CLIENT_SECRET
     - id: alertmanager
       name: Alertmanager
