@@ -119,8 +119,8 @@ grafana:
     GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: "true"
   grafana.ini:
     server:
-      domain: grafana.homelab.local
-      root_url: https://grafana.homelab.local
+      domain: grafana.lan.homelab.ntbc.io
+      root_url: https://grafana.lan.homelab.ntbc.io
     analytics:
       reporting_enabled: false
       check_for_updates: false
