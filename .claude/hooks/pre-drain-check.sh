@@ -19,11 +19,31 @@ if [[ "$COMMAND" =~ kubectl[[:space:]]+drain[[:space:]] ]]; then
     exit 2
   fi
 
-  # Check for OFFLINE satellites
-  OFFLINE=$(kubectl linstor node list 2>/dev/null | grep -c "OFFLINE\|UNKNOWN" || true)
-  if [ "$OFFLINE" -gt 0 ]; then
-    echo "DRBD safety check FAILED: $OFFLINE satellite(s) OFFLINE/UNKNOWN. Run '/linstor-storage-triage' for details." >&2
-    exit 2
+  # Check for OFFLINE satellites (with ALLOWED_OFFLINE allowlist bypass)
+  # ALLOWED_OFFLINE="node-pi-01,other-name" permits drain when every OFFLINE
+  # satellite is in the allowlist. Use case: permacordoned helper nodes that
+  # should not block drains on unrelated nodes. No blanket bypass intentionally —
+  # stale env vars silently reviving D-state deadlocks is the footgun this hook
+  # exists to prevent.
+  OFFLINE_NAMES=$(kubectl linstor node list 2>/dev/null \
+    | awk -F'|' '/OFFLINE|UNKNOWN/ {gsub(/^[ \t]+|[ \t]+$/,"",$2); print $2}' \
+    | grep -v '^$' || true)
+  if [ -n "$OFFLINE_NAMES" ]; then
+    UNALLOWED=""
+    for name in $OFFLINE_NAMES; do
+      case ",${ALLOWED_OFFLINE:-}," in
+        *",$name,"*) continue ;;
+        *) UNALLOWED="$UNALLOWED $name" ;;
+      esac
+    done
+    if [ -n "$UNALLOWED" ]; then
+      COUNT=$(echo "$UNALLOWED" | wc -w | tr -d ' ')
+      echo "DRBD safety check FAILED: $COUNT satellite(s) OFFLINE/UNKNOWN:$UNALLOWED. Run '/linstor-storage-triage' for details, or set ALLOWED_OFFLINE=\"name1,name2\" if these are expected." >&2
+      exit 2
+    fi
+    # All offline nodes are in the allowlist — log the bypass loudly.
+    ACCEPTED=$(echo "$OFFLINE_NAMES" | tr '\n' ',' | sed 's/,$//')
+    echo "pre-drain-check: hook bypass — accepting OFFLINE satellites [$ACCEPTED] per ALLOWED_OFFLINE env" >&2
   fi
 fi
 exit 0
