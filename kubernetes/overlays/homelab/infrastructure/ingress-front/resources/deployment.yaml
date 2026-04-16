@@ -42,6 +42,13 @@ spec:
         - key: drbd.linbit.com/lost-quorum
           operator: Exists
           effect: NoSchedule
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101        # nginx UID in nginx:1.27-alpine
+        runAsGroup: 101
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
       initContainers:
         # Validate nginx config before the main container starts. Pod refuses
         # to start on syntax errors instead of crash-looping with a broken
@@ -49,10 +56,19 @@ spec:
         - name: nginx-validate
           image: nginx:1.27-alpine
           command: ["nginx", "-t", "-c", "/etc/nginx/nginx.conf"]
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
           volumeMounts:
             - name: config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
           resources:
             requests: { cpu: 5m, memory: 16Mi }
             limits: { cpu: 100m, memory: 32Mi }
@@ -73,7 +89,14 @@ spec:
           image: busybox:1.36
           command: ["sh", "-c", "udhcpc -s /bin/true -n -q -f -i net1 || echo 'dhcp probe failed on net1, continuing'"]
           securityContext:
+            readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              # NET_RAW required by udhcpc for DHCP DISCOVER/REQUEST packets.
+              # Explicit add stays compatible with PSA baseline runtime
+              # default once we drop ALL.
+              add: [NET_RAW]
           resources:
             requests: { cpu: 5m, memory: 8Mi }
             limits: { cpu: 50m, memory: 16Mi }
@@ -81,17 +104,34 @@ spec:
           image: busybox:1.36
           command: ["sh", "-c", "udhcpc -s /bin/true -n -q -f -i net2 || echo 'dhcp probe failed on net2, continuing'"]
           securityContext:
+            readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [NET_RAW]
           resources:
             requests: { cpu: 5m, memory: 8Mi }
             limits: { cpu: 50m, memory: 16Mi }
       containers:
         - name: nginx
           image: nginx:1.27-alpine
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              # NET_BIND_SERVICE lets nginx bind <1024 ports on macvlan VIPs
+              # without the runtime default net.ipv4.ip_unprivileged_port_start
+              # setting.
+              add: [NET_BIND_SERVICE]
           volumeMounts:
             - name: config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: nginx-run
+              mountPath: /var/run
           # No containerPorts / readinessProbe: nginx binds only on the macvlan
           # VIPs (net1/net2), not on the pod-network eth0 IP. A tcpSocket probe
           # would target eth0 and fail. The init container `nginx-validate`
@@ -108,3 +148,10 @@ spec:
         - name: config
           configMap:
             name: ingress-front-config
+        # Writable emptyDirs required because readOnlyRootFilesystem: true
+        # is set on both nginx containers; nginx writes proxy/client/fastcgi
+        # temp files to /var/cache/nginx and its pid file to /var/run.
+        - name: nginx-cache
+          emptyDir: {}
+        - name: nginx-run
+          emptyDir: {}
