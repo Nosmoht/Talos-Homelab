@@ -68,6 +68,7 @@ config:
       name: Alertmanager
       redirectURIs:
         - https://alertmanager.homelab.local/oauth2/callback
+        - https://alertmanager.lan.homelab.ntbc.io/oauth2/callback
       secretEnv: ALERTMANAGER_OIDC_CLIENT_SECRET
   staticPasswords:
     - email: nosmoht
