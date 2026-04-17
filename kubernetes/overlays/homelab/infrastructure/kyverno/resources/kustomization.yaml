@@ -6,3 +6,4 @@ resources:
   - cnp-kyverno-background-controller.yaml
   - cnp-kyverno-cleanup-controller.yaml
   - cnp-kyverno-reports-controller.yaml
+  - clusterpolicy-pi-reserved-daemonset-toleration.yaml
