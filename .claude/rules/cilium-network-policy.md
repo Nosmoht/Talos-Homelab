@@ -38,7 +38,7 @@ Before adding egress rules to a CNP, check whether an existing PNI CCNP already 
 ## WireGuard
 - **Strict mode `cidr: ""`** causes fatal crash: `Cannot parse CIDR from --encryption-strict-egress-cidr option: no '/'`. Always set explicit PodCIDR (`10.244.0.0/16`) or omit; Helm renders empty string by default so set it explicitly
 - **`allowRemoteNodeIdentities: true` required for hostNetwork pods** — `linstor-csi-node` and other hostNetwork pods use `reserved:remote-node` identity for cross-node traffic; `false` breaks DRBD replication and CSI volume mounts
-- **WireGuard does NOT encrypt macvlan traffic** — traffic entering via physical NIC (ingress-front → nginx → remote worker) is outside Cilium's datapath; only pod-to-pod traffic via eth0/cilium_wg0 is encrypted
+- **WireGuard does NOT encrypt macvlan or hostNetwork traffic** — traffic entering via a physical NIC is outside Cilium's datapath; only pod-to-pod traffic via eth0/cilium_wg0 is encrypted. Applies to both ingress paths: WAN (`node-pi-01` hostNetwork nginx → gateway nodes, since 2026-04-17) and LAN (`ingress-front` macvlan → nginx → remote worker)
 - **Two-pass deployment**: enable with `strictMode.enabled: false` first, verify all 7 tunnels per node, then enable strict mode — rolling restart with strict ON causes traffic blackhole between restarted and not-yet-restarted nodes
 
 ## Hubble

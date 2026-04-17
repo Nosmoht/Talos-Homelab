@@ -129,7 +129,10 @@ Before starting web research, check for prior experience and external intelligen
    - NEVER use metal-installer-secureboot — causes boot loops; always metal-installer.
    - NEVER set debugfs=off — causes "failed to create root filesystem" boot loop.
    - Cluster uses Cilium WireGuard strict mode, hostNetwork Envoy (Gateway API),
-     macvlan ingress-front, DRBD/LINSTOR storage (DRBD 9 kernel module extension).
+     macvlan ingress-front (LAN only), DRBD/LINSTOR storage (DRBD 9 kernel module extension).
+   - node-pi-01 (Raspberry Pi 4B, arm64) is the **sole WAN entrypoint** since 2026-04-17:
+     hostNetwork nginx stream pod, FritzBox port-forwards TCP/443 directly to the Pi's
+     NIC. Any node-pi-01 reboot or Talos upgrade is a WAN outage event — flag it.
    - GPU node (node-gpu-01) uses r8152 USB NIC and nvidia-container-toolkit extension.
    - Pi nodes require separate schematic (no GPU/DRBD extensions).
    - Talos extensions in use: drbd, nvidia-container-toolkit. Flag any extension API or

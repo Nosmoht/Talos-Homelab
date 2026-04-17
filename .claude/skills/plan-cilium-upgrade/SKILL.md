@@ -149,8 +149,11 @@ Before starting web research, check for prior experience and external intelligen
    - Kubernetes compatibility matrix: https://docs.cilium.io/en/stable/network/kubernetes/compatibility/
 
    Cluster topology: Cilium WireGuard strict mode, hostNetwork Envoy (Gateway API),
-   macvlan ingress-front on physical interface, DRBD/LINSTOR storage (ports 7000-7999),
-   NVIDIA GPU node (r8152 USB NIC). Flag any upstream change that interacts with these.
+   macvlan ingress-front on physical interface (LAN only), DRBD/LINSTOR storage (ports 7000-7999),
+   NVIDIA GPU node (r8152 USB NIC). node-pi-01 (arm64) is the sole WAN entrypoint since
+   2026-04-17 (hostNetwork nginx stream; FritzBox port-forward direct to Pi NIC) — any
+   Cilium agent restart or hostNetwork Envoy reload on Pi is a WAN event. Flag any upstream
+   change that interacts with these.
 
    Return max 2000 tokens: Sources, Findings, Confidence.
    ```

@@ -27,7 +27,8 @@ paths:
 - **hostNetwork mode**: `gatewayAPI.hostNetwork.enabled: true` — embedded Envoy binds on `0.0.0.0:80/443` via host network on labeled worker nodes (`node-role.kubernetes.io/gateway`)
 - **Required capabilities**: `NET_BIND_SERVICE` in ciliumAgent + `envoy.securityContext.capabilities.keepCapNetBindService: true` — without both, privileged port binding silently fails
 - **Known bug** [cilium/cilium#42786]: Gateway shows `Programmed: False` with hostNetwork (ClusterIP Service gets no addresses); traffic routing still works despite the status
-- **External ingress path**: ingress-front macvlan → nginx upstream via net1 to remote worker nodes → arrives as external LAN traffic (no eBPF identity marking) → embedded Envoy → HTTPRoutes
+- **WAN ingress path** (since 2026-04-17): FritzBox TCP/443 → `node-pi-01` (hostNetwork nginx stream, SNI allowlist `*.homelab.ntbc.io`) → LAN to gateway nodes (`node-04/05/06`) → hostNetwork Envoy → HTTPRoutes. No macvlan in the WAN path — macvlan+FritzBox port-forward is structurally unsupported on FRITZ!OS ≥ 8.25 (see `docs/adr-pi-sole-public-ingress.md`).
+- **LAN ingress path**: `ingress-front` macvlan (stable-MAC LAN VIP) → nginx L4 stream upstream via `net1` to a remote gateway worker node → arrives as external LAN traffic (no eBPF identity marking) → embedded Envoy → HTTPRoutes. macvlan bridge-isolation prevents the pod from reaching its own node's LAN IP; nginx upstream failover routes around it.
 - **Internal traffic**: pod → Gateway ClusterIP → eBPF TPROXY → embedded Envoy (identity-marked; works for pods without restrictive CNPs)
 
 ## Routing Pattern
