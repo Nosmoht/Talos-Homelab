@@ -1,0 +1,24 @@
+machine:
+  sysctls:
+    # Per-interface reverse-path filter (RFC 3704 loose mode) on the Pi's
+    # WAN-facing NIC. Global conf.all.rp_filter=0 and conf.default=0 stay
+    # in common.yaml because Cilium's lxc*/cilium_*/vxlan_sys_* interfaces
+    # require them off (BPF datapath source-validates, the kernel
+    # rp_filter would false-positive-drop pod-to-pod traffic as martian).
+    # The physical NIC (end0) doesn't carry pod traffic, so we override
+    # to mode 2 (loose) — drops inbound packets whose source IP is not
+    # reachable via any route on any interface. Mode 1 (strict, drops if
+    # source isn't reachable via the same iface) is overly tight for
+    # hostNetwork pods that may send via cilium_wg0 or cilium_vxlan.
+    net.ipv4.conf.end0.rp_filter: "2"
+    # Lower the host-net-namespace privileged-port barrier to 443 so the
+    # nginx master can bind :443 as uid 101 without any added capability
+    # (NET_BIND_SERVICE capability-add does not propagate to non-root
+    # processes on Alpine without file caps on /usr/sbin/nginx, and
+    # ambient-cap support is unreliable). This sysctl is scoped to the
+    # host net namespace — non-hostNetwork pods on the Pi keep the kernel
+    # default of 1024 in their own netns. Risk: any future hostNetwork
+    # pod on the Pi can bind 443-1023 as non-root — mitigated by the
+    # homelab.io/pi-reserved=true:NoSchedule taint + Kyverno policy that
+    # only permits known-good DaemonSets to schedule here.
+    net.ipv4.ip_unprivileged_port_start: "443"
