@@ -28,6 +28,7 @@ spec:
     - name: https
       protocol: HTTPS
       port: 443
+      hostname: "*.homelab.local"
       tls:
         mode: Terminate
         certificateRefs:
