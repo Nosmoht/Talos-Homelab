@@ -22,3 +22,55 @@ machine:
     # homelab.io/pi-reserved=true:NoSchedule taint + Kyverno policy that
     # only permits known-good DaemonSets to schedule here.
     net.ipv4.ip_unprivileged_port_start: "443"
+---
+# Enable default-deny ingress on this node. Once the firewall is active,
+# any TCP/UDP inbound not matched by a NetworkRuleConfig below is dropped
+# at the kernel nftables layer. ICMP is always allowed (Talos firewall
+# only filters TCP/UDP). Egress is not filtered by this API.
+apiVersion: v1alpha1
+kind: NetworkDefaultActionConfig
+ingress: block
+---
+# WAN-only lock: the single intentional WAN entrypoint. TCP/443 from
+# anywhere (IPv4 world via FritzBox port-forward; IPv6 ::/0 reserved for
+# future — Pi currently holds ULA only, but the rule costs nothing and
+# closes the hole in case an IPv6 GUA ever appears from the ISP).
+apiVersion: v1alpha1
+kind: NetworkRuleConfig
+name: wan-https
+portSelector:
+  ports:
+    - 443
+  protocol: tcp
+ingress:
+  - subnet: 0.0.0.0/0
+  - subnet: ::/0
+---
+# LAN full TCP access. Allows every LAN client to reach any TCP port
+# the Pi listens on (kubelet 10250, apid 50000, cilium-health 4240,
+# node-exporter 9100, tetragon 2112, Cilium-Envoy random ports, etc.).
+# Chosen over strict per-port allowlist because: (1) Cilium-Envoy binds
+# random ports that change across agent restarts / version bumps, (2)
+# any missed port would lock the node out of cluster ops, (3) the home
+# LAN is a trusted zone — the WAN isolation is the actual security goal.
+apiVersion: v1alpha1
+kind: NetworkRuleConfig
+name: lan-tcp-all
+portSelector:
+  ports:
+    - 1-65535
+  protocol: tcp
+ingress:
+  - subnet: 192.168.2.0/24
+---
+# LAN full UDP access. Covers VXLAN (8472), WireGuard (51871), DNS (53),
+# and any future Cilium/Envoy UDP listener. Same rationale as TCP above.
+apiVersion: v1alpha1
+kind: NetworkRuleConfig
+name: lan-udp-all
+portSelector:
+  ports:
+    - 1-65535
+  protocol: udp
+ingress:
+  - subnet: 192.168.2.0/24
