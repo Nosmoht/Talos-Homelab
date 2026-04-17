@@ -6,7 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/name: pi-public-ingress
     app.kubernetes.io/instance: homelab
-    app.kubernetes.io/version: "1.27"
+    app.kubernetes.io/version: "1.29"
     app.kubernetes.io/component: l4-proxy
     app.kubernetes.io/part-of: homelab
     app.kubernetes.io/managed-by: argocd
@@ -24,7 +24,7 @@ spec:
       labels:
         app.kubernetes.io/name: pi-public-ingress
         app.kubernetes.io/instance: homelab
-        app.kubernetes.io/version: "1.27"
+        app.kubernetes.io/version: "1.29"
         app.kubernetes.io/component: l4-proxy
         app.kubernetes.io/part-of: homelab
     spec:
@@ -41,17 +41,28 @@ spec:
           effect: NoSchedule
       terminationGracePeriodSeconds: 10
       securityContext:
-        # nginx:1.27-alpine master runs as root to bind :443 then forks
+        # nginx:1.29-alpine master runs as root to bind :443 then forks
         # workers that drop to the nginx (uid 101) user. Forcing
         # runAsNonRoot here makes the master start as uid 101, which
         # then fails to bind :443 because NET_BIND_SERVICE does not
         # propagate to non-root processes on Alpine without file caps.
         # The namespace is PSA=privileged which permits root.
+        # H1 (non-root nginx via net.ipv4.ip_unprivileged_port_start=443
+        # sysctl) will follow in a later commit once the Talos sysctl is
+        # live on the Pi.
         seccompProfile:
           type: RuntimeDefault
       containers:
         - name: nginx
-          image: nginx:1.27-alpine
+          # Image digest-pinned to the nginx:1.29.8-alpine manifest-list
+          # (retrieved via Docker Hub API — multi-arch, includes linux/arm64/v8
+          # sub-digest sha256:7dd09a6c…0be8). 1.29.8 addresses three open
+          # stream-module CVEs absent from the prior 1.27-alpine floating tag:
+          # CVE-2025-23419 (SSL session reuse, fix 1.27.4+),
+          # CVE-2026-28755 (OCSP stream bypass, fix 1.29.7+),
+          # CVE-2026-1642 (SSL upstream race, fix 1.29.5+).
+          # Pinning by digest prevents supply-chain tag-repush risk.
+          image: nginx:1.29.8-alpine@sha256:8aa63af009a39ecd6c28d61da578a5447378c10bb097a069e3a3e0fb42bb6b19
           securityContext:
             readOnlyRootFilesystem: true
             # master runs as root to bind :443, forks workers as nginx user.
