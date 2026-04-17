@@ -41,10 +41,12 @@ spec:
           effect: NoSchedule
       terminationGracePeriodSeconds: 10
       securityContext:
-        runAsNonRoot: true
-        runAsUser: 101        # nginx UID in nginx:1.27-alpine
-        runAsGroup: 101
-        fsGroup: 101
+        # nginx:1.27-alpine master runs as root to bind :443 then forks
+        # workers that drop to the nginx (uid 101) user. Forcing
+        # runAsNonRoot here makes the master start as uid 101, which
+        # then fails to bind :443 because NET_BIND_SERVICE does not
+        # propagate to non-root processes on Alpine without file caps.
+        # The namespace is PSA=privileged which permits root.
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -52,12 +54,11 @@ spec:
           image: nginx:1.27-alpine
           securityContext:
             readOnlyRootFilesystem: true
+            # master runs as root to bind :443, forks workers as nginx user.
             allowPrivilegeEscalation: false
             capabilities:
               drop: [ALL]
-              # NET_BIND_SERVICE lets the non-root nginx bind <1024 without
-              # relying on net.ipv4.ip_unprivileged_port_start tuning.
-              add: [NET_BIND_SERVICE]
+              add: [NET_BIND_SERVICE, CHOWN, SETUID, SETGID, DAC_OVERRIDE]
           ports:
             - name: https
               containerPort: 443
