@@ -1,8 +1,27 @@
 # ADR: Ingress Front — Stable MAC Address for FritzBox Port Forwarding
 
-- **Status:** Accepted
+- **Status:** Superseded by [docs/adr-pi-sole-public-ingress.md](adr-pi-sole-public-ingress.md) on 2026-04-17
 - **Date:** 2026-03-28
 - **Deciders:** Thomas
+
+> **Superseded 2026-04-17.** The macvlan-on-pod approach documented below was
+> proven **structurally unsupported as a WAN port-forward target** under
+> FRITZ!OS ≥ 8.25 during the 2026-04-15 exhaustion investigation
+> ([docs/2026-04-15-fritzbox-macvlan-port-forward-exhaustion.md](2026-04-15-fritzbox-macvlan-port-forward-exhaustion.md)).
+> Even with a stable MAC, correct DHCP registration, and clean host-table state,
+> inbound TCP/443 SYNs never reach a macvlan-pod VIP through the FritzBox NAT
+> path — community consensus *"MACVLAN und FritzBox: Besser NICHT machen!"*
+> was empirically confirmed.
+>
+> The current WAN architecture uses `node-pi-01` as a dedicated hostNetwork
+> public-ingress node; the FritzBox port-forwards directly to the Pi's regular
+> DHCP-reserved NIC, bypassing macvlan entirely. See the superseding ADR for
+> details.
+>
+> **The `ingress-front` macvlan pod itself remains deployed** and still serves
+> the LAN ingress VIP (`*.homelab.local` and `*.lan.homelab.ntbc.io` from
+> trusted LAN clients). The stable-MAC reasoning, routing constraints, and
+> node-portability properties below continue to apply to that LAN-only role.
 
 ## Context
 

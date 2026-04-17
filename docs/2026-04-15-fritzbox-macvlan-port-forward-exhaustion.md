@@ -239,3 +239,51 @@ Additionally, the current `ingress-front` pod can either:
 5. **Multus does not hot-reload NetworkAttachmentDefinitions.** Every NAD change requires a pod-template annotation bump (e.g., `kubectl.kubernetes.io/restartedAt`) to trigger rollout; committing only the NAD leaves existing pods on the old config indefinitely.
 6. **Four iterations of macvlan ARP/MAC patching prior to this session were negative-ROI.** The root cause was never in the macvlan layer. Earlier escalation to a structural plan would have saved iterations.
 7. **Scale-to-0 is the right quiescence primitive** for LAN state cleanup when a running pod is faster at re-announcing than the operator is at UI deletion. Commit-driven scaling through git preserves GitOps discipline.
+
+---
+
+## Epilogue — Chosen Structural Fix (2026-04-17)
+
+**Decision:** `node-pi-01` (Raspberry Pi 4B, arm64) as sole public-ingress
+entrypoint. FritzBox port-forward retargeted from the old macvlan VIP to the
+Pi's regular DHCP-reserved NIC IP. No macvlan in the WAN path.
+
+This is a hybrid of the "Used Lenovo M920q / N100 mini-PC as standalone edge"
+and "Port-forward to one gateway node" options from the §Structural Fix Options
+table — the Pi is inside the cluster (so GitOps ops stay uniform) but runs a
+dedicated hostNetwork nginx stream pod that is structurally equivalent to a
+standalone edge: no macvlan, no shared workload noise, taint-isolated to a
+minimal 8-pod set. Diagnostic on 2026-04-15 had empirically confirmed the
+hostNetwork-on-cluster-node path works end-to-end through the FritzBox.
+
+**Date live:** 2026-04-17. FritzBox port-forward active immediately after the
+5-commit security hardening plan landed (digest pin, non-root nginx, Talos
+NetworkRuleConfig default-deny, per-NIC `rp_filter=2`, per-netns
+`ip_unprivileged_port_start=443`).
+
+**Verification (WAN-side, non-LAN vantage):**
+
+| Port | Expected | Actual |
+|---|---|---|
+| TCP/443 | open | ✓ open |
+| TCP/6443 | closed (Kubernetes API must not be WAN-reachable) | ✓ closed |
+| TCP/50000 | closed (Talos apid must not be WAN-reachable) | ✓ closed |
+
+**State of the `ingress-front` macvlan pod:** Retained for the **LAN path only**.
+Serves `*.homelab.local` and `*.lan.homelab.ntbc.io` from trusted LAN clients
+via the internal VIP. The public-VIP (`net2`) allow-map in `nginx.conf` and the
+`net2` NetworkAttachmentDefinition can be retired in a follow-up change; they
+are dormant but harmless today.
+
+**References:**
+
+- [docs/adr-pi-sole-public-ingress.md](adr-pi-sole-public-ingress.md) — ADR
+  documenting the decision, alternatives, and consequences in full
+- [docs/adr-ingress-front-stable-mac.md](adr-ingress-front-stable-mac.md) —
+  the superseded macvlan-WAN ADR (remains valid for the LAN role)
+- GitHub commits (all on `main`, 2026-04-17):
+  - Gateway listener hostname filter on `https` (structural catch-all closure)
+  - nginx image digest pin + version label
+  - Talos `pi-firewall.yaml` (sysctls + NetworkRuleConfig documents)
+  - pi-public-ingress non-root securityContext + nginx.conf tuning
+  - Talos NetworkRuleConfig default-deny ingress + WAN-only lock

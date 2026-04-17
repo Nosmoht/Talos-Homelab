@@ -7,6 +7,22 @@
 
 ---
 
+> **Update 2026-04-17.** The **WAN path described in this postmortem is
+> superseded**. Since 2026-04-17, WAN ingress arrives at `node-pi-01`
+> (hostNetwork nginx stream), not through the `ingress-front` macvlan pod —
+> see [docs/adr-pi-sole-public-ingress.md](adr-pi-sole-public-ingress.md) and
+> [docs/2026-04-15-fritzbox-macvlan-port-forward-exhaustion.md](2026-04-15-fritzbox-macvlan-port-forward-exhaustion.md).
+> The **internal reasoning remains valid**: the `cilium.l7policy` filter
+> behaviour, embedded Envoy architecture, `NET_BIND_SERVICE` requirement,
+> extraManifests-no-GC, and macvlan bridge-isolation findings are all still
+> correct and still apply to the LAN path (ingress-front macvlan → gateway
+> nodes) and to anyone reading this for Cilium Gateway API internals. Only
+> the specific "Final Architecture" diagram below and the FritzBox port-forward
+> target are now historical — inline markers below call out the specific
+> paragraphs.
+
+---
+
 ## The Problem
 
 After introducing an `ingress-front` nginx L4 proxy with Multus macvlan (stable MAC for router port forwarding), all external traffic through the Cilium Gateway API returned **HTTP 403 "Access denied"**. Every single service — ArgoCD, Grafana, Prometheus, Alertmanager, Vault, Dex — was unreachable from outside the cluster.
@@ -192,6 +208,15 @@ All three worker node LAN IPs are in the upstream. The local node's IP fails sil
 
 ## Final Architecture
 
+> **[SUPERSEDED 2026-04-17 — see [docs/adr-pi-sole-public-ingress.md](adr-pi-sole-public-ingress.md).]**
+> The WAN path below no longer applies. Since 2026-04-17 the FritzBox
+> port-forwards TCP/443 directly to `node-pi-01` (hostNetwork nginx stream),
+> which L4-proxies to the gateway nodes. The inner reasoning (external LAN
+> traffic bypasses the `cilium.l7policy` filter) still explains why the
+> gateway-node-hostNetwork-Envoy step works regardless of upstream ingress
+> choice. For the LAN ingress path (internal clients → `ingress-front`
+> macvlan → gateway nodes) the diagram below is still accurate.
+
 ```
 Internet
   -> Router (port forward 443 -> MAC 02:42:c0:a8:02:46 / IP 192.168.2.70)
@@ -318,6 +343,13 @@ Researched extensively. kube-vip does **NOT** implement VRRP and does **NOT** pr
 - Worker nodes node-04, node-05, node-06 labeled `node-role.kubernetes.io/gateway`
 
 ### ingress-front Configuration
+
+> **[SUPERSEDED 2026-04-17 for the WAN role.]** `ingress-front` now serves the
+> **LAN path only** (`*.homelab.local`, `*.lan.homelab.ntbc.io` for trusted
+> LAN clients). WAN ingress has moved to `pi-public-ingress` on `node-pi-01`
+> (hostNetwork nginx, not macvlan). The properties below still describe the
+> LAN-side ingress-front pod correctly.
+
 - nginx L4 stream proxy with static upstream (all 3 worker IPs)
 - Traffic flows via macvlan (net1) to remote worker nodes
 - Macvlan same-host isolation handled by nginx upstream failover
@@ -328,7 +360,7 @@ Researched extensively. kube-vip does **NOT** implement VRRP and does **NOT** pr
 - ArgoCD, Grafana, Prometheus, Alertmanager, Vault, Dex — all accessible via `192.168.2.70`
 - Home Assistant macvlan (192.168.2.71, 192.168.2.72) unaffected
 - Internal pod-to-pod traffic unaffected
-- FritzBox port forwarding unchanged (same MAC/IP)
+- FritzBox port forwarding unchanged (same MAC/IP) — **[SUPERSEDED 2026-04-17: FritzBox now port-forwards to node-pi-01, not to the ingress-front macvlan VIP]**
 
 ---
 

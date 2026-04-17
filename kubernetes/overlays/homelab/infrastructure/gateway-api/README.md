@@ -15,14 +15,20 @@ A single Envoy serves all three listeners. SNI dispatch on `external-https` is
 hostname-bound to `*.homelab.ntbc.io`; the listener attaches only HTTPRoutes from
 namespaces that carry the `consume.external-gateway-routes` opt-in label.
 
-## Public exposure path
+## Public (WAN) exposure path
+
+Since 2026-04-17 WAN traffic enters via `node-pi-01` (hostNetwork nginx stream),
+not via the `ingress-front` macvlan pod. The macvlan-on-pod WAN path was
+declared structurally unsupported under FRITZ!OS ≥ 8.25 on 2026-04-15 — see
+[docs/adr-pi-sole-public-ingress.md](../../../../../docs/adr-pi-sole-public-ingress.md)
+and [docs/2026-04-15-fritzbox-macvlan-port-forward-exhaustion.md](../../../../../docs/2026-04-15-fritzbox-macvlan-port-forward-exhaustion.md).
 
 ```
 Internet (TCP 443 only)
-  -> Router public IP (port-forward)
-  -> ingress-front macvlan VIP (LAN)
-  -> nginx stream proxy
-  -> gateway nodes (hostNetwork Envoy)
+  -> FritzBox public IP (port-forward TCP/443 → node-pi-01 NIC)
+  -> node-pi-01 hostNetwork nginx stream pod
+     (SNI allowlist = *.homelab.ntbc.io; L4 proxy)
+  -> gateway worker nodes (hostNetwork Envoy on node-04/05/06)
   -> external-https listener (SNI = *.homelab.ntbc.io)
   -> HTTPRoutes from labelled namespaces
 ```
@@ -30,6 +36,28 @@ Internet (TCP 443 only)
 Port `80` is intentionally NOT forwarded from the WAN. Let's Encrypt issuance uses
 DNS-01 (CloudDNS), not HTTP-01, so port 80 is unnecessary. Public clients must use
 HTTPS only.
+
+## LAN (internal) ingress path
+
+Internal LAN clients reach services via the `ingress-front` macvlan pod bound
+to a stable MAC + LAN VIP — see
+[docs/adr-ingress-front-stable-mac.md](../../../../../docs/adr-ingress-front-stable-mac.md)
+(superseded for WAN, retained for LAN).
+
+```
+LAN client (TCP 443)
+  -> ingress-front macvlan VIP (LAN) — stable MAC for router static-bind quality
+  -> nginx L4 stream proxy (SNI dispatch)
+  -> gateway worker nodes (hostNetwork Envoy) via macvlan to remote node
+  -> https or external-https listener (depending on SNI)
+  -> HTTPRoutes from labelled namespaces
+```
+
+Traffic flowing via the macvlan path arrives at the gateway worker nodes as
+**external LAN traffic** (no eBPF identity marking), which is why the
+`cilium.l7policy` filter does not deny it — see
+[docs/postmortem-gateway-403-hairpin.md](../../../../../docs/postmortem-gateway-403-hairpin.md)
+for the internal reasoning.
 
 ## Reviewer checklist for new external HTTPRoutes
 
