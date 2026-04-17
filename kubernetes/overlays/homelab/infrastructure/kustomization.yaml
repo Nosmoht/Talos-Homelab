@@ -36,3 +36,4 @@ resources:
   - kubevirt-cdi
   - tetragon
   - omada-controller
+  - pi-public-ingress
