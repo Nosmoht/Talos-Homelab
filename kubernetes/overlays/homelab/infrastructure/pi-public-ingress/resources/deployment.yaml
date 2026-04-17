@@ -58,6 +58,9 @@ spec:
             allowPrivilegeEscalation: false
             capabilities:
               drop: [ALL]
+              # nginx -t in hostNetwork mode validates the stream listener
+              # by creating a test bind — needs NET_BIND_SERVICE to probe :443.
+              add: [NET_BIND_SERVICE]
           volumeMounts:
             - name: config
               mountPath: /etc/nginx/nginx.conf
