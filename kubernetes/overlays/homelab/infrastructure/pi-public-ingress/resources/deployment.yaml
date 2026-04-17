@@ -41,15 +41,16 @@ spec:
           effect: NoSchedule
       terminationGracePeriodSeconds: 10
       securityContext:
-        # nginx:1.29-alpine master runs as root to bind :443 then forks
-        # workers that drop to the nginx (uid 101) user. Forcing
-        # runAsNonRoot here makes the master start as uid 101, which
-        # then fails to bind :443 because NET_BIND_SERVICE does not
-        # propagate to non-root processes on Alpine without file caps.
-        # The namespace is PSA=privileged which permits root.
-        # H1 (non-root nginx via net.ipv4.ip_unprivileged_port_start=443
-        # sysctl) will follow in a later commit once the Talos sysctl is
-        # live on the Pi.
+        # H1: nginx master + workers all run as uid 101 (nginx). Binding
+        # :443 as non-root works because the Pi-local Talos sysctl
+        # net.ipv4.ip_unprivileged_port_start=443 (see talos/patches/
+        # pi-firewall.yaml) lowers the host netns privileged-port barrier
+        # to 443. Capabilities.add is empty — drop:[ALL] is the effective
+        # Linux-cap posture.
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -65,11 +66,9 @@ spec:
           image: nginx:1.29.8-alpine@sha256:8aa63af009a39ecd6c28d61da578a5447378c10bb097a069e3a3e0fb42bb6b19
           securityContext:
             readOnlyRootFilesystem: true
-            # master runs as root to bind :443, forks workers as nginx user.
             allowPrivilegeEscalation: false
             capabilities:
               drop: [ALL]
-              add: [NET_BIND_SERVICE, CHOWN, SETUID, SETGID, DAC_OVERRIDE]
           ports:
             - name: https
               containerPort: 443
