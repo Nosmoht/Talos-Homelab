@@ -10,6 +10,7 @@ paths:
 ## Patch Files
 - `talos/patches/common.yaml` — shared: CNI none, proxy disabled, kubePrism, DRBD modules, kubelet args, NTP, search domain
 - `talos/patches/controlplane.yaml` — CP settings, extraManifests (cert-approver, metrics-server, Cilium URL)
+  - **extraManifests are URL-cached**: when changing the *content* served at an existing extraManifest URL (e.g., editing the rendered `kubernetes/bootstrap/cilium/cilium.yaml`), bump the `?v=<n>` cache-bust query param on the URL here, regenerate configs, and re-apply to ALL CP nodes BEFORE `upgrade-k8s`. Without the bump, nodes serve the stale cached manifest and admission denials (Kyverno, etc.) reappear unchanged.
 - `talos/patches/worker-gpu.yaml` — NVIDIA kernel modules (`NVreg_UsePageAttributeTable=1`), no sysctls (Talos KSPP defaults)
 - `rp_filter` and `log_martians` must be `0` in `common.yaml` — Cilium BPF bypasses kernel FIB, causing false-positive martian drops
 
