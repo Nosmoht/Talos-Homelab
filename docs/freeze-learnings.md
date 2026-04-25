@@ -1,10 +1,16 @@
-# Freeze-Learnings — Talos-Homelab Primitives
+# Freeze-Learnings — Talos-Homelab Primitives (CLOSED 2026-04-26)
 
-Append-only backlog for primitive ideas and friction points observed during the `kube-agent-harness` freeze phase. Entries here are not acted on during freeze — they feed the switch-project backlog.
+> **Status: freeze lifted 2026-04-26.** This file is preserved as a historical log. New primitive work happens directly in `.claude/skills/`, `rules/`, `agents/` again. Backlog entries previously parked here are now actionable in this repo without carve-out gymnastics.
 
-## Context
+## Closing rationale
 
-Talos-Homelab `.claude/skills/**`, `rules/**`, `agents/**` are frozen until the harness is declared "done" (hard stop 2026-07-13). New primitive work happens in `github.com/devobagmbh/kube-agent-harness` during the freeze. See `Plans/swirling-strolling-alpaca.md` for the full freeze rule and carve-out.
+The user lifted the freeze on 2026-04-26: "Der Harness frozen wird hiermit aufgehoben. Aktuell ist der harness und das wissen in den skills und agents das was am meisten mehrwert bringt." Concentrating primitive authoring solely in the harness repo was no longer the right trade-off — the in-repo skills/agents/rules deliver more direct value at this stage of the platform's evolution. The hard-stop date 2026-07-13 was retired ahead of schedule.
+
+CI enforcement (`.github/workflows/freeze-guard.yml`) removed in the same commit as this banner. The `freeze-exception` GitHub label is no longer load-bearing and can be deleted at convenience.
+
+## Original context (preserved for the record)
+
+Talos-Homelab `.claude/skills/**`, `rules/**`, `agents/**` were frozen 2026-04-14 → 2026-04-26 during `kube-agent-harness` development. New primitive work was redirected to `github.com/devobagmbh/kube-agent-harness`. Carve-out for hooks + `validate-gitops` + `gitops-health-triage`. See `Plans/swirling-strolling-alpaca.md` for the original freeze rule and carve-out (gitignored).
 
 ## How to log an entry
 
