@@ -109,6 +109,8 @@ resources_list(apiVersion="cilium.io/v2", kind="CiliumNode")
 If `resources_list` for `CiliumNode` returns an empty list, record as **CRIT**: "No CiliumNode objects — Cilium may not be running."
 Any Cilium agent not Running: **CRIT**. Stale or mismatched CiliumNode IPs: **WARN**.
 
+**Interpreting `cilium-dbg status` Modules Health line**: the format is `Stopped(N) Degraded(M) OK(K)`. `Stopped(N)` lists *completed one-shot Hive jobs* (init, cleanup, restore, sync-crds, proxy-bootstrapper, etc.) reporting their final post-completion state — not failed modules. As of Cilium 1.19.2 the steady-state count is **24 STOPPED** on every node regardless of role. The actual failure signal is `Degraded(M) ≠ 0`, or a `Stopped(N)` count that diverges across nodes. Do not flag a uniform Stopped count as a defect.
+
 ### 4. LINSTOR/Storage layer (skip if --subsystem not storage/all)
 
 Run:
