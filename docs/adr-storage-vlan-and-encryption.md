@@ -40,15 +40,53 @@ DRBD `transport_tls` (kTLS, AES-NI software offload) is enabled as the **only** 
 protection layer for VLAN 110 replication payload. This is a deliberate, empirically validated
 decision — see §Layered-Defense below.
 
-Enabled via:
-- `LinstorSatelliteConfiguration.spec.internalTLS.tlsHandshakeDaemon: true` (Piraeus 2.3+
-  `tlshd` sidecar — Spike #2 confirmed field present at v2.10.4)
-- Certificates minted from the existing `linstor-internal-ca` namespaced Issuer in
-  `piraeus-datastore` — **not** a new ClusterIssuer
+Enabled via **two** control points (verified against Piraeus v2.10.4 + LINSTOR v1.33.1
+upstream sources, 2026-04-25):
 
-> **Note (PR #2a)**: `DrbdOptions/Net/tls` does NOT exist in LINSTOR v1.33.1 — the property
-> is not recognized at controller, node, or resource-definition level. DRBD TLS enablement
-> mechanism needs re-research before PR #2b. Tracked in follow-up GitHub issue.
+1. **`LinstorSatelliteConfiguration.spec.internalTLS.tlsHandshakeDaemon: true`** —
+   adds a privileged `ktls-utils` sidecar container into the `linstor-satellite`
+   DaemonSet pod, mounting the existing `internalTLS` cert at `/etc/tlshd.d`.
+   The sidecar runs `tlshd` userspace, which performs the TLS handshake on behalf
+   of the kernel TLS ULP that DRBD ≥ 9.2.6 opens.
+   Source: `pkg/resources/satellite/patches/tlshd.yaml` in piraeusdatastore/piraeus-operator @ v2.10.4.
+2. **`LinstorCluster.spec.properties[]: {name: DrbdOptions/Net/tls, value: "yes"}`** —
+   tells LINSTOR to render `net { tls yes; }` into the generated DRBD `.res` files,
+   so DRBD opens TLS-ULP sockets that the in-pod tlshd then handshakes for.
+   Source: piraeusdatastore/piraeus-operator @ v2.10.4 — `docs/how-to/drbd-tls.md`
+   "Configure TLS for DRBD" section.
+
+> **Important — API surface**: `DrbdOptions/Net/tls` MUST be set via the `LinstorCluster`
+> CR, not via `linstor controller set-property` / `linstor node set-property` on the CLI.
+> The operator's reconciler routes the property correctly; the LINSTOR CLI on v1.33.1
+> rejects it as `Not a valid key` at controller and node scope (this was the false
+> negative observed during PR #2a). Resource-definition scope may also accept it
+> directly via CLI, but the documented and operator-supported path is the CR.
+
+Certificates minted from the existing `linstor-internal-ca` namespaced Issuer in
+`piraeus-datastore` — **not** a new ClusterIssuer. The `tlshd` sidecar reuses the
+same Secret as the controller↔satellite gRPC/TLS path; no separate Secret naming
+convention or per-satellite cert is required.
+
+**Talos prerequisites** (no system extension needed — tlshd is a sidecar, not a host service):
+- Linux kernel ≥ 4.19 with `CONFIG_TLS=y` (Talos 1.x ships this in-tree; verify
+  on pinned version with `talos_read_file /proc/config.gz | gunzip | grep TLS`)
+- DRBD ≥ 9.2.6 in satellite image — verify with `head -1 /proc/drbd` inside satellite
+  pods before merging PR #2b
+- NICs in this cluster (Intel I219 on M910q/M920q, RTL r8152 on node-gpu-01) do **not**
+  support kernel TLS device offload — expect software TLS only (`TlsRxSw`/`TlsTxSw`
+  in `/proc/net/tls_stat`); minor CPU cost at 1 GbE line rate, acceptable
+
+**Rollout discipline** (DRBD does not support online TLS reconfiguration):
+1. Apply both control-point changes; satellite pods rolling-restart with the
+   sidecar attached. DRBD detaches/reattaches per node as the satellite pod
+   restarts — storage stays online elsewhere via replica redundancy.
+2. Per-node, sequential (never parallel across replicas of the same resource):
+   `kubectl exec` the satellite pod and run
+   `drbdadm suspend-io all && drbdadm disconnect --force all && drbdadm adjust all`
+   to flip live connections to TLS. Brief I/O suspension per node — order it
+   like a rolling drain, leverage existing `pre-drain-check.sh` hook.
+3. Verify TLS active: nonzero `TlsRxSw`/`TlsTxSw` in `/proc/net/tls_stat` AND
+   `ktls-utils` sidecar log line `Handshake with <peer> was successful`.
 
 Bandwidth cap: `DrbdOptions/Disk/c-max-rate: 60M` (~50% of 1 Gbps) reserves headroom for
 etcd heartbeats and Cilium WireGuard overhead.
