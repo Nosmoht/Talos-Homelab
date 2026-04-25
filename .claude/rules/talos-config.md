@@ -70,3 +70,30 @@ Install image resolution: `factory.talos.dev/metal-installer/<SCHEMATIC_ID>:<TAL
 - `.versions.stamp` tracks `TALOS_VERSION` + `KUBERNETES_VERSION` — triggers config regeneration
 - Changing `TALOS_VERSION` in Makefile is sufficient to update all install image URLs
 - Makefile ordering: `config-path` helper MUST be defined before any `$(eval)` template that references it
+- `talosctl upgrade-k8s` requires `-n <node-ip> -e <node-ip>` — `--endpoint` is a different flag (proxy endpoint, not node target)
+- `talosctl upgrade-k8s` does NOT reliably update existing ConfigMaps shipped via `extraManifests` (e.g. `cilium-config`). For Cilium specifically, see `.claude/rules/cilium-bootstrap.md` §`upgrade-k8s` Does Not Reliably Update Existing ConfigMaps for the SSA workaround.
+
+## Change Classes
+- Sysctl/config changes: `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`.
+- Boot args / extensions / image changes: `talosctl apply-config` then `talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve --wait --timeout 10m`.
+- Cluster-wide config refresh: regenerate first (`make -C talos gen-configs`).
+- Install image resolution: read `talos/.schematic-ids.mk` + `talos/versions.mk` to construct `factory.talos.dev/metal-installer/<SCHEMATIC_ID>:<TALOS_VERSION>`.
+
+## Safety Checklist
+1. Confirm node role and impact (control plane vs worker vs GPU worker).
+2. For reboot/upgrade, verify workload and DRBD placement before action.
+3. Validate generated config exists under `talos/generated/` before apply.
+4. Use dry-run where possible before apply.
+
+## Node Recovery
+- Etcd member removed: `talosctl reset --system-labels-to-wipe EPHEMERAL --reboot --graceful=false`.
+- Learner promotion is automatic (~1–2 min) after EPHEMERAL reset.
+- For DRBD-specific recovery (D-state deadlock, unmount lock), see `.claude/rules/linstor-storage-guardrails.md` §Known Failure Modes and the cross-linked `.claude/rules/k8s-csi.md` for the general CSI pattern.
+
+## API Behaviour
+- `talosctl apply-config` with unchanged config is a no-op.
+- `kubectl delete pod` on Talos static pods (control-plane components) only recreates the mirror pod — the real container keeps running. Use `talosctl service <name> restart` instead where supported.
+- `kube-apiserver` `$(POD_IP)` env var is frozen at container creation; survives kubelet restarts.
+- `talosctl service etcd restart` is NOT supported — etcd cannot be restarted via the Talos API; node reboot is the only path.
+- Maintenance mode (`--insecure`) only supports: `version`, `get disks`, `apply-config`.
+- `talosctl disks` is deprecated — use `get disks`, `get systemdisk`, or `get discoveredvolumes` instead.

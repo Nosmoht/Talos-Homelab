@@ -10,6 +10,10 @@ Node inventory (names, IPs, roles, NICs) is defined in `.claude/environment.yaml
 Read that file for the authoritative node-to-IP mapping.
 The Makefile (`talos/Makefile`) also contains `IP_<node>` variables that must stay consistent.
 
+## Node Endpoint Usage
+- Use explicit node endpoint flags for operational `talosctl` commands: `talosctl -n <node-ip> -e <node-ip> ...`. Do not rely on the API VIP for node-targeted operations — the VIP is suitable for cluster-level reads but several `talosctl` operations either fail through VIP forwarding or behave inconsistently when the cluster is degraded.
+- (For the specific case of `talos_apply_config dry_run=true` panicking on fresh interface additions, see `.claude/rules/talos-mcp-first.md` §Apply-Config Gotchas.)
+
 ## Node File Structure
 - Per-node: `talos/nodes/<name>.yaml` — hostname, static IP, install disk (by-path), VIP (CP nodes only)
 - **Always use `hardwareAddr: <mac>`** in deviceSelector — `physical: true` matches ALL NICs, breaks multi-NIC nodes

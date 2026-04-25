@@ -5,7 +5,9 @@ paths:
   - "docs/day2-operations.md"
 ---
 
-# Talos Operations & MCP-First Policy
+# Talos MCP-vs-CLI Tool Policy
+
+This file is scoped narrowly to **MCP-vs-CLI tool selection and parameter defaults for the Talos MCP server** — token-efficient operations guidance for the agent. For Talos config generation, lifecycle gotchas, node recovery, and Talos API behaviour, see the cross-references at the bottom of this file.
 
 ## Policy Statement
 
@@ -14,11 +16,6 @@ Use Talos MCP tools for all supported operations. Fall back to `talosctl` CLI on
 When a MCP tool fails: retry once, then fall back to CLI for the remainder of the session and log the fallback.
 
 **Skill CLI-only exceptions:** Skills may use `talosctl get machineconfig -o yaml > <file>` for config backup to file, `talosctl upgrade-k8s` (no MCP equivalent), and bulk `/proc`/`/sys` reads in `analyze-node-hardware`. Planning skills (`plan-*`) may use `talosctl apply-config --dry-run` for validation only (B2: planning skills must not have mutating MCP tools). All other Talos operations must use MCP tools.
-
-## Node Connectivity
-
-- Use explicit node endpoint for operational commands: `talosctl -n <node-ip> -e <node-ip> ...`.
-- Do not rely on VIP for operations known to fail via forwarding (dry-run/apply in degraded states).
 
 ## MCP Tool Mapping
 
@@ -77,55 +74,23 @@ These parameters must **always** be specified explicitly — never rely on defau
 - `talos_apply_config`: set `dry_run` explicitly (default is true, but always be explicit)
 - `talos_reset`: requires `confirm=true` and explicit `nodes` array
 
-## Change Classes
-
-- Sysctl/config changes: `talosctl apply-config -n <ip> -e <ip> -f talos/generated/<role>/<node>.yaml`.
-- Boot args/extensions/image changes: `talosctl apply-config` then `talosctl upgrade -n <ip> -e <ip> --image <install-image> --preserve --wait --timeout 10m`.
-- Cluster-wide config refresh: regenerate first (`make -C talos gen-configs`).
-- Install image resolution: read `talos/.schematic-ids.mk` + `talos/versions.mk` to construct `factory.talos.dev/metal-installer/<SCHEMATIC_ID>:<TALOS_VERSION>`.
-
-## Safety Checklist
-
-1. Confirm node role and impact (control plane vs worker vs GPU worker).
-2. For reboot/upgrade, verify workload and DRBD placement before action.
-3. Validate generated config exists under `talos/generated/` before apply.
-4. Use dry-run where possible before apply.
-
 ## Apply-Config Gotchas
 
 - **Patches that add new `interfaces:` entries: apply with `dry_run=false` directly.** Before applying, read the live `MachineConfig` via `talos_get type=MachineConfig`. If the target `interface:` name is absent from the live config, skip dry-run — `talos_apply_config dry_run=true` panics with `panic: runtime error: index out of range [N] with length N` when the patch introduces an interface entry that the diff engine has no existing object to diff against. The panic is a Talos diff-engine bug, not a config error; the real apply (`dry_run=false`) succeeds cleanly. If the target interface already exists in the live config, `dry_run=true` is safe and preferred.
-
-## Upgrade Gotchas
-
-- **Stale schematic IDs**: After editing `talos/talos-factory-schematic*.yaml`, re-run `make -C talos schematics` to update `.schematic-ids.mk`. `make -C talos validate-schematics` detects drift; `upgrade-*` Makefile targets run it automatically.
-- `talosctl upgrade-k8s` requires `-n <node-ip> -e <node-ip>` — `--endpoint` is a different flag (proxy endpoint, not node target)
-- **`hubble-generate-certs` Job blocks `upgrade-k8s`**: The Job has a hash-based name (`hubble-generate-certs-b36ef54b9b`); if it exists from a previous run, `upgrade-k8s` fails with immutable field error. Delete before running: `kubectl delete job -n kube-system -l k8s-app=hubble-generate-certs`
-- **`upgrade-k8s` does NOT reliably update existing ConfigMaps**: When adding keys to existing ones (e.g., `enable-wireguard` in `cilium-config`), `upgrade-k8s` shows "no changes" and skips them. Workaround: `yq` extract + `kubectl apply --server-side --force-conflicts --field-manager=talos -f -`, then restart the DaemonSet
-
-## Node Recovery
-
-- **Stuck D-state nodes (DRBD)**: Only fixable with physical power cycle — no API recovery
-- **Upgrade sequence lock on CSI unmount**: DRBD CSI volumes in D-state during `unmountPodMounts` deadlock the upgrade — `talosctl reboot`, `upgrade --force`, and `reset` all fail with "locked"; only physical power cycle recovers. Mitigate: `kubectl drain <node> --delete-emptydir-data --ignore-daemonsets --timeout=120s` before `talosctl upgrade` on DRBD nodes
-- Etcd member removed: `talosctl reset --system-labels-to-wipe EPHEMERAL --reboot --graceful=false`
-- Learner promotion is automatic (~1-2 min) after EPHEMERAL reset
-
-## API Behavior
-
-- `talosctl apply-config` with unchanged config is a no-op
-- `kubectl delete pod` on static pods only recreates the mirror pod — real container keeps running
-- kube-apiserver `$(POD_IP)` env var is frozen at container creation; survives kubelet restarts
-- `talosctl service etcd restart` is NOT supported — etcd can't be restarted via API
-- Maintenance mode `--insecure` only supports: `version`, `get disks`, `apply-config`
-- `talosctl disks` deprecated — use `get disks`, `get systemdisk`, `get discoveredvolumes`
+- **Do not target the API VIP for `dry_run` / `apply` operations on degraded clusters.** VIP forwarding is unreliable for these operations when the cluster is degraded. Use the explicit per-node endpoint pattern (`-n <node-ip> -e <node-ip>` for CLI fallback, or the `nodes` parameter for MCP tools). The endpoint syntax itself is documented in `.claude/rules/talos-nodes.md` §Node Endpoint Usage.
 
 ## Known Restrictions
 
-- `talos_service_action(service=etcd, action=restart)` — NOT supported via Talos API. Use `talosctl service etcd restart` is also unsupported; etcd restarts require node reboot.
+- `talos_service_action(service=etcd, action=restart)` — NOT supported via Talos API. `talosctl service etcd restart` is also unsupported; etcd restarts require node reboot.
 - `talos_reset` — excluded from autonomous agent `allowed-tools` due to irreversibility.
-- **`talos_apply_config dry_run=true` panics on fresh interface additions** — see §Apply-Config Gotchas above for the decision rule. Short form: read live `MachineConfig` first; if the target interface is absent, use `dry_run=false` directly.
 
-## Hard Rules
+## Cross-References
 
-- Never edit generated files under `talos/generated/` directly.
-- Never switch to `metal-installer-secureboot` on this hardware.
-- Never add `debugfs=off` to kernel args.
+This file is intentionally narrow. Related operational content lives in domain-specific rule files:
+
+- Talos config generation, patches, Makefile, change classes, safety checklist, node recovery, API behaviour → `.claude/rules/talos-config.md`
+- Talos node inventory, endpoint syntax, per-node patches → `.claude/rules/talos-nodes.md`
+- Talos Image Factory schematics, schematic ID drift → `.claude/rules/talos-image-factory.md`
+- DRBD D-state recovery, LINSTOR-specific node-recovery — `.claude/rules/linstor-storage-guardrails.md`
+- Cilium bootstrap via Talos `extraManifests` (Hubble cert-gen Job blocker, ConfigMap update gotcha) → `.claude/rules/cilium-bootstrap.md`
+- Cluster-wide hard constraints (no SecureBoot, no `debugfs=off`, etc.) → `AGENTS.md` §Hard Constraints (single source of truth)

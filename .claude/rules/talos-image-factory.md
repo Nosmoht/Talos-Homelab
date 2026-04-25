@@ -19,11 +19,13 @@ paths:
 - All standard nodes (node-01..06) share identical kernel tuning
 
 ## Hard Constraints
-- **Do NOT use `metal-installer-secureboot`** — causes boot loops on these nodes
-- **Do NOT use `debugfs=off`** boot param — Talos needs debugfs; causes "failed to create root filesystem" boot loop
+- For SecureBoot and `debugfs=off` constraints, see `AGENTS.md` §Hard Constraints (single source of truth — no duplication here).
 - gVisor is userspace runtime — no `machine.kernel.modules` entry needed (unlike DRBD or NVIDIA)
 
 ## Detection & Verification
 - UEFI/SecureBoot: check `/sys/firmware/efi/` exists + `dmesg | grep "Secure boot"`
 - Changing `TALOS_VERSION` in Makefile suffices to update all install image URLs — no `make schematics` needed
 - Factory API only called when schematic YAML files are modified
+
+## Schematic ID Drift
+After editing `talos/talos-factory-schematic*.yaml`, re-run `make -C talos schematics` to refresh `.schematic-ids.mk`. `make -C talos validate-schematics` detects drift between the YAML inputs and the cached IDs; `upgrade-*` Makefile targets run `validate-schematics` automatically as a prerequisite. If drift is detected mid-upgrade, the upgrade target aborts before any node is touched.
