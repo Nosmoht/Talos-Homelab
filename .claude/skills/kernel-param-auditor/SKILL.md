@@ -1,6 +1,6 @@
 ---
 name: kernel-param-auditor
-description: Audit kernel sysctl parameters across nodes via Talos MCP. Detect drift from per-role baselines (cp/worker/storage/gpu), classify CRITICAL/WARNING by parameter+role. Read-only — never auto-applies. Emits per-node JSON conforming to docs/primitive-contract.md.
+description: Audit kernel sysctl parameters across nodes via Talos MCP. Three-layer baseline (universal/Talos-KSPP/cluster-tuning) classifies drift CRITICAL (L1) / WARNING (L2,L3-non-advisory) / INFO (L3-advisory). Read-only — never auto-applies. Emits per-node JSON conforming to docs/primitive-contract.md.
 disable-model-invocation: true
 argument-hint: "[--node <name>] [--role <cp|worker|storage|gpu>] [--json] [--save-baseline]"
 allowed-tools:
@@ -14,7 +14,7 @@ model: inherit
 
 # Kernel Parameter Auditor
 
-Read sysctl values per node from `/proc/sys/<key>` via Talos MCP, classify drift against the per-role baseline table in `references/role-baselines.md`, emit JSON conforming to `docs/primitive-contract.md`.
+Read sysctl values per node from `/proc/sys/<key>` via Talos MCP, classify drift against the **three-layer** baseline (Universal / Talos-KSPP / Cluster-tuning) in `references/role-baselines.md`, emit JSON conforming to `docs/primitive-contract.md` with the primitive-specific `layer` extension.
 
 ## Environment Setup
 
@@ -55,11 +55,23 @@ SCHEMA_VERSION=$(yq e '.schema_version' "$CONTRACT_PATH" 2>/dev/null) \
 [ -z "$SCHEMA_VERSION" ] && SCHEMA_VERSION="unknown"
 ```
 
-### 2. Load baseline table
+### 2. Load three-layer baseline
 
-Read `references/role-baselines.md`. Parse the **Baseline Table** rows into a map keyed by parameter path (`<param> -> {cp, worker, storage, gpu, category}`). Parse the **Severity Table** rows into a map keyed by parameter path (`<param> -> {default_severity, critical_roles}`).
+Read `references/role-baselines.md`. The baselines live in three fenced YAML blocks delimited by `# layerN-baseline-yaml-start` / `# layerN-baseline-yaml-end` markers. Extract each layer's `sysctls` map deterministically:
 
-If the file is missing or no rows parse, emit `PRECONDITION_NOT_MET` with reason `"role-baselines.md not readable or empty"` and stop.
+```bash
+BL=.claude/skills/kernel-param-auditor/references/role-baselines.md
+for layer in 1 2 3; do
+  awk "/^# layer${layer}-baseline-yaml-start$/,/^# layer${layer}-baseline-yaml-end$/" "$BL" \
+    | sed '1d;$d' | yq e '.sysctls' - > "/tmp/kpa-layer${layer}.yaml"
+done
+```
+
+Build a single in-memory map keyed by sysctl path (e.g. `net.ipv4.ip_forward`) → `{layer: 1|2|3, expected: "<value>", advisory: <bool>}`. The same sysctl path MUST NOT appear in more than one layer (overlap is a baseline bug — fail-closed with `PRECONDITION_NOT_MET`, reason `"sysctl <path> appears in layers <X> and <Y>"`).
+
+Sysctl paths use **dot notation** in the YAML (e.g. `net.ipv4.ip_forward`); convert to `/proc/sys/` slash paths at read time (`net/ipv4/ip_forward`).
+
+If any layer block is missing or yields zero entries, emit `PRECONDITION_NOT_MET` with reason `"role-baselines.md layer-N block not readable or empty"` and stop.
 
 ### 3. Discover target nodes
 
@@ -93,29 +105,35 @@ If `--role` is given, override the detected role for ALL targeted nodes and appe
 
 ### 5. Read sysctl values per node
 
-For each (node IP, parameter) in the baseline table where the role's column is not empty:
+For each (node IP, parameter) in the merged three-layer baseline:
 
 ```
-talos_read_file(path="/proc/sys/<param>", nodes=["<node-ip>"])
+talos_read_file(path="/proc/sys/<param-slash-form>", nodes=["<node-ip>"])
 ```
+
+Convert the dot-form key (`net.ipv4.ip_forward`) to slash-form path (`/proc/sys/net/ipv4/ip_forward`) at read time.
 
 Parse the returned content:
 - Trim leading/trailing whitespace and trailing newline.
-- For tuple parameters (e.g. `tcp_rmem`, `tcp_wmem`), collapse internal whitespace to single spaces.
+- For tuple parameters (e.g. `tcp_rmem`, `tcp_wmem`, `ip_local_port_range`), collapse internal whitespace to single spaces (`sed 's/[[:space:]]\+/ /g'`). Talos `/proc/sys/` may emit tabs in tuples; the YAML baseline uses spaces.
 - Treat the result as a string (kernel exposes integers as text in `/proc/sys/`).
 
 If the read fails (path absent on this kernel build, MCP error): record `actual: null`, status `PRECONDITION_NOT_MET` for that parameter, continue with the next parameter.
 
 If ALL parameter reads fail for a node: mark that node `verdict: PRECONDITION_NOT_MET` in `results[]` and continue with other nodes.
 
+**Audit load** — each audit issues ~60 `talos_read_file` calls per node × N nodes (sequential). Do not run in tight loop or against multiple nodes in parallel without ≥1s spacing — `node-pi-01` (arm64, sole WAN ingress) is the only node where audit latency is non-negligible.
+
 ### 6. Classify drift per parameter
 
-For each (node, parameter) pair:
+For each (node, parameter) pair, look up the parameter's `{layer, expected, advisory}` in the merged baseline:
 
-- If `expected == "*"` → status `INFO` (probed for evidence; no verdict effect).
-- Else if `actual == expected` (after trim/whitespace-collapse) → status `OK`.
-- Else if the node's role is in the parameter's `critical_roles` list → status `CRITICAL`, append finding `"<param>: expected <expected>, actual <actual> (role=<role>, severity=CRITICAL)"`.
-- Else → status `WARNING`, append finding `"<param>: expected <expected>, actual <actual> (role=<role>, severity=WARNING)"`.
+- If `actual == expected` (after trim + whitespace-collapse) → status `OK`.
+- Else (drift detected), classify by layer:
+  - **Layer 1** → status `CRITICAL`, append finding `"<param>: expected <expected>, actual <actual> (layer=1 universal)"`.
+  - **Layer 2** → status `WARNING`, append finding `"<param>: expected <expected>, actual <actual> (layer=2 talos-kspp)"`.
+  - **Layer 3** with `advisory: false` (default) → status `WARNING`, append finding `"<param>: expected <expected>, actual <actual> (layer=3 cluster-tuning)"`.
+  - **Layer 3** with `advisory: true` → status `INFO`, append finding `"<param>: aspirational <expected>, actual <actual> (layer=3 advisory)"`.
 
 ### 7. Per-node verdict
 
@@ -123,7 +141,7 @@ Apply precedence `CRITICAL > WARNING > HEALTHY`. `OK` and `INFO` collapse to `HE
 
 ### 8. Emit JSON
 
-Build canonical output. Note the `role` field per result is a primitive-specific extension to the §B3 schema:
+Build canonical output. The `role` field per result and the `layer` field per metric are **primitive-specific extensions** to the §B3 schema (documented in `docs/primitive-contract.md` §B3 "Primitive-specific metric extensions"):
 
 ```json
 {
@@ -143,9 +161,11 @@ Build canonical output. Note the `role` field per result is a primitive-specific
       "verdict": "HEALTHY|WARNING|CRITICAL|PRECONDITION_NOT_MET",
       "metrics": {
         "<param>": {
-          "expected": "<value-or-*>",
+          "layer": "1|2|3",
+          "expected": "<value>",
           "actual": "<value-or-null>",
-          "status": "OK|WARNING|CRITICAL|INFO|PRECONDITION_NOT_MET"
+          "status": "OK|WARNING|CRITICAL|INFO|PRECONDITION_NOT_MET",
+          "advisory": false
         }
       },
       "findings": ["<string>", ...]
@@ -154,12 +174,19 @@ Build canonical output. Note the `role` field per result is a primitive-specific
   "summary": {
     "healthy": N,
     "warning": N,
-    "critical": N
+    "critical": N,
+    "by_layer": {
+      "1": { "healthy": N, "warning": N, "critical": N },
+      "2": { "healthy": N, "warning": N, "critical": N },
+      "3": { "healthy": N, "warning": N, "critical": N }
+    }
   }
 }
 ```
 
-Aggregate-verdict precedence: `CRITICAL > WARNING > HEALTHY > PRECONDITION_NOT_MET`.
+`advisory: true` MUST appear on the metric entry only when the baseline declares it (currently only `vm.swappiness`). Omit the field otherwise (preferred over emitting `advisory: false` for every entry — keeps output compact).
+
+Aggregate-verdict precedence: `CRITICAL > WARNING > HEALTHY > PRECONDITION_NOT_MET`. INFO and OK collapse to HEALTHY for verdict purposes; per-layer rollup counts INFO toward `healthy` (no separate `info` bucket — keeps consumer code simple).
 
 ### 9. Optional baseline persist
 
@@ -186,7 +213,8 @@ Order: CRITICAL first, then WARNING, then HEALTHY, then PRECONDITION_NOT_MET.
 - Read-only: never write to `/proc/sys/`, never propose a write through this skill, never call `talos_apply_config` or any mutating MCP tool.
 - Talos MCP `talos_read_file` for all `/proc/sys/` access — never `talosctl read` CLI from this skill.
 - Aggregate `verdict` is the worst per-node verdict.
-- `role` field per result is a primitive-specific extension to schema §B3; downstream consumers (Phase 5 composite #113) must tolerate its presence.
+- `role` field per result and `layer` field per metric are primitive-specific extensions to schema §B3; downstream consumers (Phase 5 composite #113) must tolerate their presence (forward-compat clause in primitive-contract.md §B3).
 - Never fabricate values; if a read fails for a parameter, record `actual: null` with status `PRECONDITION_NOT_MET` and continue.
 - Bash strict-mode (`set -euo pipefail`) compatible — see §1 yq lookup pattern.
 - On Kubernetes MCP tool failure (case a): retry once, then run the `# Fallback: kubectl ...` command. Empty result (case b) is reported as-is, no fallback.
+- **Audit pacing**: do not run audits in tight loop or against multiple nodes in parallel without ≥1s spacing between calls. Each audit issues ~60 `talos_read_file` calls per node; `node-pi-01` (arm64, sole WAN ingress) is latency-sensitive.
