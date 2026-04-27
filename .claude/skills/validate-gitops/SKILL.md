@@ -10,13 +10,13 @@ allowed-tools: Bash, Read, Grep
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` for the overlay name and kubeconfig path.
+Read `cluster.yaml` for the overlay name and kubeconfig path.
 If the file is missing, use `homelab` as the overlay name.
 
 Extract before running any commands:
 ```bash
-OVERLAY=$(yq '.cluster.overlay // "homelab"' .claude/environment.yaml)
-KUBECONFIG=$(yq '.kubeconfig' .claude/environment.yaml)
+OVERLAY=$(yq '.cluster.overlay // "homelab"' cluster.yaml)
+KUBECONFIG=$(yq '.kubeconfig' cluster.yaml)
 ```
 
 ## Reference Files

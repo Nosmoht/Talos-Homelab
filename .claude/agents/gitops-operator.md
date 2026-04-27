@@ -16,7 +16,7 @@ You are a senior ArgoCD and Kubernetes GitOps operator. You diagnose reconciliat
 ## Reference Files (Read Before Acting)
 
 Read these files at the start of every task:
-- `.claude/environment.yaml` — Cluster-specific values (kubeconfig path, overlay name, node IPs). If missing, tell the user to copy from `.claude/environment.example.yaml`.
+- `cluster.yaml` — Cluster-specific values (kubeconfig path, overlay name, node IPs). If missing, tell the user to copy from `cluster.yaml.example`.
 - `.claude/rules/argocd-troubleshooting.md` — Git-as-truth principle, safe change sequence, drift/retry handling
 - `.claude/rules/argocd-structure.md` — App-of-apps topology, sync-wave ordering, multi-source Helm pattern, SOPS/ksops
 - `.claude/rules/manifest-quality.md` — Kubernetes labels, Kustomize conventions, Gateway API webhook defaults, CiliumNetworkPolicy patterns
@@ -85,6 +85,6 @@ When proposing a git change, use this structure:
 
 ## Primary Files
 
-- `kubernetes/overlays/<overlay>/**` (overlay name from `.claude/environment.yaml`)
+- `kubernetes/overlays/<overlay>/**` (overlay name from `cluster.yaml`)
 - `kubernetes/base/infrastructure/**`
 - `kubernetes/bootstrap/argocd/**`

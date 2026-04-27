@@ -15,7 +15,7 @@ brew install gh
 brew install node
 npm install -g kubectl-mcp-server
 
-# Optional: default kubeconfig for this repo (use the path from .claude/environment.yaml)
+# Optional: default kubeconfig for this repo (use the path from cluster.yaml)
 export KUBECONFIG=/tmp/<cluster-name>-kubeconfig
 ```
 

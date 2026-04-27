@@ -16,8 +16,8 @@ allowed-tools:
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path).
-If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+Read `cluster.yaml` to load cluster-specific values (node IPs, kubeconfig path).
+If the file is missing, tell the user: "Copy `cluster.yaml.example` to `cluster.yaml` and fill in your cluster details."
 
 Control-plane IPs are typically `192.168.2.61` (node-01), `192.168.2.62` (node-02), `192.168.2.63` (node-03).
 

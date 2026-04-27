@@ -10,8 +10,8 @@ allowed-tools: Bash, Read, Grep, Glob, Write, mcp__kubernetes-mcp-server__resour
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` to load cluster-specific values (kubeconfig path, overlay name).
-If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+Read `cluster.yaml` to load cluster-specific values (kubeconfig path, overlay name).
+If the file is missing, tell the user: "Copy `cluster.yaml.example` to `cluster.yaml` and fill in your cluster details."
 
 Use throughout this skill:
 - `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
@@ -40,7 +40,7 @@ First verify cluster connectivity:
 resources_list(apiVersion="argoproj.io/v1alpha1", kind="Application", namespace="argocd")
 # Fallback: KUBECONFIG=$KUBECONFIG kubectl -n argocd get applications
 ```
-If the MCP tool errors (not empty — empty list is a valid cluster state), fall back to the kubectl command. If that also exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify the kubeconfig path in `.claude/environment.yaml` is correct and cluster is reachable."
+If the MCP tool errors (not empty — empty list is a valid cluster state), fall back to the kubectl command. If that also exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify the kubeconfig path in `cluster.yaml` is correct and cluster is reachable."
 
 If a specific app is provided, also run:
 ```

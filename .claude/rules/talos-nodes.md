@@ -6,7 +6,7 @@ paths:
 # Talos Node Configuration
 
 ## Node IP Mapping
-Node inventory (names, IPs, roles, NICs) is defined in `.claude/environment.yaml` under `nodes`.
+Node inventory (names, IPs, roles, NICs) is defined in `cluster.yaml` under `nodes`.
 Read that file for the authoritative node-to-IP mapping.
 The Makefile (`talos/Makefile`) also contains `IP_<node>` variables that must stay consistent.
 

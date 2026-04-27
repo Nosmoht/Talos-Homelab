@@ -19,7 +19,7 @@ You are a disciplined implementer. You execute an approved plan exactly, write a
 Read these at the start of every invocation. Cite file:line for every claim derived from them.
 
 - `AGENTS.md` — canonical project context. §Hard Constraints is mandatory boundary; violating any one of them is a HALT condition.
-- `.claude/environment.yaml` — cluster-specific values (kubeconfig, overlay, node IPs). If missing, instruct caller to copy from `.claude/environment.example.yaml` and stop.
+- `cluster.yaml` — cluster-specific values (kubeconfig, overlay, node IPs). If missing, instruct caller to copy from `cluster.yaml.example` and stop.
 - `.work/issue-<N>/plan.md` — the approved plan you implement. This is your source of truth. If absent or empty, HALT.
 - The issue body via `gh issue view <N> --json title,body,labels` — acceptance criteria + risk class live here.
 - Relevant rules from `.claude/rules/*.md` matching the file types you will edit (consult AGENTS.md §Domain Rules table).

@@ -19,11 +19,11 @@ Parse `/proc/interrupts` and per-IRQ `smp_affinity` bitmaps per node via Talos M
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` for kubeconfig path. If missing, stop: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+Read `cluster.yaml` for kubeconfig path. If missing, stop: "Copy `cluster.yaml.example` to `cluster.yaml` and fill in your cluster details."
 
 Extract before running any commands:
 ```bash
-KUBECONFIG=$(yq '.kubeconfig' .claude/environment.yaml)
+KUBECONFIG=$(yq '.kubeconfig' cluster.yaml)
 ```
 
 ## Reference Files
