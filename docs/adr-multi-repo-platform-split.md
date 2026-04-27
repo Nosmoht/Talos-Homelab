@@ -77,37 +77,79 @@ fallback only.
   ArgoCD pointing at its own repo. Manageable for ≤5 clusters.
 - Service mesh federation explicitly NOT planned.
 - Cross-cluster Vault/Dex/SSO explicitly NOT planned.
+- Office-lab has no WAN edge by design (internal-only); the homelab's
+  `pi-public-ingress` architecture is homelab-specific and stays in
+  `talos-homelab-cluster`. No "shared edge ingress" capability across clusters.
 
 ## Migration Plan (Phases)
 
-### Phase 1 — Base de-homelab-ification (in current repo, ~1 week)
-- Move hardcoded NTP/gateway from `talos/patches/common.yaml` into per-cluster
-  patch.
-- Parameterize `talos/Makefile` (`CLUSTER ?= homelab`, per-cluster
-  `clusters/<name>.mk`).
-- Parameterize `kubernetes/bootstrap/argocd/` (`OVERLAY ?= homelab`,
-  `REPO_URL ?= ...`).
-- Extract any cluster-specific Helm values that leaked into
-  `kubernetes/base/infrastructure/**/values.yaml` into the homelab overlay.
+### Phase 1 — Base de-homelab-ification (in current repo, ~1.5–2 weeks)
+
+**Scope (initial discovery via pre-merge review of this ADR):**
+- `talos/patches/common.yaml` — NTP/gateway IPs.
+- `talos/Makefile:1-21` — `CLUSTER_NAME`, `ENDPOINT`, IP_node-XX map.
+- `kubernetes/base/infrastructure/argocd/values.yaml` — hardcoded ArgoCD FQDN.
+- `kubernetes/base/infrastructure/alloy/values.yaml` — hardcoded `cluster = "homelab"` Loki label.
+- `kubernetes/base/infrastructure/**/namespace.yaml` and PNI CCNP files — `instance: homelab`, `part-of: homelab` labels (~14 files).
+- `kubernetes/bootstrap/argocd/root-application.yaml` — hardcoded `repoURL` and `path` (raw YAML, not a template).
+
+**Parameterization mechanisms:**
+- Talos Makefile: `CLUSTER ?= homelab`, `include clusters/$(CLUSTER).mk`. Default preserves current behaviour.
+- ArgoCD root-application: render via `envsubst` or Make target generating the manifest from a template (`root-application.yaml.tmpl`) into a gitignored `_out/` path that `make argocd-bootstrap` applies. Template variables: `${REPO_URL}`, `${OVERLAY}`, `${CLUSTER_NAME}`. Document the mechanism in the Phase-1 sub-issue acceptance.
+- Helm values cluster-specific tokens: extract into per-overlay `values-<cluster>.yaml` or kustomize `patchesStrategicMerge` overlays.
+- Namespace labels: `instance:` and `part-of:` become per-overlay kustomize patches against base namespace manifests.
+
+**Acceptance gate:** `grep -rn "homelab\|<homelab-mgmt-prefix>\|ntbc.io" kubernetes/base/ talos/Makefile` returns zero matches.
 
 ### Phase 2 — Plugin extraction (~1 week)
-- `git filter-repo --path .claude/skills/ --path .claude/agents/ --path .claude/rules/ --path .claude/references/ --path .claude/hooks/`
-  → integrate into `kube-agent-harness`.
-- Replace `.claude/**` in current repo with plugin reference
-  (`claude plugin install kube-agent-harness` or equivalent).
+
+**Prerequisite spike (must complete before any history rewrite):**
+- Verify Claude Code's plugin distribution schema actually supports: (a) `.claude/hooks/*.sh` registration through plugin install, (b) `paths:`-frontmatter rules with host-repo path resolution. If either is unsupported, hooks and `paths:`-rules stay per-host-repo (carve-out exception); only `paths:`-agnostic skills/agents/refs/rules ship in the plugin. Spike outcome documented in Phase-2 sub-issue.
+
+**Migration steps:**
+- `git filter-repo --path .claude/skills/ --path .claude/agents/ --path .claude/rules/ --path .claude/references/ --path .claude/hooks/` → integrate into `kube-agent-harness`. Resolve naming collisions with existing harness skills via explicit prefix rename map (e.g. `gitops-health-triage` → `homelab-gitops-health-triage` if duplicate).
+- Replace `.claude/**` in current repo with plugin reference (`claude plugin install kube-agent-harness` or equivalent local marketplace).
 - Update CLAUDE.md / AGENTS.md to document the new plugin source.
 
+**Operational caveat:** `git filter-repo` rewrites SHA history. Open PRs and feature branches against `main` must be merged or closed in a 24-hour freeze window before each filter-repo run. The 4-week budget assumes one freeze per filter-repo (Phase 2 + Phase 3A = 2 freezes total).
+
 ### Phase 3 — Cluster split + office-lab scaffold (~2 weeks)
-- 3A: `git filter-repo --path kubernetes/overlays/homelab --path talos/nodes --path talos/patches/pi-firewall.yaml --path docs/adr-pi-sole-public-ingress.md ...`
-  → new `talos-homelab-cluster` repo.
-- 3B: Rename current repo to `talos-platform-base`. Final cleanup.
-- 3C: Scaffold `talos-office-lab-cluster` from base. Deliver network admin brief.
+
+**3A: Homelab cluster repo split (history-preserving, with live-cluster cutover)**
+- `git filter-repo --path kubernetes/overlays/homelab --path talos/nodes --path talos/patches/pi-firewall.yaml --path docs/adr-pi-sole-public-ingress.md ...` → new `talos-homelab-cluster` repo.
+- **AppProject `sourceRepos` dual-listing**: every AppProject in the new repo lists BOTH `talos-platform-base.git` AND `talos-homelab-cluster.git` so multi-source Applications (kustomize + helm `$values`) keep working. Verified via `argocd app get` for all 34 applications post-cutover.
+- **ArgoCD repoURL cutover sequence** (NOT a re-run of `argocd-bootstrap` — the root Application has `selfHeal: true, prune: true` which would race a fresh apply):
+  1. Pause root Application (`kubectl patch application root -n argocd --type merge -p '{"spec":{"syncPolicy":{"automated":null}}}'`).
+  2. `kubectl edit application root -n argocd` — change `spec.source.repoURL` and `spec.source.path` to new repo + path.
+  3. `argocd app diff root` — must show zero drift.
+  4. Resume automation by re-applying the root manifest with `automated.selfHeal: true`.
+  5. Monitor for 24h before declaring stable.
+
+**3B: Base repo rename**
+- Rename `Nosmoht/Talos-Homelab` → `Nosmoht/talos-platform-base`. GitHub auto-redirects.
+- README/AGENTS.md cleanup; remove cluster-specific overview.
+
+**3C: Office-lab scaffold**
+- New `talos-office-lab-cluster` repo from base + plugin templates.
+- Deliver `docs/office-lab-network-brief.md` (network-admin briefing).
+
+### Verification gate (Phase 3A done)
+
+`argocd app diff` is necessary but **not sufficient** — it compares manifests, not running state. Phase 3A cutover must additionally verify these never-blip services with external runtime probes:
+
+- **pi-public-ingress** — external `curl -I https://<homelab-public-fqdn>/` returns 200/302 before/during/after cutover.
+- **ingress-front** — internal LAN curl against gateway VIP returns 200.
+- **vault** — `kubectl -n vault exec ... vault status` reports unsealed throughout.
+- **dex** — OIDC discovery endpoint returns 200, kubectl OIDC login still succeeds.
+- **cert-manager** — `kubectl get clusterissuer -o jsonpath='{.items[*].status.conditions[?(@.type=="Ready")].status}'` is `True True` for all issuers.
+- **kube-prometheus-stack** — `up{job="..."}` query against Prometheus shows continuous scrape (no gap > 60s).
+- **PreSync/PostSync hooks** in vault-config-operator and similar must not re-run unintentionally; check `kubectl get jobs -A` before/after for unexpected new job creations.
+
+If any probe shows degradation > 60s, abort the cutover and roll back via `kubectl patch application root` to the old repoURL.
 
 ### Verification gate (Phase 3 done)
-- Existing homelab cluster still reconciled by ArgoCD from new homelab-cluster
-  repo (no production drift during migration).
-- Office-lab can be brought up from base + plugin + new office-lab repo using
-  the same workflow.
+- Existing homelab cluster still reconciled by ArgoCD from new homelab-cluster repo (no production drift during migration).
+- Office-lab can be brought up from base + plugin + new office-lab repo using the same workflow.
 
 ## Alternatives Considered
 
