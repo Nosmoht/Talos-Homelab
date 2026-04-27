@@ -2,7 +2,9 @@ talos/talosconfig
 talos/generated/
 talos/.secrets.dec.yaml
 talos/.versions.stamp
-.claude/environment.yaml
+/cluster.yaml
+/talos/_out/
+/kubernetes/bootstrap/argocd/_out/
 Plans/
 
 # MCP config local overrides and pre-apply snapshots

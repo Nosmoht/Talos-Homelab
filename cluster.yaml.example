@@ -1,11 +1,15 @@
-# Claude Code Environment Configuration
+# Cluster Identity — Single Source of Truth
 #
-# Copy this file to environment.yaml and fill in your cluster values.
-# environment.yaml is gitignored — your cluster details stay local.
+# This file is the canonical cluster identity SOT for this repo.
+# It is tool-agnostic: read by make (talos/Makefile), kubectl (argocd bootstrap),
+# and Claude Code skills/agents — no AI tooling required to use it.
 #
-# This file is read by Claude Code skills and agents as the first step
-# of every invocation. It provides cluster-specific context that makes
-# skills portable across different clusters without losing specificity.
+# Copy this file to cluster.yaml (gitignored) and fill in your cluster values.
+# One cluster.yaml per working tree. For multi-cluster: pass ENV=../other/cluster.yaml
+# to talos/Makefile targets.
+#
+# NOTE: secrets.yaml (PKI material) is scoped to a single cluster and is NOT
+# interpolated from cluster.yaml. Each cluster has its own secrets.yaml.
 
 cluster:
   name: my-cluster
@@ -14,6 +18,8 @@ cluster:
   gateway_vip: 10.0.0.200                 # Gateway/LoadBalancer virtual IP
   network: 10.0.0.0/24                    # cluster network CIDR
   gateway: 10.0.0.1                       # default gateway / DNS
+  ntp_server: 10.0.0.1                    # NTP server IP or hostname (required, no public default)
+  target_revision: main                   # git branch/tag for ArgoCD root application (optional, default: main)
 
 kubeconfig: /tmp/my-cluster-kubeconfig     # path to kubeconfig file
 
