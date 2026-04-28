@@ -98,7 +98,7 @@ Check:
 - cluster health and node readiness
 - Argo CD application health for platform apps that depend on Cilium
 
-Run at minimum (use control-plane node IPs from `environment.yaml`):
+Run at minimum (use control-plane node IPs from `cluster.yaml`):
 ```
 talos_version(nodes=["<cp-node-1-ip>", "<cp-node-2-ip>", "<cp-node-3-ip>"])
 talos_health(nodes=["<cp-node-1-ip>"])
@@ -176,7 +176,7 @@ Also run repo validation required by the changed files. At minimum:
 ```bash
 make -C talos gen-configs
 ```
-Dry-run all nodes via MCP (resolve IPs from environment.yaml):
+Dry-run all nodes via MCP (resolve IPs from cluster.yaml):
 ```
 talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=true, nodes=["<node-ip>"])
 # Fallback: talosctl -n <node-ip> -e <node-ip> apply-config -f talos/generated/<role>/<node>.yaml --dry-run

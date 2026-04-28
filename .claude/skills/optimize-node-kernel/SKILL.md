@@ -214,7 +214,7 @@ talos_dmesg(nodes=["$NODE_IP"])
 ## Important Notes
 
 - Always use explicit endpoint (`-e $NODE_IP`) with talosctl.
-- Use the kubeconfig path from `environment.yaml`.
+- Use the kubeconfig path from `cluster.yaml`.
 - Boot parameter changes require `talosctl upgrade` (not just `talosctl apply-config`).
 - Some changes require a node reboot to take effect.
 - DRBD volumes should be drained before rebooting to avoid stuck shutdown (D-state processes).

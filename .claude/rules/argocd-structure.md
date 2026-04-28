@@ -64,10 +64,10 @@ spec:
         valueFiles:
           - $values/kubernetes/base/infrastructure/<component>/values.yaml
           - $values/kubernetes/overlays/<overlay>/infrastructure/<component>/values.yaml  # optional overlay
-    - repoURL: <repo-url-from-environment.yaml>
+    - repoURL: <repo-url-from-cluster.yaml>
       targetRevision: HEAD
       ref: values
-    - repoURL: <repo-url-from-environment.yaml>    # optional: extra resources
+    - repoURL: <repo-url-from-cluster.yaml>    # optional: extra resources
       targetRevision: HEAD
       path: kubernetes/overlays/<overlay>/infrastructure/<component>/resources
   destination:

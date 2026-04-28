@@ -29,7 +29,7 @@ Read before proceeding:
 
 - Argument: one application name (`dex`, `kube-prometheus-stack`) or `all`.
   - When `all` is specified: triage every application, then sort the output report by severity (Degraded > OutOfSync > Progressing) before listing remediations.
-- Kubeconfig: from `environment.yaml` (`kubeconfig` field).
+- Kubeconfig: from `cluster.yaml` (`kubeconfig` field).
 
 ## Workflow
 

@@ -157,7 +157,7 @@ Optionally write a snapshot to `docs/cluster-health-<date>.md` if the user reque
 ## Hard Rules
 
 - Read-only: never modify cluster state. Observation only.
-- Use `-n $CP1 -e $CP1` (first control plane IP from environment.yaml) for all talosctl commands. Never use VIP.
+- Use `-n $CP1 -e $CP1` (first control plane IP from cluster.yaml) for all talosctl commands. Never use VIP.
 - Do not attempt automated remediation — report findings and point to the appropriate skill.
 - If a command fails due to tool unavailability (linstor plugin, metrics-server), record as WARN and continue — do not stop the entire health check.
 - On Kubernetes MCP tool failure: retry once, then run the `# Fallback:` kubectl command from the same step. Record the fallback in the report. Applies to all `mcp__kubernetes-mcp-server__*` calls in this skill.
