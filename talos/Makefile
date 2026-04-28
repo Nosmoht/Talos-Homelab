@@ -1,4 +1,10 @@
 ENV ?= ../cluster.yaml
+
+# Goals that work without cluster.yaml (CI uses these for static validation).
+NO_ENV_GOALS := cilium-bootstrap cilium-bootstrap-check schematics validate-schematics validate-secrets-cleanup clean
+NEEDS_ENV    := $(strip $(filter-out $(NO_ENV_GOALS),$(if $(MAKECMDGOALS),$(MAKECMDGOALS),all)))
+
+ifneq ($(NEEDS_ENV),)
 ifeq ($(wildcard $(ENV)),)
 $(error Cluster config not found: $(ENV). Run 'make migrate-cluster-yaml' from repo root, or copy ../cluster.yaml.example to ../cluster.yaml.)
 endif
@@ -33,6 +39,7 @@ $(shell mkdir -p $(OUTPUT_ROOT)/controlplane $(OUTPUT_ROOT)/worker)
 # bootstrap issue where the cluster.yaml target is built during the first
 # pass but cannot yet satisfy the pattern-rule prerequisite in the same run.
 $(shell NTP_SERVER='$(NTP_SERVER)' envsubst '$$NTP_SERVER' < patches/cluster.yaml.tmpl > $(OUTPUT_ROOT)/cluster.yaml)
+endif
 include versions.mk
 
 -include .schematic-ids.mk
