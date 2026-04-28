@@ -8,7 +8,7 @@ paths:
 # ArgoCD Structure
 
 ## App-of-Apps Pattern
-- **Root Application** (`root`) uses `root-bootstrap` AppProject (least-privilege); points to `kubernetes/overlays/<overlay>/` (overlay name from `.claude/environment.yaml`)
+- **Root Application** (`root`) uses `root-bootstrap` AppProject (least-privilege); points to `kubernetes/overlays/<overlay>/` (overlay name from `cluster.yaml`)
 - Root app manages: AppProjects, all child Application CRs, namespaces, gateway-api resources
 - **ArgoCD self-management**: `argocd` Application CR manages its own Helm chart + HTTPRoute
 - Bootstrap is minimal: `make argocd-install` (Helm) + `make argocd-bootstrap` (applies root app only)
@@ -64,10 +64,10 @@ spec:
         valueFiles:
           - $values/kubernetes/base/infrastructure/<component>/values.yaml
           - $values/kubernetes/overlays/<overlay>/infrastructure/<component>/values.yaml  # optional overlay
-    - repoURL: <repo-url-from-environment.yaml>
+    - repoURL: <repo-url-from-cluster.yaml>
       targetRevision: HEAD
       ref: values
-    - repoURL: <repo-url-from-environment.yaml>    # optional: extra resources
+    - repoURL: <repo-url-from-cluster.yaml>    # optional: extra resources
       targetRevision: HEAD
       path: kubernetes/overlays/<overlay>/infrastructure/<component>/resources
   destination:

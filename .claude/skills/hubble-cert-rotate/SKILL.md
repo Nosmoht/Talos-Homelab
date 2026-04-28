@@ -36,7 +36,7 @@ does NOT garbage-collect — manually delete orphaned Jobs after bootstrap re-re
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` for cluster-specific values (node IPs, kubeconfig path).
+Read `cluster.yaml` for cluster-specific values (node IPs, kubeconfig path).
 
 ## Rotation Paths
 

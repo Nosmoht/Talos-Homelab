@@ -28,8 +28,8 @@ allowed-tools:
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path, cluster name).
-If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+Read `cluster.yaml` to load cluster-specific values (node IPs, kubeconfig path, cluster name).
+If the file is missing, tell the user: "Copy `cluster.yaml.example` to `cluster.yaml` and fill in your cluster details."
 
 Use throughout this skill:
 - `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
@@ -119,7 +119,7 @@ Check:
 - Cilium and Kubernetes baseline health before node reboots begin
 
 Run at minimum:
-Use control-plane node IPs from `environment.yaml`:
+Use control-plane node IPs from `cluster.yaml`:
 ```bash
 git status --short
 ```
@@ -219,7 +219,7 @@ make -C talos gen-configs
 # Validate all generated configs (CLI-only — talos_validate works per-node, not file)
 find talos/generated -type f -name '*.yaml' | sort | while read f; do echo "Validating $f"; talosctl validate --config "$f" --mode metal --strict; done
 ```
-Dry-run all nodes via MCP (resolve IPs from environment.yaml):
+Dry-run all nodes via MCP (resolve IPs from cluster.yaml):
 ```
 talos_apply_config(config_file="<abs-path>/talos/generated/<role>/<node>.yaml", dry_run=true, nodes=["<node-ip>"])
 # Fallback: talosctl -n <node-ip> -e <node-ip> apply-config -f talos/generated/<role>/<node>.yaml --dry-run
@@ -253,7 +253,7 @@ Stage only the files actually changed by the approved plan. Do not batch this ch
 ### 7. Execute the supported rollout path
 Before beginning, check etcd leadership: `talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> etcd status`. Upgrade non-leader control-plane nodes first to minimize quorum disruption risk. If the first planned CP node is the current etcd leader, begin with a follower node instead.
 
-Use the approved plan’s sequencing. Default order: control-plane nodes first (from `nodes.control_plane`), then standard workers (from `nodes.workers`), then GPU workers (from `nodes.gpu_workers`), then Pi nodes (from `nodes.pi_nodes`). Resolve the exact node names and IPs from `environment.yaml`.
+Use the approved plan’s sequencing. Default order: control-plane nodes first (from `nodes.control_plane`), then standard workers (from `nodes.workers`), then GPU workers (from `nodes.gpu_workers`), then Pi nodes (from `nodes.pi_nodes`). Resolve the exact node names and IPs from `cluster.yaml`.
 
 For each node (resolve install image from `talos/.schematic-ids.mk` + `talos/versions.mk`):
 ```

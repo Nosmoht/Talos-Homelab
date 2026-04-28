@@ -14,8 +14,8 @@ allowed-tools:
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path).
-If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+Read `cluster.yaml` to load cluster-specific values (node IPs, kubeconfig path).
+If the file is missing, tell the user: "Copy `cluster.yaml.example` to `cluster.yaml` and fill in your cluster details."
 
 Use `-n <node-ip> -e <node-ip>` for all `talosctl` commands.
 

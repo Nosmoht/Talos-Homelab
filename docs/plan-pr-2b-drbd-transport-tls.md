@@ -5,11 +5,11 @@
 **Source of truth for mechanism:** `docs/adr-storage-vlan-and-encryption.md` §Decision (commit d39da7a).
 **Reviewed by:** `talos-sre` + `platform-reliability-reviewer` (2026-04-25). v2 integrates all blocking findings; remaining MEDIUM/LOW findings explicitly acknowledged.
 
-> **Note on placeholders.** All node-IP references use shell variables or `<placeholder>` strings. Resolve at runtime against `.claude/environment.yaml` — never hardcode IPs into the runbook.
+> **Note on placeholders.** All node-IP references use shell variables or `<placeholder>` strings. Resolve at runtime against `cluster.yaml` — never hardcode IPs into the runbook.
 >
 > ```sh
-> CP_IPS=$(yq '.nodes.control_plane[].ip' .claude/environment.yaml)
-> STORAGE_IPS=$(yq '.nodes[] | select(.role == "worker" or .role == "control_plane" or .role == "gpu_worker") | .ip' .claude/environment.yaml)
+> CP_IPS=$(yq '.nodes.control_plane[].ip' cluster.yaml)
+> STORAGE_IPS=$(yq '.nodes[] | select(.role == "worker" or .role == "control_plane" or .role == "gpu_worker") | .ip' cluster.yaml)
 > ```
 
 ## Goal

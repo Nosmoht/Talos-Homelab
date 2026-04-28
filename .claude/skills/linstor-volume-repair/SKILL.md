@@ -12,13 +12,13 @@ confirmation ("yes" or "proceed") before executing it.
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` for kubeconfig path and node name map.
+Read `cluster.yaml` for kubeconfig path and node name map.
 
 ```bash
-KUBECONFIG=$(yq '.kubeconfig' .claude/environment.yaml)
+KUBECONFIG=$(yq '.kubeconfig' cluster.yaml)
 ```
 
-If missing, stop: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml`."
+If missing, stop: "Copy `cluster.yaml.example` to `cluster.yaml`."
 
 ## Reference Files
 

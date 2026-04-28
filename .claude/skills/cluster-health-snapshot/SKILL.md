@@ -21,22 +21,22 @@ allowed-tools:
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` for kubeconfig path, CP node IPs, and full node IP map.
-If the file is missing, stop: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+Read `cluster.yaml` for kubeconfig path, CP node IPs, and full node IP map.
+If the file is missing, stop: "Copy `cluster.yaml.example` to `cluster.yaml` and fill in your cluster details."
 
 Extract variables before running any commands:
 ```bash
-CP1=$(yq '.nodes.control_plane[0].ip' .claude/environment.yaml)
-CP2=$(yq '.nodes.control_plane[1].ip' .claude/environment.yaml)
-CP3=$(yq '.nodes.control_plane[2].ip' .claude/environment.yaml)
-KUBECONFIG=$(yq '.kubeconfig' .claude/environment.yaml)
+CP1=$(yq '.nodes.control_plane[0].ip' cluster.yaml)
+CP2=$(yq '.nodes.control_plane[1].ip' cluster.yaml)
+CP3=$(yq '.nodes.control_plane[2].ip' cluster.yaml)
+KUBECONFIG=$(yq '.kubeconfig' cluster.yaml)
 ```
-If any variable is empty after extraction, stop: "Required field missing in `.claude/environment.yaml`. Check `.claude/environment.example.yaml` for the schema."
+If any variable is empty after extraction, stop: "Required field missing in `cluster.yaml`. Check `cluster.yaml.example` for the schema."
 
 ## Reference Files
 
 Read before acting:
-- `.claude/environment.yaml` — kubeconfig, CP IPs, node inventory
+- `cluster.yaml` — kubeconfig, CP IPs, node inventory
 - `docs/day2-operations.md` — "Cluster Health Checks" section (commands per subsystem, thresholds)
 - `.claude/rules/talos-mcp-first.md` — etcd quorum thresholds, D-state recovery guidance
 
@@ -157,7 +157,7 @@ Optionally write a snapshot to `docs/cluster-health-<date>.md` if the user reque
 ## Hard Rules
 
 - Read-only: never modify cluster state. Observation only.
-- Use `-n $CP1 -e $CP1` (first control plane IP from environment.yaml) for all talosctl commands. Never use VIP.
+- Use `-n $CP1 -e $CP1` (first control plane IP from cluster.yaml) for all talosctl commands. Never use VIP.
 - Do not attempt automated remediation — report findings and point to the appropriate skill.
 - If a command fails due to tool unavailability (linstor plugin, metrics-server), record as WARN and continue — do not stop the entire health check.
 - On Kubernetes MCP tool failure: retry once, then run the `# Fallback:` kubectl command from the same step. Record the fallback in the report. Applies to all `mcp__kubernetes-mcp-server__*` calls in this skill.

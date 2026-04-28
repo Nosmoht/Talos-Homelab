@@ -9,8 +9,8 @@ allowed-tools: Bash, Read, Grep, Glob, Write, WebSearch, WebFetch, Agent, mcp__t
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path, cluster name).
-If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+Read `cluster.yaml` to load cluster-specific values (node IPs, kubeconfig path, cluster name).
+If the file is missing, tell the user: "Copy `cluster.yaml.example` to `cluster.yaml` and fill in your cluster details."
 
 Use throughout this skill:
 - `-n <node-ip> -e <node-ip>` for all `talosctl` commands targeting a node
@@ -155,7 +155,7 @@ If omitted, resolve in this order:
 3. if they differ, treat that as drift and include it as a first-class risk
 4. if the cluster is unreachable, fail closed instead of guessing, unless the user explicitly allows repo-only planning
 
-Preferred live checks — use control-plane node IPs from `environment.yaml`:
+Preferred live checks — use control-plane node IPs from `cluster.yaml`:
 ```
 talos_version(nodes=["<cp-node-1-ip>", "<cp-node-2-ip>", "<cp-node-3-ip>"])
 # Fallback: talosctl -n <cp-node-1-ip> -e <cp-node-1-ip> version
@@ -291,8 +291,8 @@ Require the plan to address:
 - whether `TALOS_VERSION` alone changes, or whether Kubernetes/Cilium/schematics also change
 - whether `make -C talos schematics` is required before config generation
 - whether coupled Cilium work requires updating `talos/patches/controlplane.yaml` `?v=` and re-rendering bootstrap Cilium manifests
-- control-plane node upgrade order (from `nodes.control_plane` in environment.yaml)
-- worker node upgrade order: standard workers first, then GPU workers, then Pi nodes (from environment.yaml)
+- control-plane node upgrade order (from `nodes.control_plane` in cluster.yaml)
+- worker node upgrade order: standard workers first, then GPU workers, then Pi nodes (from cluster.yaml)
 - health gates before proceeding to the next node
 
 ### 8. Include rollback and safety constraints

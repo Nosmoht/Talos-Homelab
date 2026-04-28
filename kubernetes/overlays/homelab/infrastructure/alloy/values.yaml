@@ -1,50 +1,8 @@
-controller:
-  type: daemonset
-  initContainers:
-    - name: geoip-db
-      image: curlimages/curl:8.12.1
-      imagePullPolicy: IfNotPresent
-      command:
-        - /bin/sh
-        - -ec
-      args:
-        - |
-          set -euo pipefail
-          month="$(date +%Y-%m)"
-          url="https://download.db-ip.com/free/dbip-country-lite-${month}.mmdb.gz"
-          curl -fsSL "$url" -o /geoip/dbip-country.mmdb.gz
-          gunzip -f /geoip/dbip-country.mmdb.gz
-          mv /geoip/dbip-country.mmdb /geoip/GeoIP.mmdb
-      volumeMounts:
-        - name: geoip-db
-          mountPath: /geoip
-  volumes:
-    extra:
-      - name: geoip-db
-        emptyDir: {}
-  tolerations:
-    - key: nvidia.com/gpu
-      operator: Equal
-      value: "present"
-      effect: NoSchedule
-
 alloy:
-  extraArgs:
-    - --disable-reporting
-  mounts:
-    varlog: true
-    extra:
-      - name: geoip-db
-        mountPath: /var/lib/alloy/geoip
-        readOnly: true
-  resources:
-    requests:
-      cpu: 50m
-      memory: 128Mi
-    limits:
-      cpu: 500m
-      memory: 512Mi
   configMap:
+    # Override the loki.write external_labels to add the cluster identity label.
+    # The full content is reproduced here because Helm string values are replaced,
+    # not merged. The base values.yaml has external_labels = {} (cluster-agnostic).
     content: |
       local.file_match "pods" {
         path_targets = [
@@ -126,8 +84,7 @@ alloy:
         endpoint {
           url = "http://loki-gateway.monitoring.svc/loki/api/v1/push"
         }
-        external_labels = {}
+        external_labels = {
+          cluster = "homelab",
+        }
       }
-
-serviceMonitor:
-  enabled: true

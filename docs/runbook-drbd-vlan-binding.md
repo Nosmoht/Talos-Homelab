@@ -3,7 +3,7 @@
 **Executed**: 2026-04-12  
 **Cluster**: homelab  
 **Scope**: All 6 NVMe storage nodes (node-01..06), DRBD replication migrated from pod IPs
-to VLAN 110 storage addresses (see `.claude/environment.yaml` for IP map).
+to VLAN 110 storage addresses (see `cluster.yaml` for IP map).
 
 ---
 
@@ -44,7 +44,7 @@ kubectl exec -n piraeus-datastore "$CTRL" -- \
   linstor node interface create <node-name> storage-vlan110 <node-vlan110-address>
 ```
 
-Node name → VLAN 110 address mapping is in `.claude/environment.yaml` under `nodes[].vlan110_ip`.
+Node name → VLAN 110 address mapping is in `cluster.yaml` under `nodes[].vlan110_ip`.
 
 **Verify**: `kubectl linstor node interface list` → both `default-ipv4` and `storage-vlan110`
 per node.

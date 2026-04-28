@@ -20,6 +20,7 @@ spec:
       helm:
         valueFiles:
           - $values/kubernetes/base/infrastructure/alloy/values.yaml
+          - $values/kubernetes/overlays/homelab/infrastructure/alloy/values.yaml
     - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
       targetRevision: main
       ref: values

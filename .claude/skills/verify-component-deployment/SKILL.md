@@ -10,20 +10,20 @@ allowed-tools: Bash, Read, Grep, Glob, mcp__kubernetes-mcp-server__resources_get
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` for kubeconfig path and overlay name.
-If the file is missing, stop: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+Read `cluster.yaml` for kubeconfig path and overlay name.
+If the file is missing, stop: "Copy `cluster.yaml.example` to `cluster.yaml` and fill in your cluster details."
 
 ```bash
-KUBECONFIG=$(yq '.kubeconfig' .claude/environment.yaml)
-OVERLAY=$(yq '.cluster.overlay // "homelab"' .claude/environment.yaml)
+KUBECONFIG=$(yq '.kubeconfig' cluster.yaml)
+OVERLAY=$(yq '.cluster.overlay // "homelab"' cluster.yaml)
 ```
 
-If any variable is empty after extraction, stop: "Required field missing in `.claude/environment.yaml`. Check `.claude/environment.example.yaml` for the schema."
+If any variable is empty after extraction, stop: "Required field missing in `cluster.yaml`. Check `cluster.yaml.example` for the schema."
 
 ## Reference Files
 
 Read before acting:
-- `.claude/environment.yaml` — kubeconfig, overlay name
+- `cluster.yaml` — kubeconfig, overlay name
 - `.claude/rules/argocd-structure.md` — ArgoCD patterns, sync-wave ordering, GitOps constraints
 
 ## Inputs

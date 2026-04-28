@@ -10,8 +10,8 @@ allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` to load cluster-specific values (node IPs, kubeconfig path).
-If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+Read `cluster.yaml` to load cluster-specific values (node IPs, kubeconfig path).
+If the file is missing, tell the user: "Copy `cluster.yaml.example` to `cluster.yaml` and fill in your cluster details."
 
 Use throughout this skill:
 - `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
@@ -214,7 +214,7 @@ talos_dmesg(nodes=["$NODE_IP"])
 ## Important Notes
 
 - Always use explicit endpoint (`-e $NODE_IP`) with talosctl.
-- Use the kubeconfig path from `environment.yaml`.
+- Use the kubeconfig path from `cluster.yaml`.
 - Boot parameter changes require `talosctl upgrade` (not just `talosctl apply-config`).
 - Some changes require a node reboot to take effect.
 - DRBD volumes should be drained before rebooting to avoid stuck shutdown (D-state processes).

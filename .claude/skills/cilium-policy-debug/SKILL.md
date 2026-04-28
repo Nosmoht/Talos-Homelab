@@ -10,8 +10,8 @@ allowed-tools: Bash, Read, Grep, Glob, Write, mcp__kubernetes-mcp-server__resour
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` to load cluster-specific values (kubeconfig path, overlay name).
-If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+Read `cluster.yaml` to load cluster-specific values (kubeconfig path, overlay name).
+If the file is missing, tell the user: "Copy `cluster.yaml.example` to `cluster.yaml` and fill in your cluster details."
 
 Use throughout this skill:
 - `KUBECONFIG=<kubeconfig>` for all `kubectl` commands
@@ -51,7 +51,7 @@ pods_list_in_namespace(namespace="kube-system", labelSelector="k8s-app=cilium")
 # Fallback: KUBECONFIG=<kubeconfig> kubectl -n kube-system get pods -l k8s-app=cilium
 ```
 
-If the first MCP call errors with timeout (not empty — empty list is a valid zero result), fall back to `kubectl`. If kubectl exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify the kubeconfig path in `.claude/environment.yaml` is correct and cluster is reachable."
+If the first MCP call errors with timeout (not empty — empty list is a valid zero result), fall back to `kubectl`. If kubectl exits non-zero (kubeconfig missing, cluster unreachable), stop and report: "Cannot connect to cluster. Verify the kubeconfig path in `cluster.yaml` is correct and cluster is reachable."
 
 Capture drop evidence (required before proceeding to Step 2):
 ```bash

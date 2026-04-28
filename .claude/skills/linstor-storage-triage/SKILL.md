@@ -10,18 +10,18 @@ allowed-tools: Bash, Read
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` for kubeconfig path and node IP map.
-If the file is missing, stop: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+Read `cluster.yaml` for kubeconfig path and node IP map.
+If the file is missing, stop: "Copy `cluster.yaml.example` to `cluster.yaml` and fill in your cluster details."
 
 Extract before running any commands:
 ```bash
-KUBECONFIG=$(yq '.kubeconfig' .claude/environment.yaml)
+KUBECONFIG=$(yq '.kubeconfig' cluster.yaml)
 ```
 
 ## Reference Files
 
 Read before acting:
-- `.claude/environment.yaml` — kubeconfig, node IP map
+- `cluster.yaml` — kubeconfig, node IP map
 - `docs/day2-operations.md` — LINSTOR health commands
 - `.claude/rules/talos-mcp-first.md` — "DRBD volumes in D-state deadlock upgrade" gotcha — critical reading before any node operation
 

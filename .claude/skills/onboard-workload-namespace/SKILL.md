@@ -10,19 +10,19 @@ allowed-tools: Bash, Read, Grep, Glob, Write, Edit, mcp__kubernetes-mcp-server__
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` for kubeconfig path and overlay name.
-If the file is missing, stop: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+Read `cluster.yaml` for kubeconfig path and overlay name.
+If the file is missing, stop: "Copy `cluster.yaml.example` to `cluster.yaml` and fill in your cluster details."
 
 Extract before running any commands:
 ```bash
-KUBECONFIG=$(yq '.kubeconfig' .claude/environment.yaml)
-OVERLAY=$(yq '.cluster.overlay // "homelab"' .claude/environment.yaml)
+KUBECONFIG=$(yq '.kubeconfig' cluster.yaml)
+OVERLAY=$(yq '.cluster.overlay // "homelab"' cluster.yaml)
 ```
 
 ## Reference Files
 
 Read before acting:
-- `.claude/environment.yaml` — kubeconfig, overlay name
+- `cluster.yaml` — kubeconfig, overlay name
 - `docs/platform-network-interface.md` — PNI contract v1, capability catalog, namespace label requirements
 - `.claude/rules/argocd-structure.md` — Application CR pattern, directory structure, sync-waves, ArgoCD patterns
 - `.claude/rules/manifest-quality.md` — required labels, validation commands

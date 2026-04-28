@@ -5,3 +5,9 @@ resources:
   - projects
   - infrastructure
   - apps
+
+labels:
+  - pairs:
+      app.kubernetes.io/instance: homelab
+      app.kubernetes.io/part-of: homelab
+    includeSelectors: false

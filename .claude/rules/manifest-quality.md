@@ -19,7 +19,7 @@ paths:
 - SOPS secrets stay encrypted (`*.sops.yaml`) and ksops generators are referenced in local `kustomization.yaml`.
 
 ## Validation Commands
-- `kubectl kustomize kubernetes/overlays/<overlay>` (overlay name from `.claude/environment.yaml`)
+- `kubectl kustomize kubernetes/overlays/<overlay>` (overlay name from `cluster.yaml`)
 - `kubectl apply -k kubernetes/overlays/<overlay> --dry-run=client`
 - **Kyverno ClusterPolicy changes**: run `make validate-kyverno-policies` before commit to catch invalid variable/JMESPath expressions via server-side dry-run
 - **Local kustomize builds with SOPS secrets**: use `kubectl kustomize --enable-alpha-plugins ...` — default build fails with `external plugins disabled`

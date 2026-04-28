@@ -14,7 +14,7 @@ allowed-tools:
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` to load cluster-specific values.
+Read `cluster.yaml` to load cluster-specific values.
 
 This skill rotates the AGE key used to encrypt all `*.sops.yaml` secrets in the repo.
 The current key recipients are defined in `.sops.yaml` at the repo root.

@@ -10,8 +10,8 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep, WebFetch
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` to load cluster-specific values (node names and roles).
-If the file is missing, tell the user: "Copy `.claude/environment.example.yaml` to `.claude/environment.yaml` and fill in your cluster details."
+Read `cluster.yaml` to load cluster-specific values (node names and roles).
+If the file is missing, tell the user: "Copy `cluster.yaml.example` to `cluster.yaml` and fill in your cluster details."
 
 Use node inventory from `nodes.control_plane`, `nodes.workers`, `nodes.gpu_workers` to resolve node names and roles.
 

@@ -27,7 +27,7 @@ bootstrap recovery.
 
 ## Environment Setup
 
-Read `.claude/environment.yaml` for cluster-specific values (kubeconfig path).
+Read `cluster.yaml` for cluster-specific values (kubeconfig path).
 
 ```bash
 KUBECONFIG=<kubeconfig>
