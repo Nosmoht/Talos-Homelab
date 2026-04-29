@@ -23,11 +23,12 @@ The amended ADR (PR #154 merged 2026-04-29) decided:
 
 Phase 1 (PR #153, merged 2026-04-28) already de-homelab-ified the base layer in the current repo: `talos/Makefile` reads from `cluster.yaml`, ArgoCD bootstrap manifests are templated via `envsubst`, hardcoded homelab IPs in `kubernetes/base/` are gone (verified — `git grep homelab` against `kubernetes/base/` and `talos/Makefile` returns empty post-merge). This means the source tree is already mostly clean; the filter operation is largely about **removing cluster-specific paths**, not editing remaining files in place.
 
-Two known leftover hardcodes that this plan handles explicitly:
-- `talos/patches/controlplane.yaml:7` references the cluster's own raw GitHub URL for `kubernetes/bootstrap/cilium/cilium.yaml` — this is a cluster-specific URL because the rendered cilium.yaml carries cluster-specific Hubble TLS certificates.
-- `kubernetes/base/infrastructure/platform-network-interface/resources/ccnp-pni-internet-egress-consumer-egress.yaml:23` hardcodes the homelab LAN CIDR (RFC1918 `<homelab-lan-cidr>`), which differs per cluster.
+**Phase 1 already cleanly separated PNI** (Platform Network Interface) into base + overlay. The base ships only the generic *pattern* — namespace/pod label conventions, Kyverno enforcement policies, the 18 capability CCNPs (whose CIDR rules use IANA-reserved RFC1918 blocks `10/8`, `172.16/12`, `192.168/16` as RFC-standard "private network" exclusions, NOT cluster-specific homelab values), and the empty `capability-registry-configmap`. The overlay carries the only cluster-specific value: `cluster-config-cm.yaml` with the homelab's `external_hostname_pattern`. **PNI stays in base** — it is the architectural heart of the platform's tenant-network contract and is correctly cluster-agnostic post-Phase-1.
 
-Both are addressed in §6 (path classification) and §7 (post-filter cleanup).
+One known leftover hardcode that this plan handles explicitly:
+- `talos/patches/controlplane.yaml:7` references the cluster's own raw GitHub URL for `kubernetes/bootstrap/cilium/cilium.yaml` — this is a cluster-specific URL because the rendered cilium.yaml carries cluster-specific Hubble TLS certificates.
+
+Addressed in §5.3 (controlplane mutation) and §7.4 (post-filter cleanup).
 
 ## 2. Goal
 
@@ -89,24 +90,16 @@ Any commits after `51aefde` are fine — the snapshot moves forward — but the 
 
 ### 5.1 `kubernetes/base/`
 
-**All retained** with one structural mutation:
+**All retained, no mutation.**
 
-`kubernetes/base/infrastructure/platform-network-interface/` — the PNI base contains CCNPs that hardcode the homelab LAN CIDR. PNI is also a **homelab convention**, not a generic Kubernetes pattern. Decision: **move PNI entirely out of base**.
+Initial draft proposed removing `kubernetes/base/infrastructure/platform-network-interface/` based on suspected hardcoded CIDRs. Verification proved that suspicion wrong:
 
-After filter-repo, manually:
-```bash
-git rm -rf kubernetes/base/infrastructure/platform-network-interface
-git commit -s -m "chore(pni): remove from base — homelab convention, not platform-generic
+- `ccnp-pni-internet-egress-consumer-egress.yaml` excludes the three IANA-reserved RFC1918 blocks from internet egress — this is the **standard "don't dial into private networks" guard**, generic across any cluster.
+- `ccnp-pni-controlplane-egress-consumer-egress.yaml` allows egress to the **default Kubernetes ServiceCIDR API IP** (`kubernetes.default.svc` ClusterIP at the Talos default ServiceCIDR). Generic across any Talos-default cluster.
 
-PNI is a homelab-specific namespace contract enforced via Kyverno
-policies + ConfigMap-driven capability allowlists. The CCNP CIDRs
-encode a specific cluster's LAN topology, so PNI bases cannot be
-reused unchanged by a second cluster.
+PNI is a **platform architecture pattern** (namespace/pod label contract, Kyverno enforcement policies, capability registry) and belongs in base. The only homelab-specific value is `external_hostname_pattern` in `cluster-config-cm.yaml`, which is already correctly placed in `kubernetes/overlays/homelab/infrastructure/platform-network-interface/`.
 
-This commit removes PNI from the base entirely; it stays in
-talos-homelab-cluster as a per-cluster construct. Future clusters
-that want PNI-like behavior implement their own variant."
-```
+Edge case: a future tenant cluster that uses a non-default ServiceCIDR would need to overlay-override the API ClusterIP literal in `ccnp-pni-controlplane-egress`. Document this in the `talos-homelab-cluster` AGENTS.md (Mini-Projekt 3 plan) as a caveat for future office-lab onboarding; do not pre-empt by removing the literal — the homelab cluster will keep its existing values.
 
 ### 5.2 `kubernetes/bootstrap/`
 
@@ -233,7 +226,6 @@ git rev-parse HEAD                                  # record source commit
 git filter-repo --invert-paths \
   --path kubernetes/overlays/homelab \
   --path kubernetes/bootstrap/cilium/cilium.yaml \
-  --path kubernetes/base/infrastructure/platform-network-interface \
   --path talos/nodes \
   --path talos/patches/pi-firewall.yaml \
   --path talos/secrets.yaml \
@@ -319,7 +311,7 @@ After filter-repo, six files need editing before the first push.
 
 Drop these sections entirely (they are homelab-operational, not platform-generic):
 - `## Cluster Overview` (homelab IP table, hardware list)
-- `## Key Terms` — keep only the platform-generic terms; drop PNI / FritzBox / pi-public-ingress / macvlan
+- `## Key Terms` — keep platform-generic terms (PNI definition, AppProject, sync-wave, schematic, CCNP/CNP); drop homelab-physical terms (FritzBox, pi-public-ingress, macvlan, DRBD specifics, references to `node-pi-01`)
 - `## Operational Patterns` — homelab-specific runbook references
 - `## Operational Runbooks (Skills)` — `.claude/skills/` is gone post-#147
 - `## Session-Start Ritual (both agents)` — describes homelab session pattern
@@ -487,8 +479,7 @@ filtered to retain only cluster-agnostic content per
 
 ### Removed from source
 
-- All homelab-specific overlays, node configs, secrets, talosconfig
-- PNI base (homelab convention; lives in consumer cluster repo)
+- All homelab-specific overlays, node configs, encrypted bundles, talosconfig
 - Homelab-specific docs (hardware analyses, cilium-debug logs, ADRs)
 - Homelab-specific scripts (configure-sg3428, run_trivy)
 - Homelab-specific workflows (skill-frontmatter-check, sysctl-baseline-check)
@@ -593,10 +584,6 @@ git grep -nE '192\.168\.2\.[0-9]+|192\.168\.0\.0/16' \
 ### 9.2 Post-filter cleanup commits
 
 ```bash
-# §5.1 PNI removal
-git rm -rf kubernetes/base/infrastructure/platform-network-interface
-git commit -s -m "chore(pni): remove from base — homelab convention"
-
 # §7.4 controlplane patch mutation
 $EDITOR talos/patches/controlplane.yaml   # strip extraManifests block per §7.4
 git commit -s talos/patches/controlplane.yaml \
@@ -702,7 +689,7 @@ The sandbox test is a smoke-test only; full Day-0 verification happens in Mini-P
 10. SHA256 of the extracted tarball matches the published `checksums.txt`
 11. `:latest` tag points at `v0.1.0` after publish
 12. README, AGENTS.md, CLAUDE.md, cluster.yaml.example all contain platform-base perspective (no homelab specifics)
-13. `kubernetes/base/infrastructure/platform-network-interface/` does not exist in the new repo
+13. `kubernetes/base/infrastructure/platform-network-interface/` is **PRESENT** in the new repo (PNI is the platform's tenant-network-contract pattern, kept in base)
 14. `talos/patches/controlplane.yaml` does not contain `extraManifests:` block
 15. `Talos-Homelab` repo unchanged: `git log` on `Talos-Homelab/main` shows the same commits before and after this work
 
@@ -727,8 +714,8 @@ Mini-Projekt 3 (Talos-Homelab #148, post-amendment) creates the consumer cluster
 
 - Pin `.base-version` to whatever this plan tags (initially `v0.1.0`)
 - Layer its own `talos/patches/controlplane.yaml` over the base controlplane patch, providing the cluster-specific `extraManifests:` URL pointing at the consumer's own rendered `cilium.yaml`
-- Re-introduce PNI components (CCNPs, ConfigMap, Kyverno policies) under `kubernetes/overlays/homelab/infrastructure/platform-network-interface/`, since base no longer carries them
-- Carry `talos/nodes/`, `talos/secrets.yaml`, `talos/talosconfig`, all homelab-specific docs from the §5.6 STAY list, all homelab-specific scripts and workflows
+- Carry `kubernetes/overlays/homelab/infrastructure/platform-network-interface/` (the cluster-specific PNI overlay: Application CR, kustomization, `cluster-config-cm.yaml` with the homelab `external_hostname_pattern`). The base PNI components are consumed via Multi-Source Application; the overlay only adds cluster-specific values.
+- Carry `talos/nodes/`, all cluster-specific encrypted bundles (talosconfig, the SOPS-encrypted secrets file under `talos/`), all homelab-specific docs from the §5.6 STAY list, all homelab-specific scripts and workflows
 - Author Multi-Source Application manifests for each component in `kubernetes/overlays/homelab/infrastructure/<comp>/application.yaml`
 
 Mini-Projekt 3 is a separate plan in this same `docs/` directory, written next.
@@ -749,7 +736,7 @@ Mini-Projekt 3 is a separate plan in this same `docs/` directory, written next.
 | `worker-pi.yaml` retains homelab-specific iptables / IPs | §5.3 mandates content-audit during execution; if found, classify STAY |
 | Phase-1 cleanup missed a hardcoded reference | Cleanliness grep in §6 catches it; manual edit in post-filter cleanup |
 | Cilium bootstrap URL in cluster repo points at the OLD source URL after Mini-Projekt 3 starts | Mini-Projekt 3's own filter+post-mutation handles this; this plan only ensures the URL is gone from base |
-| `kubernetes/base/infrastructure/platform-network-interface/` removal breaks `make -C talos validate-generated` | Validate after the PNI-removal commit (§9.2 step 1); fix any kustomization.yaml references in adjacent components |
+| Future tenant cluster uses non-default ServiceCIDR | `ccnp-pni-controlplane-egress` API IP literal must be overlay-overridden; document as caveat in Mini-Projekt 3 plan |
 | `gh repo create` fails due to user-org mismatch | Run `gh auth status` first; ensure default account is `Nosmoht` |
 
 ## 15. Verification grep helpers
@@ -764,7 +751,7 @@ git grep -nE '192\.168\.2\.[0-9]+|192\.168\.0\.0/16' \
   -- ':!docs/adr-multi-repo-platform-split.md'
 
 # Stale references to removed paths
-git grep -nE 'platform-network-interface|configure-sg3428|run_trivy\.sh|cilium\.yaml.*v=' \
+git grep -nE 'configure-sg3428|run_trivy\.sh|cilium\.yaml.*v=' \
   -- ':!docs/adr-multi-repo-platform-split.md'
 
 # Conftest+kustomize sanity (CI mirrors this)
