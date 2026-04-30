@@ -25,7 +25,7 @@ spec:
       helm:
         releaseName: omada-controller
         valueFiles:
-          - $values/kubernetes/base/infrastructure/omada-controller/values.yaml
+          - $values/kubernetes/overlays/homelab/infrastructure/omada-controller/values.yaml
     - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
       targetRevision: main
       ref: values

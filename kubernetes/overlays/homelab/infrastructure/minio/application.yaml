@@ -19,7 +19,7 @@ spec:
       targetRevision: 7.1.1
       helm:
         valueFiles:
-          - $values/kubernetes/base/infrastructure/minio/values.yaml
+          - $values/kubernetes/overlays/homelab/infrastructure/minio/values-defaults.yaml
           - $values/kubernetes/overlays/homelab/infrastructure/minio/values.yaml
     - repoURL: https://github.com/Nosmoht/Talos-Homelab.git
       targetRevision: main
