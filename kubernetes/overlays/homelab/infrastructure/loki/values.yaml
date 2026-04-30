@@ -1,3 +1,12 @@
-# Overlay values are empty — all Loki config is in base values.
-# This file exists so the Application CR's $values reference resolves.
-{}
+# Tenant-specific Loki overlay values.
+#
+# Architectural note: Loki is a Platform Consumer (observability stack)
+# living in base. Its concrete S3 backend coordinate is a tenant choice
+# and lives here. See docs/adr-multi-repo-platform-split.md §Component
+# Classification.
+
+loki:
+  storage:
+    s3:
+      # In-cluster MinIO tenant (homelab choice).
+      endpoint: minio.minio.svc.cluster.local:443
