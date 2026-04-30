@@ -7,10 +7,8 @@ metadata:
   namespace: cdi
   labels:
     app.kubernetes.io/name: cdi
-    app.kubernetes.io/instance: homelab
     app.kubernetes.io/version: v1.62.0
     app.kubernetes.io/component: data-importer
-    app.kubernetes.io/part-of: homelab
     app.kubernetes.io/managed-by: argocd
 spec:
   config:
