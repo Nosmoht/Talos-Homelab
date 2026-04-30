@@ -7,10 +7,8 @@ metadata:
   namespace: kubevirt
   labels:
     app.kubernetes.io/name: kubevirt
-    app.kubernetes.io/instance: homelab
     app.kubernetes.io/version: v1.5.0
     app.kubernetes.io/component: operator
-    app.kubernetes.io/part-of: homelab
     app.kubernetes.io/managed-by: argocd
 spec:
   configuration:
