@@ -16,6 +16,12 @@ spec:
   destinations:
     - namespace: argocd
       server: https://kubernetes.default.svc
+    # kyverno namespace destination needed because root's kustomize tree pulls
+    # in overlay-specific ConfigMaps targeting kyverno (e.g. PNI cluster-config
+    # with external_hostname_pattern). Architectural debt: these CMs should be
+    # owned by the consuming Application (PNI), not by root. Tracked separately.
+    - namespace: kyverno
+      server: https://kubernetes.default.svc
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace
@@ -24,3 +30,7 @@ spec:
       kind: AppProject
     - group: argoproj.io
       kind: Application
+    # ConfigMap permitted for overlay-specific cluster-config CMs (see
+    # destinations comment above for context).
+    - group: ""
+      kind: ConfigMap
